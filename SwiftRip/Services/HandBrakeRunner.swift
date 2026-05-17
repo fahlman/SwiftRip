@@ -25,18 +25,43 @@ struct ProcessHandBrakeRunner: HandBrakeRunning {
         arguments: [String],
         onOutput: @escaping @MainActor @Sendable (String) -> Void
     ) async -> HandBrakeResult {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: executablePath)
-        process.arguments = arguments
-
         let executableURL = URL(fileURLWithPath: executablePath)
         let macOSDirectoryURL = executableURL.deletingLastPathComponent()
-        let frameworksDirectoryURL = macOSDirectoryURL
+        let frameworksDirectoryURL = frameworksDirectoryURL(for: macOSDirectoryURL)
+        let process = makeProcess(
+            executableURL: executableURL,
+            arguments: arguments,
+            currentDirectoryURL: macOSDirectoryURL,
+            frameworksDirectoryURL: frameworksDirectoryURL
+        )
+        let pipe = makeOutputPipe(for: process, onOutput: onOutput)
+        return await run(process, outputPipe: pipe, onOutput: onOutput)
+    }
+
+    private func frameworksDirectoryURL(for macOSDirectoryURL: URL) -> URL {
+        macOSDirectoryURL
             .deletingLastPathComponent()
             .appendingPathComponent("Frameworks", isDirectory: true)
+    }
 
-        process.currentDirectoryURL = macOSDirectoryURL
+    private func makeProcess(
+        executableURL: URL,
+        arguments: [String],
+        currentDirectoryURL: URL,
+        frameworksDirectoryURL: URL
+    ) -> Process {
+        let process = Process()
+        process.executableURL = executableURL
+        process.arguments = arguments
+        process.currentDirectoryURL = currentDirectoryURL
+        process.environment = makeEnvironment(
+            macOSDirectoryURL: currentDirectoryURL,
+            frameworksDirectoryURL: frameworksDirectoryURL
+        )
+        return process
+    }
 
+    private func makeEnvironment(macOSDirectoryURL: URL, frameworksDirectoryURL: URL) -> [String: String] {
         var environment = ProcessInfo.processInfo.environment
         let bundledLibraryPaths = [
             macOSDirectoryURL.path,
@@ -46,14 +71,18 @@ struct ProcessHandBrakeRunner: HandBrakeRunning {
         environment["DYLD_LIBRARY_PATH"] = bundledLibraryPaths
         environment["DYLD_FALLBACK_LIBRARY_PATH"] = bundledLibraryPaths
         environment["LD_LIBRARY_PATH"] = bundledLibraryPaths
-        process.environment = environment
+        return environment
+    }
 
+    private func makeOutputPipe(
+        for process: Process,
+        onOutput: @escaping @MainActor @Sendable (String) -> Void
+    ) -> Pipe {
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = pipe
 
-        let outputHandle = pipe.fileHandleForReading
-        outputHandle.readabilityHandler = { handle in
+        pipe.fileHandleForReading.readabilityHandler = { handle in
             let data = handle.availableData
             guard !data.isEmpty, let text = String(data: data, encoding: .utf8) else { return }
 
@@ -61,6 +90,16 @@ struct ProcessHandBrakeRunner: HandBrakeRunning {
                 onOutput(text)
             }
         }
+
+        return pipe
+    }
+
+    private func run(
+        _ process: Process,
+        outputPipe: Pipe,
+        onOutput: @escaping @MainActor @Sendable (String) -> Void
+    ) async -> HandBrakeResult {
+        let outputHandle = outputPipe.fileHandleForReading
 
         return await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in
@@ -86,25 +125,5 @@ struct ProcessHandBrakeRunner: HandBrakeRunning {
                 process.terminate()
             }
         }
-    }
-}
-
-extension ProcessHandBrakeRunner {
-    func run(dvd: DVDVolume, outputURL: URL, presetURL: URL, onOutput: @escaping @MainActor @Sendable (String) -> Void) async -> HandBrakeResult {
-        let args = [
-            "--preset-import-file", presetURL.path,
-            "-Z", "SwiftRip",
-            "-i", dvd.path,
-            "-t", "1",
-            "-o", outputURL.path
-        ]
-        guard let executablePath = Bundle.main.url(forAuxiliaryExecutable: "HandBrakeCLI")?.path else {
-            await MainActor.run {
-                onOutput("HandBrakeCLI was not found in the app bundle.\n")
-            }
-            return HandBrakeResult(exitCode: -1)
-        }
-
-        return await run(executablePath: executablePath, arguments: args, onOutput: onOutput)
     }
 }

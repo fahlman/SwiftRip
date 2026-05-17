@@ -74,6 +74,9 @@ struct ContentView: View {
         }
         .fileDialogDefaultDirectory(URL(fileURLWithPath: "/Volumes", isDirectory: true))
         .fileDialogConfirmationLabel("Choose DVD…")
+        .onDisappear {
+            viewModel.cancelRip()
+        }
     }
 
     private var dvdIcon: some View {
@@ -147,16 +150,16 @@ struct ContentView: View {
 
     private var statusSection: some View {
         VStack(spacing: 10) {
-            if viewModel.isEncoding {
-                ProgressView(value: viewModel.progress)
-                    .frame(width: 180)
+            ProgressView(value: viewModel.progress)
+                .frame(width: 180)
 
-                Text("\(Int(viewModel.progress * 100))%")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
+            Text("\(Int(viewModel.progress * 100))%")
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
         }
+        .opacity(viewModel.isEncoding ? 1 : 0)
         .frame(maxWidth: .infinity)
+        .frame(height: 38)
     }
 }
 

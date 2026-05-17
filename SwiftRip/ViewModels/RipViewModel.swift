@@ -10,6 +10,9 @@ import Foundation
 
 @MainActor
 final class RipViewModel: ObservableObject {
+    private static let progressRegex = try? NSRegularExpression(
+        pattern: #"Encoding:\s+task\s+\d+\s+of\s+\d+,\s+([0-9]+(?:\.[0-9]+)?)\s*%"#
+    )
     static let initialStatusMessage = "Choose a DVD and output file to begin."
 
     @Published var dvdVolumes: [DVDVolume] = []
@@ -22,11 +25,18 @@ final class RipViewModel: ObservableObject {
 
     private var logText = ""
     private var ripTask: Task<Void, Never>?
+    private var activeRip: ActiveRip?
     private let configuration: RipConfiguration
     private let fileManager: FileManager
     private let handBrakeRunner: HandBrakeRunning
     private let volumeFinder: DVDVolumeFinding
     private let logDirectoryOverride: URL?
+
+    private struct ActiveRip {
+        let outputURL: URL
+        let logURL: URL
+        var shouldDeleteOutputOnCancel = true
+    }
 
     convenience init() {
         self.init(
@@ -51,7 +61,7 @@ final class RipViewModel: ObservableObject {
         self.logDirectoryOverride = logDirectoryOverride
     }
 
-    var canRip: Bool {
+    var isPrimaryActionAvailable: Bool {
         isEncoding || (selectedDVD != nil && outputURL != nil)
     }
 
@@ -151,6 +161,9 @@ final class RipViewModel: ObservableObject {
     func cancelRip() {
         guard isEncoding else { return }
         ripTask?.cancel()
+
+        cleanupCancelledRip()
+
         isEncoding = false
         statusMessage = "Rip stopped."
     }
@@ -160,16 +173,25 @@ final class RipViewModel: ObservableObject {
 
         let arguments = configuration.handBrakeArguments(input: selectedDVD, outputURL: outputURL)
         let logURL = makeLogFileURL(for: selectedDVD)
+        activeRip = ActiveRip(outputURL: outputURL, logURL: logURL)
         logFileURL = logURL
         logText = makeLogHeader(input: selectedDVD, outputURL: outputURL, arguments: arguments)
 
         guard fileManager.isExecutableFile(atPath: configuration.handBrakeCLIPath) else {
             savePreflightFailure("HandBrakeCLI was not found at \(configuration.handBrakeCLIPath).", logURL: logURL)
+            clearActiveRipFiles()
             return
         }
 
         guard fileManager.fileExists(atPath: configuration.libdvdcssPath) else {
             savePreflightFailure("libdvdcss was not found at \(configuration.libdvdcssPath).", logURL: logURL)
+            clearActiveRipFiles()
+            return
+        }
+
+        guard fileManager.fileExists(atPath: configuration.presetURL.path) else {
+            savePreflightFailure("SwiftRip preset was not found at \(configuration.presetURL.path).", logURL: logURL)
+            clearActiveRipFiles()
             return
         }
 
@@ -192,31 +214,21 @@ final class RipViewModel: ObservableObject {
         )
 
         if Task.isCancelled {
-            if fileManager.fileExists(atPath: outputURL.path) {
-                do {
-                    try fileManager.removeItem(at: outputURL)
-                    logText += "\nDeleted incomplete output file: \(outputURL.path)\n"
-                } catch {
-                    logText += "\nCould not delete incomplete output file: \(error.localizedDescription)\n"
-                }
-            }
-
-            logText += "\nRip stopped by user.\n"
             logText += "\nExit code: \(result.exitCode)\n"
-            _ = saveLog(to: logURL)
+            cleanupCancelledRip()
             isEncoding = false
             statusMessage = "Rip stopped."
             return
         }
 
         if result.exitCode == 0 {
+            activeRip?.shouldDeleteOutputOnCancel = false
             progress = 1
         }
 
         isEncoding = false
 
-        logText += "\nExit code: \(result.exitCode)\n"
-        let logWriteError = saveLog(to: logURL)
+        let logWriteError = appendExitCodeAndSaveLog(result.exitCode, to: logURL)
 
         if result.exitCode == 0 {
             statusMessage = "Done. Saved to \(outputURL.path). Log saved to \(logURL.path)."
@@ -225,20 +237,42 @@ final class RipViewModel: ObservableObject {
             statusMessage = "HandBrakeCLI failed with exit code \(result.exitCode). Log saved to \(logURL.path)."
         }
 
-        if let logWriteError {
-            statusMessage += " Could not write log: \(logWriteError.localizedDescription)"
+        appendLogWriteErrorIfNeeded(logWriteError)
+        clearActiveRipFiles()
+    }
+
+    private func deleteIncompleteOutputFile(at url: URL) {
+        guard fileManager.fileExists(atPath: url.path) else { return }
+
+        do {
+            try fileManager.removeItem(at: url)
+            logText += "\nDeleted incomplete output file: \(url.path)\n"
+        } catch {
+            logText += "\nCould not delete incomplete output file: \(error.localizedDescription)\n"
         }
     }
 
-    private static func progressValue(from text: String) -> Double? {
-        let pattern = #"Encoding:\s+task\s+\d+\s+of\s+\d+,\s+([0-9]+(?:\.[0-9]+)?)\s*%"#
+    private func cleanupCancelledRip() {
+        guard let activeRip else { return }
 
-        guard let regex = try? NSRegularExpression(pattern: pattern) else {
-            return nil
+        if activeRip.shouldDeleteOutputOnCancel {
+            deleteIncompleteOutputFile(at: activeRip.outputURL)
         }
 
+        logText += "\nRip stopped by user.\n"
+        _ = saveLog(to: activeRip.logURL)
+        clearActiveRipFiles()
+    }
+
+    private func clearActiveRipFiles() {
+        activeRip = nil
+    }
+
+    private static func progressValue(from text: String) -> Double? {
+        guard let progressRegex else { return nil }
+
         let range = NSRange(text.startIndex..<text.endIndex, in: text)
-        guard let match = regex.matches(in: text, range: range).last,
+        guard let match = progressRegex.matches(in: text, range: range).last,
               let percentRange = Range(match.range(at: 1), in: text),
               let percent = Double(text[percentRange]) else {
             return nil
@@ -247,14 +281,21 @@ final class RipViewModel: ObservableObject {
         return min(max(percent / 100, 0), 1)
     }
 
+    private func appendExitCodeAndSaveLog(_ exitCode: Int32, to logURL: URL) -> Error? {
+        logText += "\nExit code: \(exitCode)\n"
+        return saveLog(to: logURL)
+    }
+
+    private func appendLogWriteErrorIfNeeded(_ error: Error?) {
+        guard let error else { return }
+        statusMessage += " Could not write log: \(error.localizedDescription)"
+    }
+
     private func savePreflightFailure(_ message: String, logURL: URL) {
         logText += "\(message)\n"
         let logWriteError = saveLog(to: logURL)
         statusMessage = "\(message) Log saved to \(logURL.path)."
-
-        if let logWriteError {
-            statusMessage += " Could not write log: \(logWriteError.localizedDescription)"
-        }
+        appendLogWriteErrorIfNeeded(logWriteError)
     }
 
     private func makeLogFileURL(for dvd: DVDVolume) -> URL {
