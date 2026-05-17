@@ -4,7 +4,7 @@ SwiftRipTools produces finished command-line artifacts for SwiftRip.app.
 
 ## Final artifact output
 
-SwiftRipTools/Artifacts/macos-universal/
+SwiftRipTools/Artifacts/macos-arm64/
   HandBrakeCLI
   libdvdcss.2.dylib
 
@@ -21,7 +21,7 @@ SwiftRip.app/
       SwiftRip.json
 
 ## Rules
-
+- SwiftRip is currently ARM64-only.
 - SwiftRip.app must not rely on Homebrew, MacPorts, /usr/local/lib, /opt/local/lib, or user-installed HandBrake.
 - SwiftRip.app should consume artifacts produced by SwiftRipTools.
 - Tool artifacts should be reproducible.

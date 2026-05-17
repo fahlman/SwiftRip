@@ -49,6 +49,7 @@
 		94FC322B2FBA3F1600B23D1F /* THIRD_PARTY_NOTICES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = THIRD_PARTY_NOTICES.md; sourceTree = "<group>"; };
 		94FC322C2FBA517E00B23D1F /* build-handbrakecli.zsh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-handbrakecli.zsh"; sourceTree = "<group>"; };
 		94FC322D2FBA574000B23D1F /* HandBrakeCLI */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = HandBrakeCLI; sourceTree = "<group>"; };
+		94FC32312FBA6B9600B23D1F /* ROADMAP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ROADMAP.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -97,6 +98,7 @@
 		9412AEFB2FB9503F004E17B6 = {
 			isa = PBXGroup;
 			children = (
+				94FC32312FBA6B9600B23D1F /* ROADMAP.md */,
 				94FC32292FBA3F1600B23D1F /* LEGAL.md */,
 				94FC322A2FBA3F1600B23D1F /* SOURCE_OFFER.md */,
 				94FC322B2FBA3F1600B23D1F /* THIRD_PARTY_NOTICES.md */,

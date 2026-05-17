@@ -21,6 +21,7 @@ final class RipViewModel: ObservableObject {
     @Published private(set) var progress: Double = 0
 
     private var logText = ""
+    private var ripTask: Task<Void, Never>?
     private let configuration: RipConfiguration
     private let fileManager: FileManager
     private let handBrakeRunner: HandBrakeRunning
@@ -51,7 +52,7 @@ final class RipViewModel: ObservableObject {
     }
 
     var canRip: Bool {
-        selectedDVD != nil && outputURL != nil && !isEncoding
+        isEncoding || (selectedDVD != nil && outputURL != nil)
     }
 
     var shouldShowStatusMessage: Bool {
@@ -137,6 +138,24 @@ final class RipViewModel: ObservableObject {
     }
 
     func startRip(revealOutput: @escaping @MainActor (URL) -> Void) async {
+        guard !isEncoding else { return }
+        ripTask = Task { [weak self] in
+            guard let self else { return }
+            await self.performRip(revealOutput: revealOutput)
+        }
+
+        await ripTask?.value
+        ripTask = nil
+    }
+
+    func cancelRip() {
+        guard isEncoding else { return }
+        ripTask?.cancel()
+        isEncoding = false
+        statusMessage = "Rip stopped."
+    }
+
+    private func performRip(revealOutput: @escaping @MainActor (URL) -> Void) async {
         guard let selectedDVD, let outputURL else { return }
 
         let arguments = configuration.handBrakeArguments(input: selectedDVD, outputURL: outputURL)
@@ -171,6 +190,24 @@ final class RipViewModel: ObservableObject {
                 }
             }
         )
+
+        if Task.isCancelled {
+            if fileManager.fileExists(atPath: outputURL.path) {
+                do {
+                    try fileManager.removeItem(at: outputURL)
+                    logText += "\nDeleted incomplete output file: \(outputURL.path)\n"
+                } catch {
+                    logText += "\nCould not delete incomplete output file: \(error.localizedDescription)\n"
+                }
+            }
+
+            logText += "\nRip stopped by user.\n"
+            logText += "\nExit code: \(result.exitCode)\n"
+            _ = saveLog(to: logURL)
+            isEncoding = false
+            statusMessage = "Rip stopped."
+            return
+        }
 
         if result.exitCode == 0 {
             progress = 1

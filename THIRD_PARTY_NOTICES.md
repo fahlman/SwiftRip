@@ -1,5 +1,3 @@
-
-
 # Third-Party Notices
 
 SwiftRip includes, builds, bundles, or invokes third-party software components. Those components are copyrighted by their respective authors and are licensed under their own license terms.

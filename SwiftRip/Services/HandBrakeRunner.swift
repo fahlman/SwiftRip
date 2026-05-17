@@ -25,58 +25,65 @@ struct ProcessHandBrakeRunner: HandBrakeRunning {
         arguments: [String],
         onOutput: @escaping @MainActor @Sendable (String) -> Void
     ) async -> HandBrakeResult {
-        await withCheckedContinuation { continuation in
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: executablePath)
-            process.arguments = arguments
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: executablePath)
+        process.arguments = arguments
 
-            let executableURL = URL(fileURLWithPath: executablePath)
-            let macOSDirectoryURL = executableURL.deletingLastPathComponent()
-            let frameworksDirectoryURL = macOSDirectoryURL
-                .deletingLastPathComponent()
-                .appendingPathComponent("Frameworks", isDirectory: true)
+        let executableURL = URL(fileURLWithPath: executablePath)
+        let macOSDirectoryURL = executableURL.deletingLastPathComponent()
+        let frameworksDirectoryURL = macOSDirectoryURL
+            .deletingLastPathComponent()
+            .appendingPathComponent("Frameworks", isDirectory: true)
 
-            process.currentDirectoryURL = macOSDirectoryURL
+        process.currentDirectoryURL = macOSDirectoryURL
 
-            var environment = ProcessInfo.processInfo.environment
-            let bundledLibraryPaths = [
-                macOSDirectoryURL.path,
-                frameworksDirectoryURL.path
-            ].joined(separator: ":")
+        var environment = ProcessInfo.processInfo.environment
+        let bundledLibraryPaths = [
+            macOSDirectoryURL.path,
+            frameworksDirectoryURL.path
+        ].joined(separator: ":")
 
-            environment["DYLD_LIBRARY_PATH"] = bundledLibraryPaths
-            environment["DYLD_FALLBACK_LIBRARY_PATH"] = bundledLibraryPaths
-            environment["LD_LIBRARY_PATH"] = bundledLibraryPaths
-            process.environment = environment
+        environment["DYLD_LIBRARY_PATH"] = bundledLibraryPaths
+        environment["DYLD_FALLBACK_LIBRARY_PATH"] = bundledLibraryPaths
+        environment["LD_LIBRARY_PATH"] = bundledLibraryPaths
+        process.environment = environment
 
-            let pipe = Pipe()
-            process.standardOutput = pipe
-            process.standardError = pipe
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
 
-            let outputHandle = pipe.fileHandleForReading
-            outputHandle.readabilityHandler = { handle in
-                let data = handle.availableData
-                guard !data.isEmpty, let text = String(data: data, encoding: .utf8) else { return }
+        let outputHandle = pipe.fileHandleForReading
+        outputHandle.readabilityHandler = { handle in
+            let data = handle.availableData
+            guard !data.isEmpty, let text = String(data: data, encoding: .utf8) else { return }
 
-                Task { @MainActor in
-                    onOutput(text)
-                }
+            Task { @MainActor in
+                onOutput(text)
             }
+        }
 
-            process.terminationHandler = { terminatedProcess in
-                outputHandle.readabilityHandler = nil
-                continuation.resume(returning: HandBrakeResult(exitCode: terminatedProcess.terminationStatus))
-            }
-            do {
-                try process.run()
-            } catch {
-                outputHandle.readabilityHandler = nil
-
-                Task { @MainActor in
-                    onOutput("Failed to launch HandBrakeCLI: \(error.localizedDescription)\n")
+        return await withTaskCancellationHandler {
+            await withCheckedContinuation { continuation in
+                process.terminationHandler = { terminatedProcess in
+                    outputHandle.readabilityHandler = nil
+                    continuation.resume(returning: HandBrakeResult(exitCode: terminatedProcess.terminationStatus))
                 }
 
-                continuation.resume(returning: HandBrakeResult(exitCode: -1))
+                do {
+                    try process.run()
+                } catch {
+                    outputHandle.readabilityHandler = nil
+
+                    Task { @MainActor in
+                        onOutput("Failed to launch HandBrakeCLI: \(error.localizedDescription)\n")
+                    }
+
+                    continuation.resume(returning: HandBrakeResult(exitCode: -1))
+                }
+            }
+        } onCancel: {
+            if process.isRunning {
+                process.terminate()
             }
         }
     }

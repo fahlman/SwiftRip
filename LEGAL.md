@@ -1,5 +1,3 @@
-
-
 # SwiftRip Legal Notes
 
 SwiftRip is free software distributed under the GNU General Public License version 2. See `LICENSE` for the full license text.

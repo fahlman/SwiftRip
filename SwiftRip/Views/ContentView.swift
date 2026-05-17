@@ -13,6 +13,46 @@ struct ContentView: View {
     @StateObject private var viewModel = RipViewModel()
     @State private var isDVDPickerPresented = false
 
+    private enum PrimaryButtonState {
+        case chooseDVD
+        case rip
+        case stop
+
+        var title: String {
+            switch self {
+            case .chooseDVD:
+                return "Choose DVD…"
+            case .rip:
+                return "Rip"
+            case .stop:
+                return "Stop"
+            }
+        }
+
+        var systemImage: String {
+            switch self {
+            case .chooseDVD:
+                return "opticaldisc"
+            case .rip:
+                return "arrow.trianglehead.2.clockwise"
+            case .stop:
+                return "stop.fill"
+            }
+        }
+    }
+
+    private var primaryButtonState: PrimaryButtonState {
+        if viewModel.isEncoding {
+            return .stop
+        }
+
+        if viewModel.selectedDVD == nil {
+            return .chooseDVD
+        }
+
+        return .rip
+    }
+
     var body: some View {
         VStack(spacing: 16) {
             dvdIcon
@@ -38,7 +78,7 @@ struct ContentView: View {
 
     private var dvdIcon: some View {
         ZStack(alignment: .bottomTrailing) {
-            if let selectedDVD = viewModel.selectedDVD {
+            if viewModel.selectedDVD != nil {
                 Image(systemName: "opticaldisc.fill")
                     .font(.system(size: 104, weight: .regular))
                     .symbolRenderingMode(.hierarchical)
@@ -80,31 +120,29 @@ struct ContentView: View {
 
     private var primaryButton: some View {
         Button {
-            if viewModel.selectedDVD == nil {
-                isDVDPickerPresented = true
-            } else {
-                Task {
-                    await viewModel.startRip { outputURL in
-                        NSWorkspace.shared.activateFileViewerSelecting([outputURL])
-                    }
-                }
-            }
+            performPrimaryButtonAction()
         } label: {
-            HStack(spacing: 6) {
-                if viewModel.selectedDVD == nil {
-                    Image(systemName: "opticaldisc")
-                    Text("Choose DVD…")
-                } else {
-                    Image(systemName: "arrow.trianglehead.2.clockwise")
-                    Text("Rip")
-                }
-            }
-            .frame(width: 116)
+            Label(primaryButtonState.title, systemImage: primaryButtonState.systemImage)
+                .frame(width: 116)
         }
         .keyboardShortcut(.defaultAction)
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
-        .disabled(viewModel.isEncoding)
+    }
+
+    private func performPrimaryButtonAction() {
+        switch primaryButtonState {
+        case .chooseDVD:
+            isDVDPickerPresented = true
+        case .rip:
+            Task {
+                await viewModel.startRip { outputURL in
+                    NSWorkspace.shared.activateFileViewerSelecting([outputURL])
+                }
+            }
+        case .stop:
+            viewModel.cancelRip()
+        }
     }
 
     private var statusSection: some View {
@@ -116,14 +154,6 @@ struct ContentView: View {
                 Text("\(Int(viewModel.progress * 100))%")
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
-            }
-
-            if viewModel.shouldShowStatusMessage {
-                Text(viewModel.statusMessage)
-                    .font(.callout)
-                    .foregroundStyle(viewModel.isEncoding ? .secondary : .primary)
-                    .multilineTextAlignment(.center)
-                    .textSelection(.enabled)
             }
         }
         .frame(maxWidth: .infinity)
