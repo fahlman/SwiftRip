@@ -47,6 +47,8 @@
 		94FC32292FBA3F1600B23D1F /* LEGAL.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LEGAL.md; sourceTree = "<group>"; };
 		94FC322A2FBA3F1600B23D1F /* SOURCE_OFFER.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SOURCE_OFFER.md; sourceTree = "<group>"; };
 		94FC322B2FBA3F1600B23D1F /* THIRD_PARTY_NOTICES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = THIRD_PARTY_NOTICES.md; sourceTree = "<group>"; };
+		94FC322C2FBA517E00B23D1F /* build-handbrakecli.zsh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-handbrakecli.zsh"; sourceTree = "<group>"; };
+		94FC322D2FBA574000B23D1F /* HandBrakeCLI */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = HandBrakeCLI; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -117,17 +119,10 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		94FC32192FBA2CA200B23D1F /* macos-universal */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = "macos-universal";
-			sourceTree = "<group>";
-		};
 		94FC321A2FBA2CA200B23D1F /* Artifacts */ = {
 			isa = PBXGroup;
 			children = (
-				94FC32192FBA2CA200B23D1F /* macos-universal */,
+				94FC322E2FBA574000B23D1F /* macos-arm64 */,
 			);
 			path = Artifacts;
 			sourceTree = "<group>";
@@ -143,6 +138,7 @@
 		94FC321E2FBA2CA200B23D1F /* Scripts */ = {
 			isa = PBXGroup;
 			children = (
+				94FC322C2FBA517E00B23D1F /* build-handbrakecli.zsh */,
 				94FC321D2FBA2CA200B23D1F /* build-swiftrip-tools.zsh */,
 				94FC32252FBA2D5B00B23D1F /* build-libdvdcss.zsh */,
 			);
@@ -166,6 +162,14 @@
 				94FC32202FBA2CA200B23D1F /* README.md */,
 			);
 			path = SwiftRipTools;
+			sourceTree = "<group>";
+		};
+		94FC322E2FBA574000B23D1F /* macos-arm64 */ = {
+			isa = PBXGroup;
+			children = (
+				94FC322D2FBA574000B23D1F /* HandBrakeCLI */,
+			);
+			path = "macos-arm64";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

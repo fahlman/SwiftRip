@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 TOOLS_DIR="$ROOT_DIR/SwiftRipTools"
 SOURCE_DIR="$TOOLS_DIR/Source"
 BUILD_DIR="$TOOLS_DIR/Build/libdvdcss"
-ARTIFACTS_DIR="$TOOLS_DIR/Artifacts/macos-universal"
+ARTIFACTS_DIR="$TOOLS_DIR/Artifacts/macos-arm64"
 
 LIBDVDCSS_VERSION="1.5.0"
 LIBDVDCSS_ARCHIVE="libdvdcss-${LIBDVDCSS_VERSION}.tar.xz"
@@ -13,7 +13,6 @@ LIBDVDCSS_SOURCE_DIR="$SOURCE_DIR/libdvdcss-${LIBDVDCSS_VERSION}"
 LIBDVDCSS_URL="https://get.videolan.org/libdvdcss/${LIBDVDCSS_VERSION}/${LIBDVDCSS_ARCHIVE}"
 
 ARM64_PREFIX="$BUILD_DIR/arm64-prefix"
-X86_64_PREFIX="$BUILD_DIR/x86_64-prefix"
 
 MESON_CMD="${MESON_CMD:-}"
 NINJA_CMD="${NINJA_CMD:-}"
@@ -24,6 +23,7 @@ echo "Source:    $SOURCE_DIR"
 echo "Build:     $BUILD_DIR"
 echo "Artifacts: $ARTIFACTS_DIR"
 echo "Version:   $LIBDVDCSS_VERSION"
+echo "Arch:      arm64"
 
 mkdir -p "$SOURCE_DIR"
 mkdir -p "$BUILD_DIR"
@@ -111,29 +111,33 @@ EOF
 }
 
 build_arch "arm64" "$ARM64_PREFIX"
-build_arch "x86_64" "$X86_64_PREFIX"
 
 ARM64_DYLIB="$ARM64_PREFIX/lib/libdvdcss.2.dylib"
-X86_64_DYLIB="$X86_64_PREFIX/lib/libdvdcss.2.dylib"
-UNIVERSAL_DYLIB="$ARTIFACTS_DIR/libdvdcss.2.dylib"
+ARTIFACT_DYLIB="$ARTIFACTS_DIR/libdvdcss.2.dylib"
 
 if [[ ! -f "$ARM64_DYLIB" ]]; then
     echo "Missing arm64 dylib: $ARM64_DYLIB" >&2
     exit 1
 fi
 
-if [[ ! -f "$X86_64_DYLIB" ]]; then
-    echo "Missing x86_64 dylib: $X86_64_DYLIB" >&2
+echo ""
+echo "Copying arm64 dylib artifact..."
+cp "$ARM64_DYLIB" "$ARTIFACT_DYLIB"
+
+install_name_tool -id "@rpath/libdvdcss.2.dylib" "$ARTIFACT_DYLIB"
+
+echo ""
+echo "Built artifact: $ARTIFACT_DYLIB"
+file "$ARTIFACT_DYLIB"
+otool -D "$ARTIFACT_DYLIB"
+
+echo ""
+echo "Checking for accidental MacPorts runtime dependencies..."
+if otool -L "$ARTIFACT_DYLIB" | grep -q "/opt/local"; then
+    echo "ERROR: libdvdcss.2.dylib links against /opt/local libraries."
     exit 1
 fi
 
+echo "No /opt/local runtime dependencies found."
 echo ""
-echo "Creating universal dylib..."
-lipo -create "$ARM64_DYLIB" "$X86_64_DYLIB" -output "$UNIVERSAL_DYLIB"
-
-install_name_tool -id "@rpath/libdvdcss.2.dylib" "$UNIVERSAL_DYLIB"
-
-echo ""
-echo "Built artifact: $UNIVERSAL_DYLIB"
-lipo -info "$UNIVERSAL_DYLIB"
-otool -D "$UNIVERSAL_DYLIB"
+echo "libdvdcss build complete."
