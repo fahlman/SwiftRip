@@ -39,10 +39,11 @@ struct ContentView: View {
     private var dvdIcon: some View {
         ZStack(alignment: .bottomTrailing) {
             if let selectedDVD = viewModel.selectedDVD {
-                Image(nsImage: finderDVDIcon(for: selectedDVD))
-                    .resizable()
-                    .interpolation(.high)
-                    .frame(width: 128, height: 128)
+                Image(systemName: "opticaldisc.fill")
+                    .font(.system(size: 104, weight: .regular))
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(.secondary)
+                    .symbolEffect(.rotate.byLayer, options: .repeat(.continuous), isActive: viewModel.isEncoding)
 
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 34, weight: .semibold))
@@ -50,7 +51,7 @@ struct ContentView: View {
                     .foregroundStyle(.white, .green)
                     .offset(x: 6, y: 4)
             } else {
-                Image(systemName: "opticaldisc.fill")
+                Image(systemName: "opticaldisc")
                     .font(.system(size: 104, weight: .regular))
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.secondary)
@@ -94,7 +95,7 @@ struct ContentView: View {
                     Image(systemName: "opticaldisc")
                     Text("Choose DVD…")
                 } else {
-                    Image(systemName: "square.and.arrow.down")
+                    Image(systemName: "arrow.trianglehead.2.clockwise")
                     Text("Rip")
                 }
             }
@@ -104,12 +105,6 @@ struct ContentView: View {
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
         .disabled(viewModel.isEncoding)
-    }
-
-    private func finderDVDIcon(for dvd: DVDVolume) -> NSImage {
-        let icon = NSWorkspace.shared.icon(forFile: dvd.path)
-        icon.size = NSSize(width: 128, height: 128)
-        return icon
     }
 
     private var statusSection: some View {

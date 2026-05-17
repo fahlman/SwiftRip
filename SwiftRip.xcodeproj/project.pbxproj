@@ -183,6 +183,7 @@
 				9412AF012FB9503F004E17B6 /* Frameworks */,
 				9412AF022FB9503F004E17B6 /* Resources */,
 				94FC320C2FBA0F3300B23D1F /* CopyFiles */,
+				94FC32302FBA599F00B23D1F /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -311,6 +312,31 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		94FC32302FBA599F00B23D1F /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/SwiftRipTools/Artifacts/macos-arm64/HandBrakeCLI",
+				"$(SRCROOT)/SwiftRipTools/Artifacts/macos-arm64/libdvdcss.2.dylib",
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_FOLDER_PATH)/HandBrakeCLI",
+				"$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/libdvdcss.2.dylib",
+				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_FOLDER_PATH)/libdvdcss.2.dylib",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = "/bin/zsh  ";
+			shellScript = "set -euo pipefail\n\nARTIFACTS_DIR=\"${SRCROOT}/SwiftRipTools/Artifacts/macos-arm64\"\nAPP_MACOS_DIR=\"${TARGET_BUILD_DIR}/${EXECUTABLE_FOLDER_PATH}\"\nAPP_FRAMEWORKS_DIR=\"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}\"\n\nHANDBRAKE_SOURCE=\"${ARTIFACTS_DIR}/HandBrakeCLI\"\nLIBDVDCSS_SOURCE=\"${ARTIFACTS_DIR}/libdvdcss.2.dylib\"\n\nHANDBRAKE_DESTINATION=\"${APP_MACOS_DIR}/HandBrakeCLI\"\nLIBDVDCSS_FRAMEWORKS_DESTINATION=\"${APP_FRAMEWORKS_DIR}/libdvdcss.2.dylib\"\nLIBDVDCSS_MACOS_DESTINATION=\"${APP_MACOS_DIR}/libdvdcss.2.dylib\"\n\necho \"Copying SwiftRip tool artifacts...\"\necho \"Artifacts:  ${ARTIFACTS_DIR}\"\necho \"MacOS dir:  ${APP_MACOS_DIR}\"\necho \"Frameworks: ${APP_FRAMEWORKS_DIR}\"\n\nif [[ ! -f \"${HANDBRAKE_SOURCE}\" ]]; then\n    echo \"ERROR: Missing HandBrakeCLI artifact:\"\n    echo \"${HANDBRAKE_SOURCE}\"\n    echo \"Run SwiftRipTools/Scripts/build-swiftrip-tools.zsh first.\"\n    exit 1\nfi\n\nif [[ ! -f \"${LIBDVDCSS_SOURCE}\" ]]; then\n    echo \"ERROR: Missing libdvdcss.2.dylib artifact:\"\n    echo \"${LIBDVDCSS_SOURCE}\"\n    echo \"Run SwiftRipTools/Scripts/build-swiftrip-tools.zsh first.\"\n    exit 1\nfi\n\nmkdir -p \"${APP_MACOS_DIR}\"\nmkdir -p \"${APP_FRAMEWORKS_DIR}\"\n\ncp \"${HANDBRAKE_SOURCE}\" \"${HANDBRAKE_DESTINATION}\"\n\n# Put libdvdcss in Frameworks for normal app-bundle layout.\ncp \"${LIBDVDCSS_SOURCE}\" \"${LIBDVDCSS_FRAMEWORKS_DESTINATION}\"\n\n# Also put libdvdcss beside HandBrakeCLI because HandBrake is looking in \".\".\ncp \"${LIBDVDCSS_SOURCE}\" \"${LIBDVDCSS_MACOS_DESTINATION}\"\n\nchmod 755 \"${HANDBRAKE_DESTINATION}\"\nchmod 755 \"${LIBDVDCSS_FRAMEWORKS_DESTINATION}\"\nchmod 755 \"${LIBDVDCSS_MACOS_DESTINATION}\"\n\necho \"\"\necho \"Verifying copied artifacts...\"\n\nfile \"${HANDBRAKE_DESTINATION}\"\nfile \"${LIBDVDCSS_FRAMEWORKS_DESTINATION}\"\nfile \"${LIBDVDCSS_MACOS_DESTINATION}\"\n\nif ! file \"${HANDBRAKE_DESTINATION}\" | grep -q \"arm64\"; then\n    echo \"ERROR: Bundled HandBrakeCLI is not arm64.\"\n    exit 1\nfi\n\nif ! file \"${LIBDVDCSS_FRAMEWORKS_DESTINATION}\" | grep -q \"arm64\"; then\n    echo \"ERROR: Bundled Frameworks libdvdcss.2.dylib is not arm64.\"\n    exit 1\nfi\n\nif ! file \"${LIBDVDCSS_MACOS_DESTINATION}\" | grep -q \"arm64\"; then\n    echo \"ERROR: Bundled MacOS libdvdcss.2.dylib is not arm64.\"\n    exit 1\nfi\n\nif otool -L \"${HANDBRAKE_DESTINATION}\" | grep -q \"/opt/local\"; then\n    echo \"ERROR: Bundled HandBrakeCLI links against /opt/local libraries.\"\n    exit 1\nfi\n\nif otool -L \"${LIBDVDCSS_FRAMEWORKS_DESTINATION}\" | grep -q \"/opt/local\"; then\n    echo \"ERROR: Frameworks libdvdcss.2.dylib links against /opt/local libraries.\"\n    exit 1\nfi\n\nif otool -L \"${LIBDVDCSS_MACOS_DESTINATION}\" | grep -q \"/opt/local\"; then\n    echo \"ERROR: MacOS libdvdcss.2.dylib links against /opt/local libraries.\"\n    exit 1\nfi\n\necho \"\"\necho \"libdvdcss install names:\"\notool -D \"${LIBDVDCSS_FRAMEWORKS_DESTINATION}\"\notool -D \"${LIBDVDCSS_MACOS_DESTINATION}\"\n\necho \"\"\necho \"SwiftRip tool artifacts copied successfully.\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		9412AF002FB9503F004E17B6 /* Sources */ = {

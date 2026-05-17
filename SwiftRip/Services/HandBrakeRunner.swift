@@ -30,6 +30,25 @@ struct ProcessHandBrakeRunner: HandBrakeRunning {
             process.executableURL = URL(fileURLWithPath: executablePath)
             process.arguments = arguments
 
+            let executableURL = URL(fileURLWithPath: executablePath)
+            let macOSDirectoryURL = executableURL.deletingLastPathComponent()
+            let frameworksDirectoryURL = macOSDirectoryURL
+                .deletingLastPathComponent()
+                .appendingPathComponent("Frameworks", isDirectory: true)
+
+            process.currentDirectoryURL = macOSDirectoryURL
+
+            var environment = ProcessInfo.processInfo.environment
+            let bundledLibraryPaths = [
+                macOSDirectoryURL.path,
+                frameworksDirectoryURL.path
+            ].joined(separator: ":")
+
+            environment["DYLD_LIBRARY_PATH"] = bundledLibraryPaths
+            environment["DYLD_FALLBACK_LIBRARY_PATH"] = bundledLibraryPaths
+            environment["LD_LIBRARY_PATH"] = bundledLibraryPaths
+            process.environment = environment
+
             let pipe = Pipe()
             process.standardOutput = pipe
             process.standardError = pipe
@@ -48,8 +67,6 @@ struct ProcessHandBrakeRunner: HandBrakeRunning {
                 outputHandle.readabilityHandler = nil
                 continuation.resume(returning: HandBrakeResult(exitCode: terminatedProcess.terminationStatus))
             }
-
-
             do {
                 try process.run()
             } catch {
