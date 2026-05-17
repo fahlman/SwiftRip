@@ -13,5 +13,8 @@ struct SwiftRipApp: App {
         WindowGroup {
             ContentView()
         }
+        .windowStyle(.hiddenTitleBar)
+        .defaultSize(width: 308, height: 336)
+        .windowResizability(.contentSize)
     }
 }
