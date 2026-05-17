@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		94FC32282FBA3D3700B23D1F /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 94FC32272FBA3D3700B23D1F /* LICENSE */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		9412AF122FB95040004E17B6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -43,6 +47,7 @@
 		94FC321D2FBA2CA200B23D1F /* build-swiftrip-tools.zsh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-swiftrip-tools.zsh"; sourceTree = "<group>"; };
 		94FC32202FBA2CA200B23D1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		94FC32252FBA2D5B00B23D1F /* build-libdvdcss.zsh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-libdvdcss.zsh"; sourceTree = "<group>"; };
+		94FC32272FBA3D3700B23D1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -91,6 +96,7 @@
 		9412AEFB2FB9503F004E17B6 = {
 			isa = PBXGroup;
 			children = (
+				94FC32272FBA3D3700B23D1F /* LICENSE */,
 				94FC32212FBA2CA200B23D1F /* SwiftRipTools */,
 				9412AF052FB9503F004E17B6 /* Products */,
 				9412AF062FB9503F004E17B6 /* SwiftRip */,
@@ -281,6 +287,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				94FC32282FBA3D3700B23D1F /* LICENSE in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
