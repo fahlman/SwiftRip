@@ -6,6 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		94FC32222FBA2CA200B23D1F /* ArtifactLayout.md in Resources */ = {isa = PBXBuildFile; fileRef = 94FC321B2FBA2CA200B23D1F /* ArtifactLayout.md */; };
+		94FC32232FBA2CA200B23D1F /* build-swiftrip-tools.zsh in Resources */ = {isa = PBXBuildFile; fileRef = 94FC321D2FBA2CA200B23D1F /* build-swiftrip-tools.zsh */; };
+		94FC32242FBA2CA200B23D1F /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 94FC32202FBA2CA200B23D1F /* README.md */; };
+		94FC32262FBA2D5B00B23D1F /* build-libdvdcss.zsh in Resources */ = {isa = PBXBuildFile; fileRef = 94FC32252FBA2D5B00B23D1F /* build-libdvdcss.zsh */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		9412AF122FB95040004E17B6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -39,6 +46,10 @@
 		9412AF042FB9503F004E17B6 /* SwiftRip.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftRip.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9412AF112FB95040004E17B6 /* SwiftRipTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftRipTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9412AF1B2FB95040004E17B6 /* SwiftRipUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftRipUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		94FC321B2FBA2CA200B23D1F /* ArtifactLayout.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ArtifactLayout.md; sourceTree = "<group>"; };
+		94FC321D2FBA2CA200B23D1F /* build-swiftrip-tools.zsh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-swiftrip-tools.zsh"; sourceTree = "<group>"; };
+		94FC32202FBA2CA200B23D1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		94FC32252FBA2D5B00B23D1F /* build-libdvdcss.zsh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-libdvdcss.zsh"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -87,6 +98,7 @@
 		9412AEFB2FB9503F004E17B6 = {
 			isa = PBXGroup;
 			children = (
+				94FC32212FBA2CA200B23D1F /* SwiftRipTools */,
 				9412AF052FB9503F004E17B6 /* Products */,
 				9412AF062FB9503F004E17B6 /* SwiftRip */,
 				9412AF142FB95040004E17B6 /* SwiftRipTests */,
@@ -102,6 +114,57 @@
 				9412AF1B2FB95040004E17B6 /* SwiftRipUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		94FC32192FBA2CA200B23D1F /* macos-universal */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = "macos-universal";
+			sourceTree = "<group>";
+		};
+		94FC321A2FBA2CA200B23D1F /* Artifacts */ = {
+			isa = PBXGroup;
+			children = (
+				94FC32192FBA2CA200B23D1F /* macos-universal */,
+			);
+			path = Artifacts;
+			sourceTree = "<group>";
+		};
+		94FC321C2FBA2CA200B23D1F /* Notes */ = {
+			isa = PBXGroup;
+			children = (
+				94FC321B2FBA2CA200B23D1F /* ArtifactLayout.md */,
+			);
+			path = Notes;
+			sourceTree = "<group>";
+		};
+		94FC321E2FBA2CA200B23D1F /* Scripts */ = {
+			isa = PBXGroup;
+			children = (
+				94FC321D2FBA2CA200B23D1F /* build-swiftrip-tools.zsh */,
+				94FC32252FBA2D5B00B23D1F /* build-libdvdcss.zsh */,
+			);
+			path = Scripts;
+			sourceTree = "<group>";
+		};
+		94FC321F2FBA2CA200B23D1F /* Source */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Source;
+			sourceTree = "<group>";
+		};
+		94FC32212FBA2CA200B23D1F /* SwiftRipTools */ = {
+			isa = PBXGroup;
+			children = (
+				94FC321A2FBA2CA200B23D1F /* Artifacts */,
+				94FC321C2FBA2CA200B23D1F /* Notes */,
+				94FC321E2FBA2CA200B23D1F /* Scripts */,
+				94FC321F2FBA2CA200B23D1F /* Source */,
+				94FC32202FBA2CA200B23D1F /* README.md */,
+			);
+			path = SwiftRipTools;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -225,6 +288,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				94FC32222FBA2CA200B23D1F /* ArtifactLayout.md in Resources */,
+				94FC32262FBA2D5B00B23D1F /* build-libdvdcss.zsh in Resources */,
+				94FC32232FBA2CA200B23D1F /* build-swiftrip-tools.zsh in Resources */,
+				94FC32242FBA2CA200B23D1F /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
