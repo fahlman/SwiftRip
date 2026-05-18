@@ -9,22 +9,26 @@ import SwiftUI
 
 @main
 struct SwiftRipApp: App {
+
     @Environment(\.openWindow) private var openWindow
+
+    private static let aboutWindowID = "about-swiftrip"
+    private static let aboutTitle = "About \(RipConfiguration.appName)"
 
     var body: some Scene {
         WindowGroup {
             ContentView()
         }
 
-        Window("About SwiftRip", id: "about-swiftrip") {
+        Window(Self.aboutTitle, id: Self.aboutWindowID) {
             AboutSwiftRipView()
         }
         .windowResizability(.contentSize)
         .defaultPosition(.center)
         .commands {
             CommandGroup(replacing: .appInfo) {
-                Button("About SwiftRip") {
-                    openWindow(id: "about-swiftrip")
+                Button(Self.aboutTitle) {
+                    openWindow(id: Self.aboutWindowID)
                 }
             }
         }
@@ -32,18 +36,22 @@ struct SwiftRipApp: App {
 }
 
 private struct AboutSwiftRipView: View {
-    private let appName = "SwiftRip"
-    private let appDescription = "A small macOS DVD ripping tool built around bundled ARM64 ripping tools."
+    private static let appDescription = "A small macOS DVD ripping tool built around bundled ARM64 ripping tools."
+    private static let appIconName = "opticaldisc.fill"
+    private static let terminalIconName = "terminal"
+    private static let packageIconName = "shippingbox"
+    private static let licenseIconName = "doc.text"
+    private static let licensesDirectoryName = "Licenses"
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(spacing: 14) {
-                Image(systemName: "opticaldisc.fill")
+                Image(systemName: Self.appIconName)
                     .font(.system(size: 44))
                     .symbolRenderingMode(.hierarchical)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(appName)
+                    Text(RipConfiguration.appName)
                         .font(.title2.bold())
 
                     Text(appVersionText)
@@ -52,7 +60,7 @@ private struct AboutSwiftRipView: View {
                 }
             }
 
-            Text(appDescription)
+            Text(Self.appDescription)
                 .foregroundStyle(.secondary)
 
             Divider()
@@ -61,8 +69,8 @@ private struct AboutSwiftRipView: View {
                 Text("Bundled Tools")
                     .font(.headline)
 
-                Label("HandBrakeCLI", systemImage: "terminal")
-                Label("libdvdcss.2.dylib", systemImage: "shippingbox")
+                Label(RipConfiguration.handBrakeCLIExecutableName, systemImage: Self.terminalIconName)
+                Label(RipConfiguration.libdvdcssLibraryName, systemImage: Self.packageIconName)
             }
 
             Divider()
@@ -71,7 +79,7 @@ private struct AboutSwiftRipView: View {
                 Text("Licenses")
                     .font(.headline)
 
-                Text("SwiftRip includes bundled third-party tools. Their license files are included in the app bundle under Resources/Licenses.")
+                Text("\(RipConfiguration.appName) includes bundled third-party tools. Their license files are included in the app bundle under Resources/\(Self.licensesDirectoryName).")
                     .foregroundStyle(.secondary)
 
                 if licenseNames.isEmpty {
@@ -79,7 +87,7 @@ private struct AboutSwiftRipView: View {
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(licenseNames, id: \.self) { name in
-                        Label(name, systemImage: "doc.text")
+                        Label(name, systemImage: Self.licenseIconName)
                     }
                 }
             }
@@ -108,7 +116,7 @@ private struct AboutSwiftRipView: View {
     }
 
     private var licenseNames: [String] {
-        guard let licensesURL = Bundle.main.resourceURL?.appendingPathComponent("Licenses", isDirectory: true),
+        guard let licensesURL = Bundle.main.resourceURL?.appendingPathComponent(Self.licensesDirectoryName, isDirectory: true),
               let urls = try? FileManager.default.contentsOfDirectory(
                 at: licensesURL,
                 includingPropertiesForKeys: nil,
