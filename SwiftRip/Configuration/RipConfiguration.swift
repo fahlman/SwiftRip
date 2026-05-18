@@ -8,12 +8,12 @@
 import Foundation
 
 struct RipConfiguration: Sendable {
-    static let appName = "SwiftRip"
-    static let presetResourceName = "SwiftRip"
-    static let presetFileExtension = "json"
-    static let handBrakeCLIExecutableName = "HandBrakeCLI"
-    static let libdvdcssLibraryName = "libdvdcss.2.dylib"
-    private static let missingBundledResourceDirectory = "/missing-bundled-resource"
+    nonisolated static let appName = "SwiftRip"
+    nonisolated static let presetResourceName = "SwiftRip"
+    nonisolated static let presetFileExtension = "json"
+    nonisolated static let handBrakeCLIExecutableName = "HandBrakeCLI"
+    nonisolated static let libdvdcssLibraryName = "libdvdcss.2.dylib"
+    private nonisolated static let missingBundledResourceDirectory = "/missing-bundled-resource"
 
     let handBrakeCLIPath: String
     let libdvdcssPath: String

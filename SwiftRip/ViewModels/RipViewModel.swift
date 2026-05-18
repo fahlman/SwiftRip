@@ -329,7 +329,6 @@ final class RipViewModel {
     }
 
     private func finishCancelledRip(exitCode: Int32) {
-        activeRip?.log.appendBlankLine("SwiftRip: User requested stop")
         activeRip?.log.appendExitCode(exitCode)
         cleanupCancelledRip()
         updateState { $0.finishEncoding(statusMessage: AppStrings.ripStopped) }
@@ -401,6 +400,8 @@ final class RipViewModel {
 
     private func cleanupCancelledRip() {
         guard let activeRip else { return }
+
+        self.activeRip?.log.appendBlankLine("SwiftRip: User requested stop")
 
         if activeRip.shouldDeleteOutputOnCancel {
             deleteIncompleteOutputFile(at: activeRip.outputURL)

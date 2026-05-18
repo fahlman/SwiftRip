@@ -8,6 +8,7 @@
 import Testing
 @testable import SwiftRip
 
+@MainActor
 struct AppStringsTests {
 
     @Test func formatsCoreStatusMessages() {

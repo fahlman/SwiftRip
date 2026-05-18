@@ -31,6 +31,22 @@ struct ProcessHandBrakeRunnerTests {
         #expect(output.contains("standard-error"))
     }
 
+    @Test func forwardsOutputWithoutTrailingNewline() async {
+        let runner = ProcessHandBrakeRunner()
+        var output = ""
+
+        let result = await runner.run(
+            executablePath: "/bin/sh",
+            arguments: ["-c", "printf partial-output"],
+            onOutput: { text in
+                output += text
+            }
+        )
+
+        #expect(result.exitCode == 0)
+        #expect(output.contains("partial-output"))
+    }
+
     @Test func cancellationTerminatesRunningProcess() async {
         let runner = ProcessHandBrakeRunner()
         let task = Task {

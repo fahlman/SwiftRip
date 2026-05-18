@@ -9,6 +9,7 @@ import Foundation
 import Testing
 @testable import SwiftRip
 
+@MainActor
 struct RipLifecycleStateTests {
 
     @Test func primaryActionFollowsPhase() {
