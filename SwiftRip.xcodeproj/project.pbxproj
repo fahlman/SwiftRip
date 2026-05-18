@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 100;
 	objects = {
 
 /* Begin PBXContainerItemProxy section */
@@ -26,12 +26,10 @@
 /* Begin PBXCopyFilesBuildPhase section */
 		94FC320C2FBA0F3300B23D1F /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
 			dstPath = "";
-			dstSubfolderSpec = 6;
+			dstSubfolder = Executables;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -74,24 +72,18 @@
 /* Begin PBXFrameworksBuildPhase section */
 		9412AF012FB9503F004E17B6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		9412AF0E2FB95040004E17B6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		9412AF182FB95040004E17B6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
@@ -191,14 +183,10 @@
 			);
 			buildRules = (
 			);
-			dependencies = (
-			);
 			fileSystemSynchronizedGroups = (
 				9412AF062FB9503F004E17B6 /* SwiftRip */,
 			);
 			name = SwiftRip;
-			packageProductDependencies = (
-			);
 			productName = SwiftRip;
 			productReference = 9412AF042FB9503F004E17B6 /* SwiftRip.app */;
 			productType = "com.apple.product-type.application";
@@ -220,8 +208,6 @@
 				9412AF142FB95040004E17B6 /* SwiftRipTests */,
 			);
 			name = SwiftRipTests;
-			packageProductDependencies = (
-			);
 			productName = SwiftRipTests;
 			productReference = 9412AF112FB95040004E17B6 /* SwiftRipTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -243,8 +229,6 @@
 				9412AF1E2FB95040004E17B6 /* SwiftRipUITests */,
 			);
 			name = SwiftRipUITests;
-			packageProductDependencies = (
-			);
 			productName = SwiftRipUITests;
 			productReference = 9412AF1B2FB95040004E17B6 /* SwiftRipUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -281,7 +265,7 @@
 			);
 			mainGroup = 9412AEFB2FB9503F004E17B6;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 77;
+			preferredProjectObjectVersion = 100;
 			productRefGroup = 9412AF052FB9503F004E17B6 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -296,73 +280,146 @@
 /* Begin PBXResourcesBuildPhase section */
 		9412AF022FB9503F004E17B6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		9412AF0F2FB95040004E17B6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		9412AF192FB95040004E17B6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
 		94FC32302FBA599F00B23D1F /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
 			inputPaths = (
 				"$(SRCROOT)/SwiftRipTools/Artifacts/macos-arm64/HandBrakeCLI",
 				"$(SRCROOT)/SwiftRipTools/Artifacts/macos-arm64/libdvdcss.2.dylib",
-			);
-			outputFileListPaths = (
 			);
 			outputPaths = (
 				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_FOLDER_PATH)/HandBrakeCLI",
 				"$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/libdvdcss.2.dylib",
 				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_FOLDER_PATH)/libdvdcss.2.dylib",
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/zsh  ";
-			shellScript = "set -euo pipefail\n\nARTIFACTS_DIR=\"${SRCROOT}/SwiftRipTools/Artifacts/macos-arm64\"\nAPP_MACOS_DIR=\"${TARGET_BUILD_DIR}/${EXECUTABLE_FOLDER_PATH}\"\nAPP_FRAMEWORKS_DIR=\"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}\"\n\nHANDBRAKE_SOURCE=\"${ARTIFACTS_DIR}/HandBrakeCLI\"\nLIBDVDCSS_SOURCE=\"${ARTIFACTS_DIR}/libdvdcss.2.dylib\"\n\nHANDBRAKE_DESTINATION=\"${APP_MACOS_DIR}/HandBrakeCLI\"\nLIBDVDCSS_FRAMEWORKS_DESTINATION=\"${APP_FRAMEWORKS_DIR}/libdvdcss.2.dylib\"\nLIBDVDCSS_MACOS_DESTINATION=\"${APP_MACOS_DIR}/libdvdcss.2.dylib\"\n\necho \"Copying SwiftRip tool artifacts...\"\necho \"Artifacts:  ${ARTIFACTS_DIR}\"\necho \"MacOS dir:  ${APP_MACOS_DIR}\"\necho \"Frameworks: ${APP_FRAMEWORKS_DIR}\"\n\nif [[ ! -f \"${HANDBRAKE_SOURCE}\" ]]; then\n    echo \"ERROR: Missing HandBrakeCLI artifact:\"\n    echo \"${HANDBRAKE_SOURCE}\"\n    echo \"Run SwiftRipTools/Scripts/build-swiftrip-tools.zsh first.\"\n    exit 1\nfi\n\nif [[ ! -f \"${LIBDVDCSS_SOURCE}\" ]]; then\n    echo \"ERROR: Missing libdvdcss.2.dylib artifact:\"\n    echo \"${LIBDVDCSS_SOURCE}\"\n    echo \"Run SwiftRipTools/Scripts/build-swiftrip-tools.zsh first.\"\n    exit 1\nfi\n\nmkdir -p \"${APP_MACOS_DIR}\"\nmkdir -p \"${APP_FRAMEWORKS_DIR}\"\n\ncp \"${HANDBRAKE_SOURCE}\" \"${HANDBRAKE_DESTINATION}\"\n\n# Put libdvdcss in Frameworks for normal app-bundle layout.\ncp \"${LIBDVDCSS_SOURCE}\" \"${LIBDVDCSS_FRAMEWORKS_DESTINATION}\"\n\n# Also put libdvdcss beside HandBrakeCLI because HandBrake is looking in \".\".\ncp \"${LIBDVDCSS_SOURCE}\" \"${LIBDVDCSS_MACOS_DESTINATION}\"\n\nchmod 755 \"${HANDBRAKE_DESTINATION}\"\nchmod 755 \"${LIBDVDCSS_FRAMEWORKS_DESTINATION}\"\nchmod 755 \"${LIBDVDCSS_MACOS_DESTINATION}\"\n\necho \"\"\necho \"Verifying copied artifacts...\"\n\nfile \"${HANDBRAKE_DESTINATION}\"\nfile \"${LIBDVDCSS_FRAMEWORKS_DESTINATION}\"\nfile \"${LIBDVDCSS_MACOS_DESTINATION}\"\n\nif ! file \"${HANDBRAKE_DESTINATION}\" | grep -q \"arm64\"; then\n    echo \"ERROR: Bundled HandBrakeCLI is not arm64.\"\n    exit 1\nfi\n\nif ! file \"${LIBDVDCSS_FRAMEWORKS_DESTINATION}\" | grep -q \"arm64\"; then\n    echo \"ERROR: Bundled Frameworks libdvdcss.2.dylib is not arm64.\"\n    exit 1\nfi\n\nif ! file \"${LIBDVDCSS_MACOS_DESTINATION}\" | grep -q \"arm64\"; then\n    echo \"ERROR: Bundled MacOS libdvdcss.2.dylib is not arm64.\"\n    exit 1\nfi\n\nif otool -L \"${HANDBRAKE_DESTINATION}\" | grep -q \"/opt/local\"; then\n    echo \"ERROR: Bundled HandBrakeCLI links against /opt/local libraries.\"\n    exit 1\nfi\n\nif otool -L \"${LIBDVDCSS_FRAMEWORKS_DESTINATION}\" | grep -q \"/opt/local\"; then\n    echo \"ERROR: Frameworks libdvdcss.2.dylib links against /opt/local libraries.\"\n    exit 1\nfi\n\nif otool -L \"${LIBDVDCSS_MACOS_DESTINATION}\" | grep -q \"/opt/local\"; then\n    echo \"ERROR: MacOS libdvdcss.2.dylib links against /opt/local libraries.\"\n    exit 1\nfi\n\necho \"\"\necho \"libdvdcss install names:\"\notool -D \"${LIBDVDCSS_FRAMEWORKS_DESTINATION}\"\notool -D \"${LIBDVDCSS_MACOS_DESTINATION}\"\n\necho \"\"\necho \"SwiftRip tool artifacts copied successfully.\"\n";
+			shellScript = (
+				"set -euo pipefail",
+				"",
+				"ARTIFACTS_DIR=\"${SRCROOT}/SwiftRipTools/Artifacts/macos-arm64\"",
+				"APP_MACOS_DIR=\"${TARGET_BUILD_DIR}/${EXECUTABLE_FOLDER_PATH}\"",
+				"APP_FRAMEWORKS_DIR=\"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}\"",
+				"",
+				"HANDBRAKE_SOURCE=\"${ARTIFACTS_DIR}/HandBrakeCLI\"",
+				"LIBDVDCSS_SOURCE=\"${ARTIFACTS_DIR}/libdvdcss.2.dylib\"",
+				"",
+				"HANDBRAKE_DESTINATION=\"${APP_MACOS_DIR}/HandBrakeCLI\"",
+				"LIBDVDCSS_FRAMEWORKS_DESTINATION=\"${APP_FRAMEWORKS_DIR}/libdvdcss.2.dylib\"",
+				"LIBDVDCSS_MACOS_DESTINATION=\"${APP_MACOS_DIR}/libdvdcss.2.dylib\"",
+				"",
+				"echo \"Copying SwiftRip tool artifacts...\"",
+				"echo \"Artifacts:  ${ARTIFACTS_DIR}\"",
+				"echo \"MacOS dir:  ${APP_MACOS_DIR}\"",
+				"echo \"Frameworks: ${APP_FRAMEWORKS_DIR}\"",
+				"",
+				"if [[ ! -f \"${HANDBRAKE_SOURCE}\" ]]; then",
+				"    echo \"ERROR: Missing HandBrakeCLI artifact:\"",
+				"    echo \"${HANDBRAKE_SOURCE}\"",
+				"    echo \"Run SwiftRipTools/Scripts/build-swiftrip-tools.zsh first.\"",
+				"    exit 1",
+				"fi",
+				"",
+				"if [[ ! -f \"${LIBDVDCSS_SOURCE}\" ]]; then",
+				"    echo \"ERROR: Missing libdvdcss.2.dylib artifact:\"",
+				"    echo \"${LIBDVDCSS_SOURCE}\"",
+				"    echo \"Run SwiftRipTools/Scripts/build-swiftrip-tools.zsh first.\"",
+				"    exit 1",
+				"fi",
+				"",
+				"mkdir -p \"${APP_MACOS_DIR}\"",
+				"mkdir -p \"${APP_FRAMEWORKS_DIR}\"",
+				"",
+				"cp \"${HANDBRAKE_SOURCE}\" \"${HANDBRAKE_DESTINATION}\"",
+				"",
+				"# Put libdvdcss in Frameworks for normal app-bundle layout.",
+				"cp \"${LIBDVDCSS_SOURCE}\" \"${LIBDVDCSS_FRAMEWORKS_DESTINATION}\"",
+				"",
+				"# Also put libdvdcss beside HandBrakeCLI because HandBrake is looking in \".\".",
+				"cp \"${LIBDVDCSS_SOURCE}\" \"${LIBDVDCSS_MACOS_DESTINATION}\"",
+				"",
+				"chmod 755 \"${HANDBRAKE_DESTINATION}\"",
+				"chmod 755 \"${LIBDVDCSS_FRAMEWORKS_DESTINATION}\"",
+				"chmod 755 \"${LIBDVDCSS_MACOS_DESTINATION}\"",
+				"",
+				"echo \"\"",
+				"echo \"Verifying copied artifacts...\"",
+				"",
+				"file \"${HANDBRAKE_DESTINATION}\"",
+				"file \"${LIBDVDCSS_FRAMEWORKS_DESTINATION}\"",
+				"file \"${LIBDVDCSS_MACOS_DESTINATION}\"",
+				"",
+				"if ! file \"${HANDBRAKE_DESTINATION}\" | grep -q \"arm64\"; then",
+				"    echo \"ERROR: Bundled HandBrakeCLI is not arm64.\"",
+				"    exit 1",
+				"fi",
+				"",
+				"if ! file \"${LIBDVDCSS_FRAMEWORKS_DESTINATION}\" | grep -q \"arm64\"; then",
+				"    echo \"ERROR: Bundled Frameworks libdvdcss.2.dylib is not arm64.\"",
+				"    exit 1",
+				"fi",
+				"",
+				"if ! file \"${LIBDVDCSS_MACOS_DESTINATION}\" | grep -q \"arm64\"; then",
+				"    echo \"ERROR: Bundled MacOS libdvdcss.2.dylib is not arm64.\"",
+				"    exit 1",
+				"fi",
+				"",
+				"if otool -L \"${HANDBRAKE_DESTINATION}\" | grep -q \"/opt/local\"; then",
+				"    echo \"ERROR: Bundled HandBrakeCLI links against /opt/local libraries.\"",
+				"    exit 1",
+				"fi",
+				"",
+				"if otool -L \"${LIBDVDCSS_FRAMEWORKS_DESTINATION}\" | grep -q \"/opt/local\"; then",
+				"    echo \"ERROR: Frameworks libdvdcss.2.dylib links against /opt/local libraries.\"",
+				"    exit 1",
+				"fi",
+				"",
+				"if otool -L \"${LIBDVDCSS_MACOS_DESTINATION}\" | grep -q \"/opt/local\"; then",
+				"    echo \"ERROR: MacOS libdvdcss.2.dylib links against /opt/local libraries.\"",
+				"    exit 1",
+				"fi",
+				"",
+				"echo \"\"",
+				"echo \"libdvdcss install names:\"",
+				"otool -D \"${LIBDVDCSS_FRAMEWORKS_DESTINATION}\"",
+				"otool -D \"${LIBDVDCSS_MACOS_DESTINATION}\"",
+				"",
+				"echo \"\"",
+				"echo \"SwiftRip tool artifacts copied successfully.\"",
+				"",
+			);
 		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		9412AF002FB9503F004E17B6 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		9412AF0D2FB95040004E17B6 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		9412AF172FB95040004E17B6 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
@@ -380,7 +437,7 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		9412AF232FB95040004E17B6 /* Debug */ = {
+		9412AF232FB95040004E17B6 /* Debug configuration for PBXProject "SwiftRip" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -444,7 +501,7 @@
 			};
 			name = Debug;
 		};
-		9412AF242FB95040004E17B6 /* Release */ = {
+		9412AF242FB95040004E17B6 /* Release configuration for PBXProject "SwiftRip" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -500,7 +557,7 @@
 			};
 			name = Release;
 		};
-		9412AF262FB95040004E17B6 /* Debug */ = {
+		9412AF262FB95040004E17B6 /* Debug configuration for PBXNativeTarget "SwiftRip" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -551,7 +608,7 @@
 			};
 			name = Debug;
 		};
-		9412AF272FB95040004E17B6 /* Release */ = {
+		9412AF272FB95040004E17B6 /* Release configuration for PBXNativeTarget "SwiftRip" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -602,7 +659,7 @@
 			};
 			name = Release;
 		};
-		9412AF292FB95040004E17B6 /* Debug */ = {
+		9412AF292FB95040004E17B6 /* Debug configuration for PBXNativeTarget "SwiftRipTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -623,7 +680,7 @@
 			};
 			name = Debug;
 		};
-		9412AF2A2FB95040004E17B6 /* Release */ = {
+		9412AF2A2FB95040004E17B6 /* Release configuration for PBXNativeTarget "SwiftRipTests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -644,7 +701,7 @@
 			};
 			name = Release;
 		};
-		9412AF2C2FB95040004E17B6 /* Debug */ = {
+		9412AF2C2FB95040004E17B6 /* Debug configuration for PBXNativeTarget "SwiftRipUITests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -663,7 +720,7 @@
 			};
 			name = Debug;
 		};
-		9412AF2D2FB95040004E17B6 /* Release */ = {
+		9412AF2D2FB95040004E17B6 /* Release configuration for PBXNativeTarget "SwiftRipUITests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -688,37 +745,33 @@
 		9412AEFF2FB9503F004E17B6 /* Build configuration list for PBXProject "SwiftRip" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				9412AF232FB95040004E17B6 /* Debug */,
-				9412AF242FB95040004E17B6 /* Release */,
+				9412AF232FB95040004E17B6 /* Debug configuration for PBXProject "SwiftRip" */,
+				9412AF242FB95040004E17B6 /* Release configuration for PBXProject "SwiftRip" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		9412AF252FB95040004E17B6 /* Build configuration list for PBXNativeTarget "SwiftRip" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				9412AF262FB95040004E17B6 /* Debug */,
-				9412AF272FB95040004E17B6 /* Release */,
+				9412AF262FB95040004E17B6 /* Debug configuration for PBXNativeTarget "SwiftRip" */,
+				9412AF272FB95040004E17B6 /* Release configuration for PBXNativeTarget "SwiftRip" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		9412AF282FB95040004E17B6 /* Build configuration list for PBXNativeTarget "SwiftRipTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				9412AF292FB95040004E17B6 /* Debug */,
-				9412AF2A2FB95040004E17B6 /* Release */,
+				9412AF292FB95040004E17B6 /* Debug configuration for PBXNativeTarget "SwiftRipTests" */,
+				9412AF2A2FB95040004E17B6 /* Release configuration for PBXNativeTarget "SwiftRipTests" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		9412AF2B2FB95040004E17B6 /* Build configuration list for PBXNativeTarget "SwiftRipUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				9412AF2C2FB95040004E17B6 /* Debug */,
-				9412AF2D2FB95040004E17B6 /* Release */,
+				9412AF2C2FB95040004E17B6 /* Debug configuration for PBXNativeTarget "SwiftRipUITests" */,
+				9412AF2D2FB95040004E17B6 /* Release configuration for PBXNativeTarget "SwiftRipUITests" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
