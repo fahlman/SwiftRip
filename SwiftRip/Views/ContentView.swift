@@ -13,6 +13,17 @@ struct ContentView: View {
     @StateObject private var viewModel = RipViewModel()
     @State private var isDVDPickerPresented = false
 
+    private static let chooseDVDTitle = "Choose DVD…"
+    private static let ripTitle = "Rip"
+    private static let stopTitle = "Stop"
+    private static let noValidDVDTitle = "No valid DVD"
+    private static let opticalDiscIconName = "opticaldisc"
+    private static let selectedOpticalDiscIconName = "opticaldisc.fill"
+    private static let ripIconName = "arrow.trianglehead.2.clockwise"
+    private static let stopIconName = "stop.fill"
+    private static let selectedBadgeIconName = "checkmark.circle.fill"
+    private static let missingBadgeIconName = "questionmark.circle.fill"
+
     private enum PrimaryButtonState {
         case chooseDVD
         case rip
@@ -21,22 +32,22 @@ struct ContentView: View {
         var title: String {
             switch self {
             case .chooseDVD:
-                return "Choose DVD…"
+                return ContentView.chooseDVDTitle
             case .rip:
-                return "Rip"
+                return ContentView.ripTitle
             case .stop:
-                return "Stop"
+                return ContentView.stopTitle
             }
         }
 
         var systemImage: String {
             switch self {
             case .chooseDVD:
-                return "opticaldisc"
+                return ContentView.opticalDiscIconName
             case .rip:
-                return "arrow.trianglehead.2.clockwise"
+                return ContentView.ripIconName
             case .stop:
-                return "stop.fill"
+                return ContentView.stopIconName
             }
         }
     }
@@ -73,7 +84,7 @@ struct ContentView: View {
             }
         }
         .fileDialogDefaultDirectory(URL(fileURLWithPath: "/Volumes", isDirectory: true))
-        .fileDialogConfirmationLabel("Choose DVD…")
+        .fileDialogConfirmationLabel(Self.chooseDVDTitle)
         .onDisappear {
             viewModel.cancelRip()
         }
@@ -82,25 +93,25 @@ struct ContentView: View {
     private var dvdIcon: some View {
         ZStack(alignment: .bottomTrailing) {
             if viewModel.selectedDVD != nil {
-                Image(systemName: "opticaldisc.fill")
+                Image(systemName: Self.selectedOpticalDiscIconName)
                     .font(.system(size: 104, weight: .regular))
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.secondary)
                     .symbolEffect(.rotate.byLayer, options: .repeat(.continuous), isActive: viewModel.isEncoding)
 
-                Image(systemName: "checkmark.circle.fill")
+                Image(systemName: Self.selectedBadgeIconName)
                     .font(.system(size: 34, weight: .semibold))
                     .symbolRenderingMode(.palette)
                     .foregroundStyle(.white, .green)
                     .offset(x: 6, y: 4)
             } else {
-                Image(systemName: "opticaldisc")
+                Image(systemName: Self.opticalDiscIconName)
                     .font(.system(size: 104, weight: .regular))
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.secondary)
                     .opacity(0.45)
 
-                Image(systemName: "questionmark.circle.fill")
+                Image(systemName: Self.missingBadgeIconName)
                     .font(.system(size: 34, weight: .semibold))
                     .symbolRenderingMode(.palette)
                     .foregroundStyle(.black, .gray)
@@ -113,7 +124,7 @@ struct ContentView: View {
 
     private var dvdLabel: some View {
         VStack(spacing: 4) {
-            Text(viewModel.selectedDVD?.name ?? "No valid DVD")
+            Text(viewModel.selectedDVD?.name ?? Self.noValidDVDTitle)
                 .font(.headline)
                 .lineLimit(1)
                 .truncationMode(.middle)
