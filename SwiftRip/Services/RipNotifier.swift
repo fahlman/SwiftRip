@@ -7,7 +7,7 @@ import AppKit
 import Foundation
 import UserNotifications
 
-protocol RipCompletionNotifying: Sendable {
+protocol RipNotifying: Sendable {
     @MainActor
     func notifyRipCompleted(
         outputURL: URL,
@@ -25,7 +25,7 @@ protocol RipCompletionNotifying: Sendable {
     )
 }
 
-struct SystemRipCompletionNotifier: RipCompletionNotifying {
+struct SystemRipNotifier: RipNotifying {
     @MainActor
     func notifyRipCompleted(
         outputURL: URL,

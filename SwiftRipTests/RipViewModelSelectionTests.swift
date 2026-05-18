@@ -2,8 +2,6 @@
 //  RipViewModelSelectionTests.swift
 //  SwiftRipTests
 //
-//  Created by Ryan Fahlsing on 5/16/26.
-//
 
 import Foundation
 import Testing
@@ -48,6 +46,21 @@ struct RipViewModelSelectionTests {
 
         #expect(viewModel.suggestedOutputName.hasPrefix("My Movie - "))
         #expect(viewModel.suggestedOutputName.hasSuffix(".m4v"))
+    }
+
+    @Test func outputFilenameFormatterFormatsSupportedNames() throws {
+        let date = try #require(Calendar.current.date(from: DateComponents(
+            calendar: .current,
+            year: 2026,
+            month: 5,
+            day: 18,
+            hour: 12
+        )))
+        let formatter = OutputFilenameFormatter(dateProvider: { date })
+
+        #expect(formatter.outputName(for: "MY_MOVIE", format: .titleCase) == "My Movie.m4v")
+        #expect(formatter.outputName(for: "MY_MOVIE", format: .originalName) == "MY_MOVIE.m4v")
+        #expect(formatter.outputName(for: "MY_MOVIE", format: .datedTitleCase) == "My Movie - 2026-05-18.m4v")
     }
 
     @Test func setOutputURLNormalizesExtensionToM4V() {

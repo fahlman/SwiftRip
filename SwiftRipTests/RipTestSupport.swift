@@ -2,8 +2,6 @@
 //  RipTestSupport.swift
 //  SwiftRipTests
 //
-//  Created by Ryan Fahlsing on 5/16/26.
-//
 
 import Foundation
 @testable import SwiftRip
@@ -26,7 +24,7 @@ enum RipTestSupport {
         environment: RunnableTestEnvironment,
         runner: HandBrakeRunning,
         appSettings: AppSettings? = nil,
-        completionNotifier: RipCompletionNotifying = NoOpRipCompletionNotifier(),
+        ripNotifier: RipNotifying = NoOpRipNotifier(),
         dvdDeviceEjector: DVDDeviceEjecting = NoOpDVDDeviceEjector()
     ) -> RipViewModel {
         let resolvedAppSettings = appSettings ?? makeTestAppSettings()
@@ -36,7 +34,7 @@ enum RipTestSupport {
             handBrakeRunner: runner,
             volumeFinder: FileSystemDVDVolumeFinder(),
             appSettings: resolvedAppSettings,
-            completionNotifier: completionNotifier,
+            ripNotifier: ripNotifier,
             dvdDeviceEjector: dvdDeviceEjector,
             logDirectoryOverride: environment.logDirectory
         )
@@ -128,7 +126,7 @@ enum RipTestSupport {
         }
     }
 
-    struct NoOpRipCompletionNotifier: RipCompletionNotifying {
+    struct NoOpRipNotifier: RipNotifying {
         func notifyRipCompleted(
             outputURL: URL,
             sound: CompletionSound,
@@ -145,7 +143,7 @@ enum RipTestSupport {
     }
 
     @MainActor
-    final class RecordingRipCompletionNotifier: RipCompletionNotifying {
+    final class RecordingRipNotifier: RipNotifying {
         private(set) var completedOutputURLs: [URL] = []
         private(set) var completionSounds: [CompletionSound] = []
         private(set) var notificationEnabledValues: [Bool] = []

@@ -3,7 +3,18 @@
 //  SwiftRip
 //
 
+import AppKit
 import Foundation
+
+protocol DVDDeviceEjecting: Sendable {
+    @MainActor func ejectDVD(at url: URL) throws
+}
+
+struct WorkspaceDVDDeviceEjector: DVDDeviceEjecting {
+    func ejectDVD(at url: URL) throws {
+        try NSWorkspace.shared.unmountAndEjectDevice(at: url)
+    }
+}
 
 protocol DVDVolumeFinding: Sendable {
     func findMountedDVDs() -> [DVDVolume]

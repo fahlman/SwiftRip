@@ -13,78 +13,88 @@ struct SettingsView: View {
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: SwiftRipLayout.SettingsWindow.contentSpacing) {
-                VStack(spacing: SwiftRipLayout.SettingsWindow.headerSpacing) {
-                    Image(systemName: SwiftRipSymbols.folder)
-                        .font(.system(size: SwiftRipLayout.SettingsWindow.iconSize))
-                        .symbolRenderingMode(.hierarchical)
-
-                    Text(AppStrings.settingsFilesTitle)
-                        .swiftRipSectionTitle()
-                }
-
+                settingsHeader
                 Divider()
-
-                VStack(alignment: .leading, spacing: SwiftRipLayout.SettingsWindow.rowSpacing) {
-                    outputLocationRow
-                    outputLocationControls
-                    filenameFormatRow
-
-                    if let errorMessage {
-                        Text(errorMessage)
-                            .foregroundStyle(SwiftRipColors.errorText)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
-                    }
-                }
-
+                filesSection
                 Divider()
-
-                VStack(alignment: .leading, spacing: SwiftRipLayout.SettingsWindow.rowSpacing) {
-                    Text(AppStrings.settingsCompletionTitle)
-                        .swiftRipSectionTitle()
-
-                    completionSoundRow
-
-                    Toggle(AppStrings.settingsNotificationTitle, isOn: $settings.isCompletionNotificationEnabled)
-                        .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
-
-                    Toggle(AppStrings.settingsRevealCompletedFileTitle, isOn: $settings.shouldRevealCompletedFile)
-                        .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
-
-                    Toggle(AppStrings.settingsAutoEjectTitle, isOn: $settings.shouldAutoEjectAfterSuccessfulRip)
-                        .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
-                }
-
+                completionSection
                 Spacer(minLength: 0)
             }
             .padding(SwiftRipLayout.SettingsWindow.contentPadding)
 
             Divider()
-
-            HStack {
-                Spacer()
-
-                Button {
-                    dismissSettingsWindow()
-                } label: {
-                    Text(AppStrings.settingsCancelTitle)
-                        .frame(width: SwiftRipLayout.Button.dialogFooterWidth)
-                }
-                .keyboardShortcut(.cancelAction)
-                .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
-
-                Button {
-                    dismissSettingsWindow()
-                } label: {
-                    Text(AppStrings.settingsOKTitle)
-                        .frame(width: SwiftRipLayout.Button.dialogFooterWidth)
-                }
-                .keyboardShortcut(.defaultAction)
-                .buttonStyle(SwiftRipButtonStyle(prominence: .primary))
-            }
-            .swiftRipDialogFooterPadding()
+            footer
         }
         .swiftRipWindowFrame(width: SwiftRipLayout.SettingsWindow.width, height: SwiftRipLayout.SettingsWindow.height)
+    }
+
+    private var settingsHeader: some View {
+        VStack(spacing: SwiftRipLayout.SettingsWindow.headerSpacing) {
+            Image(systemName: SwiftRipSymbols.folder)
+                .font(.system(size: SwiftRipLayout.SettingsWindow.iconSize))
+                .symbolRenderingMode(.hierarchical)
+
+            Text(AppStrings.settingsFilesTitle)
+                .swiftRipSectionTitle()
+        }
+    }
+
+    private var filesSection: some View {
+        VStack(alignment: .leading, spacing: SwiftRipLayout.SettingsWindow.rowSpacing) {
+            outputLocationRow
+            outputLocationControls
+            filenameFormatRow
+
+            if let errorMessage {
+                Text(errorMessage)
+                    .foregroundStyle(SwiftRipColors.errorText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
+            }
+        }
+    }
+
+    private var completionSection: some View {
+        VStack(alignment: .leading, spacing: SwiftRipLayout.SettingsWindow.rowSpacing) {
+            Text(AppStrings.settingsCompletionTitle)
+                .swiftRipSectionTitle()
+
+            completionSoundRow
+
+            Toggle(AppStrings.settingsNotificationTitle, isOn: $settings.isCompletionNotificationEnabled)
+                .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
+
+            Toggle(AppStrings.settingsRevealCompletedFileTitle, isOn: $settings.shouldRevealCompletedFile)
+                .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
+
+            Toggle(AppStrings.settingsAutoEjectTitle, isOn: $settings.shouldAutoEjectAfterSuccessfulRip)
+                .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
+        }
+    }
+
+    private var footer: some View {
+        HStack {
+            Spacer()
+
+            Button {
+                dismissSettingsWindow()
+            } label: {
+                Text(AppStrings.settingsCancelTitle)
+                    .frame(width: SwiftRipLayout.Button.dialogFooterWidth)
+            }
+            .keyboardShortcut(.cancelAction)
+            .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
+
+            Button {
+                dismissSettingsWindow()
+            } label: {
+                Text(AppStrings.settingsOKTitle)
+                    .frame(width: SwiftRipLayout.Button.dialogFooterWidth)
+            }
+            .keyboardShortcut(.defaultAction)
+            .buttonStyle(SwiftRipButtonStyle(prominence: .primary))
+        }
+        .swiftRipDialogFooterPadding()
     }
 
     private var outputLocationRow: some View {

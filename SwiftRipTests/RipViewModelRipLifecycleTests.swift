@@ -2,8 +2,6 @@
 //  RipViewModelRipLifecycleTests.swift
 //  SwiftRipTests
 //
-//  Created by Ryan Fahlsing on 5/16/26.
-//
 
 import Foundation
 import Testing
@@ -102,11 +100,11 @@ struct RipViewModelRipLifecycleTests {
             exitCode: 0,
             outputURLToCreate: testEnvironment.outputURL
         )
-        let completionNotifier = RipTestSupport.RecordingRipCompletionNotifier()
+        let ripNotifier = RipTestSupport.RecordingRipNotifier()
         let viewModel = RipTestSupport.makeRunnableViewModel(
             environment: testEnvironment,
             runner: runner,
-            completionNotifier: completionNotifier
+            ripNotifier: ripNotifier
         )
         let outputURL = testEnvironment.outputURL
         var revealedURL: URL?
@@ -123,7 +121,7 @@ struct RipViewModelRipLifecycleTests {
 
         #expect(FileManager.default.fileExists(atPath: outputURL.path))
         #expect(revealedURL == outputURL)
-        #expect(completionNotifier.completedOutputURLs == [outputURL])
+        #expect(ripNotifier.completedOutputURLs == [outputURL])
         #expect(viewModel.primaryAction == .eject)
         #expect(logText.contains("Outcome: Completed"))
         #expect(logText.contains("SwiftRip: Selected DVD: Movie"))
@@ -146,12 +144,12 @@ struct RipViewModelRipLifecycleTests {
             exitCode: 0,
             outputURLToCreate: testEnvironment.outputURL
         )
-        let completionNotifier = RipTestSupport.RecordingRipCompletionNotifier()
+        let ripNotifier = RipTestSupport.RecordingRipNotifier()
         let viewModel = RipTestSupport.makeRunnableViewModel(
             environment: testEnvironment,
             runner: runner,
             appSettings: appSettings,
-            completionNotifier: completionNotifier
+            ripNotifier: ripNotifier
         )
         var revealedURL: URL?
 
@@ -162,9 +160,9 @@ struct RipViewModelRipLifecycleTests {
         }
 
         #expect(revealedURL == nil)
-        #expect(completionNotifier.completedOutputURLs == [testEnvironment.outputURL])
-        #expect(completionNotifier.completionSounds == [.none])
-        #expect(completionNotifier.notificationEnabledValues == [false])
+        #expect(ripNotifier.completedOutputURLs == [testEnvironment.outputURL])
+        #expect(ripNotifier.completionSounds == [.none])
+        #expect(ripNotifier.notificationEnabledValues == [false])
         #expect(viewModel.primaryAction == .eject)
     }
 
@@ -203,11 +201,11 @@ struct RipViewModelRipLifecycleTests {
             exitCode: 4,
             outputURLToCreate: testEnvironment.outputURL
         )
-        let completionNotifier = RipTestSupport.RecordingRipCompletionNotifier()
+        let ripNotifier = RipTestSupport.RecordingRipNotifier()
         let viewModel = RipTestSupport.makeRunnableViewModel(
             environment: testEnvironment,
             runner: runner,
-            completionNotifier: completionNotifier
+            ripNotifier: ripNotifier
         )
         try "failed output".write(to: testEnvironment.outputURL, atomically: true, encoding: .utf8)
 
@@ -218,9 +216,9 @@ struct RipViewModelRipLifecycleTests {
         let logText = try String(contentsOf: logURL, encoding: .utf8)
 
         #expect(FileManager.default.fileExists(atPath: testEnvironment.outputURL.path))
-        #expect(completionNotifier.failedOutputURLs == [testEnvironment.outputURL])
-        #expect(completionNotifier.failureExitCodes == [4])
-        #expect(completionNotifier.failureNotificationEnabledValues == [true])
+        #expect(ripNotifier.failedOutputURLs == [testEnvironment.outputURL])
+        #expect(ripNotifier.failureExitCodes == [4])
+        #expect(ripNotifier.failureNotificationEnabledValues == [true])
         #expect(viewModel.statusMessage.contains("HandBrakeCLI failed with exit code 4"))
         #expect(logText.contains("Outcome: Failed"))
         #expect(logText.contains("SwiftRip: Rip failed; output preserved for inspection"))
@@ -252,6 +250,27 @@ struct RipViewModelRipLifecycleTests {
         #expect(logText.contains("Outcome: Canceled"))
         #expect(logText.contains("SwiftRip: User requested stop"))
         #expect(logText.contains("Deleted incomplete output file"))
+        #expect(!viewModel.isEncoding)
+    }
+
+    @Test func cancelRipIsIdempotentWhileRunnerUnwinds() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+
+        let runner = RipTestSupport.WaitingHandBrakeRunner()
+        let viewModel = RipTestSupport.makeRunnableViewModel(environment: testEnvironment, runner: runner)
+        try "incomplete output".write(to: testEnvironment.outputURL, atomically: true, encoding: .utf8)
+
+        let ripTask = Task {
+            await viewModel.startRip { _ in }
+        }
+        await RipTestSupport.waitUntil { viewModel.progress > 0 }
+
+        viewModel.cancelRip()
+        viewModel.cancelRip()
+        await ripTask.value
+
+        #expect(!FileManager.default.fileExists(atPath: testEnvironment.outputURL.path))
         #expect(!viewModel.isEncoding)
     }
 }

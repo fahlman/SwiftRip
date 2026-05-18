@@ -30,6 +30,7 @@ struct SwiftRipApp: App {
         Window(Self.aboutTitle, id: Self.aboutWindowID) {
             AboutSwiftRipView()
         }
+        .commandsRemoved()
         .windowResizability(.contentSize)
         .defaultPosition(.center)
     }

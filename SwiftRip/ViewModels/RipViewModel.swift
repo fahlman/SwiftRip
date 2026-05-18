@@ -3,19 +3,8 @@
 //  SwiftRip
 //
 
-import AppKit
 import Foundation
 import Observation
-
-protocol DVDDeviceEjecting: Sendable {
-    @MainActor func ejectDVD(at url: URL) throws
-}
-
-struct WorkspaceDVDDeviceEjector: DVDDeviceEjecting {
-    func ejectDVD(at url: URL) throws {
-        try NSWorkspace.shared.unmountAndEjectDevice(at: url)
-    }
-}
 
 @MainActor
 @Observable
@@ -23,9 +12,9 @@ final class RipViewModel {
     static let initialStatusMessage = AppStrings.initialStatusMessage
     private static let fallbackMovieName = AppStrings.fallbackMovieName
     private static let movieFileExtension = "m4v"
-    private static let datedFilenameDateFormat = "yyyy-MM-dd"
 
     private var state = RipLifecycleState()
+    private let outputFilenameFormatter = OutputFilenameFormatter()
 
     @ObservationIgnored
     private var ripTask: Task<Void, Never>?
@@ -42,7 +31,7 @@ final class RipViewModel {
     @ObservationIgnored
     private let appSettings: AppSettings
     @ObservationIgnored
-    private let completionNotifier: RipCompletionNotifying
+    private let ripNotifier: RipNotifying
     @ObservationIgnored
     private let dvdDeviceEjector: DVDDeviceEjecting
     @ObservationIgnored
@@ -70,7 +59,7 @@ final class RipViewModel {
             handBrakeRunner: handBrakeRunner,
             volumeFinder: volumeFinder,
             appSettings: .shared,
-            completionNotifier: SystemRipCompletionNotifier(),
+            ripNotifier: SystemRipNotifier(),
             dvdDeviceEjector: WorkspaceDVDDeviceEjector(),
             logDirectoryOverride: logDirectoryOverride
         )
@@ -90,7 +79,7 @@ final class RipViewModel {
             handBrakeRunner: handBrakeRunner,
             volumeFinder: volumeFinder,
             appSettings: appSettings,
-            completionNotifier: SystemRipCompletionNotifier(),
+            ripNotifier: SystemRipNotifier(),
             dvdDeviceEjector: WorkspaceDVDDeviceEjector(),
             logDirectoryOverride: logDirectoryOverride
         )
@@ -102,7 +91,7 @@ final class RipViewModel {
         handBrakeRunner: HandBrakeRunning,
         volumeFinder: DVDVolumeFinding,
         appSettings: AppSettings,
-        completionNotifier: RipCompletionNotifying,
+        ripNotifier: RipNotifying,
         dvdDeviceEjector: DVDDeviceEjecting = WorkspaceDVDDeviceEjector(),
         logDirectoryOverride: URL? = nil
     ) {
@@ -111,7 +100,7 @@ final class RipViewModel {
         self.handBrakeRunner = handBrakeRunner
         self.volumeFinder = volumeFinder
         self.appSettings = appSettings
-        self.completionNotifier = completionNotifier
+        self.ripNotifier = ripNotifier
         self.dvdDeviceEjector = dvdDeviceEjector
         self.logDirectoryOverride = logDirectoryOverride
     }
@@ -266,22 +255,10 @@ final class RipViewModel {
     }
 
     private func suggestedOutputName(for dvd: DVDVolume) -> String {
-        let baseName: String
-        switch appSettings.outputFilenameFormat {
-        case .titleCase:
-            baseName = titleCasedDVDName(dvd.name)
-        case .originalName:
-            baseName = dvd.name
-        case .datedTitleCase:
-            baseName = "\(titleCasedDVDName(dvd.name)) - \(Self.filenameDateFormatter.string(from: Date()))"
-        }
-        return "\(baseName).\(Self.movieFileExtension)"
-    }
-
-    private func titleCasedDVDName(_ name: String) -> String {
-        name
-            .replacingOccurrences(of: "_", with: " ")
-            .capitalized
+        outputFilenameFormatter.outputName(
+            for: dvd.name,
+            format: appSettings.outputFilenameFormat
+        )
     }
 
     private func clearDVDSelection() {
@@ -407,7 +384,7 @@ final class RipViewModel {
     }
 
     private func notifyRipCompleted(outputURL: URL) {
-        completionNotifier.notifyRipCompleted(
+        ripNotifier.notifyRipCompleted(
             outputURL: outputURL,
             sound: appSettings.completionSound,
             isNotificationEnabled: appSettings.isCompletionNotificationEnabled
@@ -417,7 +394,7 @@ final class RipViewModel {
     }
 
     private func notifyRipFailed(outputURL: URL, exitCode: Int32) {
-        completionNotifier.notifyRipFailed(
+        ripNotifier.notifyRipFailed(
             outputURL: outputURL,
             exitCode: exitCode,
             isNotificationEnabled: appSettings.isCompletionNotificationEnabled
@@ -493,9 +470,4 @@ final class RipViewModel {
         activeRip?.log.save(using: fileManager)
     }
 
-    private static var filenameDateFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateFormat = datedFilenameDateFormat
-        return formatter
-    }
 }

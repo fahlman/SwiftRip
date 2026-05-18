@@ -64,6 +64,43 @@ enum OutputFilenameFormat: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+struct OutputFilenameFormatter: Sendable {
+    private static let movieFileExtension = "m4v"
+    private static let datedFilenameDateFormat = "yyyy-MM-dd"
+
+    private let dateProvider: @Sendable () -> Date
+
+    init(dateProvider: @escaping @Sendable () -> Date = Date.init) {
+        self.dateProvider = dateProvider
+    }
+
+    func outputName(for dvdName: String, format: OutputFilenameFormat) -> String {
+        let baseName: String
+        switch format {
+        case .titleCase:
+            baseName = titleCasedDVDName(dvdName)
+        case .originalName:
+            baseName = dvdName
+        case .datedTitleCase:
+            baseName = "\(titleCasedDVDName(dvdName)) - \(Self.filenameDateFormatter.string(from: dateProvider()))"
+        }
+
+        return "\(baseName).\(Self.movieFileExtension)"
+    }
+
+    private func titleCasedDVDName(_ name: String) -> String {
+        name
+            .replacingOccurrences(of: "_", with: " ")
+            .capitalized
+    }
+
+    private static var filenameDateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = datedFilenameDateFormat
+        return formatter
+    }
+}
+
 @MainActor
 @Observable
 final class AppSettings {
