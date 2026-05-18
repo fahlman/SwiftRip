@@ -14,6 +14,10 @@ final class RipViewModel: ObservableObject {
         pattern: #"Encoding:\s+task\s+\d+\s+of\s+\d+,\s+([0-9]+(?:\.[0-9]+)?)\s*%"#
     )
     static let initialStatusMessage = "Choose a DVD and output file to begin."
+    private static let fallbackMovieName = "Movie"
+    private static let fallbackDVDName = "DVD"
+    private static let readyStatusPrefix = "Ready to rip "
+    private static let movieFileExtension = "m4v"
 
     @Published var dvdVolumes: [DVDVolume] = []
     @Published var selectedDVD: DVDVolume?
@@ -66,15 +70,15 @@ final class RipViewModel: ObservableObject {
     }
 
     var shouldShowStatusMessage: Bool {
-        statusMessage != Self.initialStatusMessage && !statusMessage.hasPrefix("Ready to rip ")
+        statusMessage != Self.initialStatusMessage && !statusMessage.hasPrefix(Self.readyStatusPrefix)
     }
 
     var suggestedOutputName: String {
         let baseName = selectedDVD?.name
             .replacingOccurrences(of: "_", with: " ")
-            .capitalized ?? "Movie"
+            .capitalized ?? Self.fallbackMovieName
 
-        return "\(baseName).m4v"
+        return "\(baseName).\(Self.movieFileExtension)"
     }
 
     var defaultOutputDirectory: URL {
@@ -112,19 +116,19 @@ final class RipViewModel: ObservableObject {
         guard isValidDVD(at: dvdURL) else {
             selectedDVD = nil
             outputURL = nil
-            statusMessage = "Choose a folder that contains a VIDEO_TS directory."
+            statusMessage = "Choose a folder that contains a \(DVDVolume.videoTSDirectoryName) directory."
             return
         }
 
         selectedDVD = DVDVolume(id: dvdURL.path, name: dvdURL.lastPathComponent, path: dvdURL.path)
         updateDefaultOutputURL()
-        statusMessage = "Ready to rip \(dvdURL.lastPathComponent)."
+        statusMessage = "\(Self.readyStatusPrefix)\(dvdURL.lastPathComponent)."
     }
 
     func setOutputURL(_ url: URL) {
-        outputURL = url.pathExtension.lowercased() == "m4v"
+        outputURL = url.pathExtension.lowercased() == Self.movieFileExtension
             ? url
-            : url.deletingPathExtension().appendingPathExtension("m4v")
+            : url.deletingPathExtension().appendingPathExtension(Self.movieFileExtension)
     }
 
     private func updateDefaultOutputURL() {
@@ -137,11 +141,11 @@ final class RipViewModel: ObservableObject {
     }
 
     private func normalizedDVDURL(from url: URL) -> URL {
-        url.lastPathComponent == "VIDEO_TS" ? url.deletingLastPathComponent() : url
+        url.lastPathComponent == DVDVolume.videoTSDirectoryName ? url.deletingLastPathComponent() : url
     }
 
     private func isValidDVD(at url: URL) -> Bool {
-        let videoTSURL = url.appendingPathComponent("VIDEO_TS", isDirectory: true)
+        let videoTSURL = url.appendingPathComponent(DVDVolume.videoTSDirectoryName, isDirectory: true)
         var isDirectory: ObjCBool = false
 
         return fileManager.fileExists(atPath: videoTSURL.path, isDirectory: &isDirectory) && isDirectory.boolValue
@@ -178,19 +182,19 @@ final class RipViewModel: ObservableObject {
         logText = makeLogHeader(input: selectedDVD, outputURL: outputURL, arguments: arguments)
 
         guard fileManager.isExecutableFile(atPath: configuration.handBrakeCLIPath) else {
-            savePreflightFailure("HandBrakeCLI was not found at \(configuration.handBrakeCLIPath).", logURL: logURL)
+            savePreflightFailure("\(RipConfiguration.handBrakeCLIExecutableName) was not found at \(configuration.handBrakeCLIPath).", logURL: logURL)
             clearActiveRipFiles()
             return
         }
 
         guard fileManager.fileExists(atPath: configuration.libdvdcssPath) else {
-            savePreflightFailure("libdvdcss was not found at \(configuration.libdvdcssPath).", logURL: logURL)
+            savePreflightFailure("\(RipConfiguration.libdvdcssLibraryName) was not found at \(configuration.libdvdcssPath).", logURL: logURL)
             clearActiveRipFiles()
             return
         }
 
         guard fileManager.fileExists(atPath: configuration.presetURL.path) else {
-            savePreflightFailure("SwiftRip preset was not found at \(configuration.presetURL.path).", logURL: logURL)
+            savePreflightFailure("\(RipConfiguration.appName) preset was not found at \(configuration.presetURL.path).", logURL: logURL)
             clearActiveRipFiles()
             return
         }
@@ -307,13 +311,13 @@ final class RipViewModel: ObservableObject {
             .filter { !$0.isEmpty }
             .joined(separator: "-")
 
-        let fileName = "\(safeName.isEmpty ? "DVD" : safeName)-\(formatter.string(from: Date())).log"
+        let fileName = "\(safeName.isEmpty ? Self.fallbackDVDName : safeName)-\(formatter.string(from: Date())).log"
         return defaultLogDirectory.appendingPathComponent(fileName)
     }
 
     private func makeLogHeader(input: DVDVolume, outputURL: URL, arguments: [String]) -> String {
         """
-        SwiftRip Log
+        \(RipConfiguration.appName) Log
         DVD: \(input.name)
         Input: \(input.path)
         Output: \(outputURL.path)

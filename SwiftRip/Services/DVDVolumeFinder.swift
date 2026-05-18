@@ -34,7 +34,7 @@ struct FileSystemDVDVolumeFinder: DVDVolumeFinding {
 
         return urls
             .filter { url in
-                let videoTS = url.appendingPathComponent("VIDEO_TS", isDirectory: true)
+                let videoTS = url.appendingPathComponent(DVDVolume.videoTSDirectoryName, isDirectory: true)
                 return fileManager.fileExists(atPath: videoTS.path)
             }
             .map { url in
