@@ -14,10 +14,6 @@ struct ContentView: View {
     private static let chooseDVDTitle = AppStrings.chooseDVDTitle
     private static let noValidDVDTitle = AppStrings.noValidDVDTitle
 
-    private var hasSelectedDVD: Bool {
-        viewModel.selectedDVD != nil
-    }
-
     var body: some View {
         VStack(spacing: SwiftRipLayout.MainWindow.contentSpacing) {
             dvdIcon
@@ -82,7 +78,7 @@ struct ContentView: View {
 
     private var dvdLabel: some View {
         VStack(spacing: 4) {
-            Text(viewModel.selectedDVD?.name ?? Self.noValidDVDTitle)
+            Text(viewModel.selectedDVDName ?? Self.noValidDVDTitle)
                 .font(.headline)
                 .lineLimit(1)
                 .truncationMode(.middle)
@@ -103,16 +99,7 @@ struct ContentView: View {
     }
 
     private func performPrimaryButtonAction() {
-        switch viewModel.primaryAction {
-        case .chooseDVD:
-            chooseDVD()
-        case .rip:
-            startRip()
-        case .stop:
-            stopRip()
-        case .eject:
-            ejectDVD()
-        }
+        ripCommandActions.perform(viewModel.primaryAction)
     }
 
     private var ripCommandActions: RipCommandActions {
@@ -129,6 +116,10 @@ struct ContentView: View {
 
     private func chooseDVD() {
         isDVDPickerPresented = true
+    }
+
+    private var hasSelectedDVD: Bool {
+        viewModel.hasSelectedDVD
     }
 
     private func startRip() {

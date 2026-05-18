@@ -37,6 +37,14 @@ struct RipLifecycleState: Sendable {
         }
     }
 
+    var hasSelectedDVD: Bool {
+        selectedDVD != nil
+    }
+
+    var selectedDVDName: String? {
+        selectedDVD?.name
+    }
+
     var outputURL: URL? {
         switch phase {
         case .idle:
@@ -85,10 +93,6 @@ struct RipLifecycleState: Sendable {
         return false
     }
 
-    var isPrimaryActionAvailable: Bool {
-        isEncoding || (selectedDVD != nil && outputURL != nil)
-    }
-
     var primaryAction: RipPrimaryAction {
         switch phase {
         case .idle:
@@ -100,11 +104,6 @@ struct RipLifecycleState: Sendable {
         case .completed:
             return .eject
         }
-    }
-
-    var shouldShowStatusMessage: Bool {
-        statusMessage != AppStrings.initialStatusMessage
-            && !statusMessage.hasPrefix(AppStrings.readyStatusPrefix)
     }
 
     var commandAvailability: RipCommandAvailability {

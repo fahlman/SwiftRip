@@ -7,11 +7,6 @@ import SwiftUI
 
 struct RipCommandActions {
     let availability: RipCommandAvailability
-    let canRip: Bool
-    let canStop: Bool
-    let canEject: Bool
-    let canRevealOutput: Bool
-    let canRevealLog: Bool
     let chooseDVD: @MainActor () -> Void
     let rip: @MainActor () -> Void
     let stop: @MainActor () -> Void
@@ -29,17 +24,50 @@ struct RipCommandActions {
         revealLog: @escaping @MainActor () -> Void
     ) {
         self.availability = availability
-        self.canRip = availability.canRip
-        self.canStop = availability.canStop
-        self.canEject = availability.canEject
-        self.canRevealOutput = availability.canRevealOutput
-        self.canRevealLog = availability.canRevealLog
         self.chooseDVD = chooseDVD
         self.rip = rip
         self.stop = stop
         self.eject = eject
         self.revealOutput = revealOutput
         self.revealLog = revealLog
+    }
+
+    var canChooseDVD: Bool {
+        availability.canChooseDVD
+    }
+
+    var canRip: Bool {
+        availability.canRip
+    }
+
+    var canStop: Bool {
+        availability.canStop
+    }
+
+    var canEject: Bool {
+        availability.canEject
+    }
+
+    var canRevealOutput: Bool {
+        availability.canRevealOutput
+    }
+
+    var canRevealLog: Bool {
+        availability.canRevealLog
+    }
+
+    @MainActor
+    func perform(_ action: RipPrimaryAction) {
+        switch action {
+        case .chooseDVD:
+            chooseDVD()
+        case .rip:
+            rip()
+        case .stop:
+            stop()
+        case .eject:
+            eject()
+        }
     }
 }
 

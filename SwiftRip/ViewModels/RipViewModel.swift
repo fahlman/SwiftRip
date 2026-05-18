@@ -79,6 +79,14 @@ final class RipViewModel {
         state.selectedDVD
     }
 
+    var hasSelectedDVD: Bool {
+        state.hasSelectedDVD
+    }
+
+    var selectedDVDName: String? {
+        state.selectedDVDName
+    }
+
     var outputURL: URL? {
         state.outputURL
     }
@@ -105,14 +113,6 @@ final class RipViewModel {
 
     var primaryAction: RipPrimaryAction {
         state.primaryAction
-    }
-
-    var isPrimaryActionAvailable: Bool {
-        state.isPrimaryActionAvailable
-    }
-
-    var shouldShowStatusMessage: Bool {
-        state.shouldShowStatusMessage
     }
 
     var commandAvailability: RipCommandAvailability {
@@ -435,5 +435,4 @@ final class RipViewModel {
     private func saveActiveLog() -> Error? {
         activeRip?.log.save(using: environment.fileManager)
     }
-
 }

@@ -16,9 +16,13 @@ struct RipLifecycleStateTests {
         var state = RipLifecycleState()
 
         #expect(state.primaryAction == .chooseDVD)
+        #expect(!state.hasSelectedDVD)
+        #expect(state.selectedDVDName == nil)
 
         state.selectDVD(dvd, outputURL: outputURL, statusMessage: "Ready")
         #expect(state.primaryAction == .rip)
+        #expect(state.hasSelectedDVD)
+        #expect(state.selectedDVDName == "MOVIE")
 
         state.beginEncoding(statusMessage: "Ripping")
         #expect(state.primaryAction == .stop)

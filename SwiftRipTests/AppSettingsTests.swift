@@ -42,4 +42,19 @@ struct AppSettingsTests {
         #expect(reloadedSettings.shouldAutoEjectAfterSuccessfulRip)
         #expect(reloadedSettings.outputFilenameFormat == .datedTitleCase)
     }
+
+    @Test func invalidPersistedEnumValuesFallBackToDefaults() throws {
+        let suiteName = "AppSettingsTests-\(UUID().uuidString)"
+        let userDefaults = try #require(UserDefaults(suiteName: suiteName))
+        defer {
+            userDefaults.removePersistentDomain(forName: suiteName)
+        }
+
+        userDefaults.set("invalid-sound", forKey: "completionSound")
+        userDefaults.set("invalid-format", forKey: "outputFilenameFormat")
+
+        let settings = AppSettings(userDefaults: userDefaults, fileManager: .default)
+        #expect(settings.completionSound == .glass)
+        #expect(settings.outputFilenameFormat == .titleCase)
+    }
 }

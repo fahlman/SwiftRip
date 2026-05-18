@@ -22,6 +22,7 @@ struct SwiftRipCommands: Commands {
                 ripCommandActions?.chooseDVD()
             }
             .keyboardShortcut("o", modifiers: .command)
+            .disabled(ripCommandActions?.canChooseDVD != true)
         }
 
         CommandGroup(replacing: .undoRedo) {}

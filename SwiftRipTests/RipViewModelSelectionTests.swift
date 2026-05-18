@@ -74,7 +74,7 @@ struct RipViewModelSelectionTests {
 
         #expect(viewModel.selectedDVD?.name == "MY_MOVIE")
         #expect(viewModel.outputURL == moviesURL.appendingPathComponent("My Movie.m4v"))
-        #expect(viewModel.isPrimaryActionAvailable)
+        #expect(viewModel.commandAvailability.canRip)
     }
 
     @Test func chooseDVDRejectsFolderWithoutVideoTS() throws {
@@ -90,7 +90,7 @@ struct RipViewModelSelectionTests {
 
         #expect(viewModel.selectedDVD == nil)
         #expect(viewModel.outputURL == nil)
-        #expect(!viewModel.isPrimaryActionAvailable)
+        #expect(!viewModel.commandAvailability.canRip)
         #expect(viewModel.primaryAction == .chooseDVD)
     }
 
