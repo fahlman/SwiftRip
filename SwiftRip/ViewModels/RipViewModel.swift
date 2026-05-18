@@ -300,10 +300,13 @@ final class RipViewModel: ObservableObject {
             presetURL: configuration.presetURL
         )
         updateState { $0.setLogFileURL(activeRip?.log.url) }
+        activeRip?.log.appendBlankLine("SwiftRip: Selected DVD: \(input.name)")
+        activeRip?.log.appendLine("SwiftRip: Output file: \(outputURL.path)")
         return arguments
     }
 
     private func beginEncoding(_ selectedDVD: DVDVolume) {
+        activeRip?.log.appendBlankLine("SwiftRip: Started ripping \(selectedDVD.name)")
         updateState { $0.beginEncoding(statusMessage: AppStrings.ripping(selectedDVD.name)) }
     }
 
@@ -316,6 +319,7 @@ final class RipViewModel: ObservableObject {
     }
 
     private func finishCancelledRip(exitCode: Int32) {
+        activeRip?.log.appendBlankLine("SwiftRip: User requested stop")
         activeRip?.log.appendExitCode(exitCode)
         cleanupCancelledRip()
         updateState { $0.finishEncoding(statusMessage: AppStrings.ripStopped) }
@@ -327,6 +331,7 @@ final class RipViewModel: ObservableObject {
         revealOutput: @escaping @MainActor (URL) -> Void
     ) {
         activeRip?.protectCompletedOutput()
+        activeRip?.log.appendBlankLine("SwiftRip: Rip completed successfully")
         activeRip?.log.appendLine("Completed output protected from cancellation cleanup: \(outputURL.path)")
         notifyRipCompleted(outputURL: outputURL)
         let logWriteError = finishRipWithOutputPreserved(
@@ -340,6 +345,7 @@ final class RipViewModel: ObservableObject {
     }
 
     private func finishFailedRip(outputURL: URL, exitCode: Int32) {
+        activeRip?.log.appendBlankLine("SwiftRip: Rip failed; output preserved for inspection")
         activeRip?.log.appendLine("Output preserved for inspection: \(outputURL.path)")
         let logWriteError = finishRipWithOutputPreserved(
             exitCode: exitCode,

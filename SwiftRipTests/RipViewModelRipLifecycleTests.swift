@@ -126,6 +126,10 @@ struct RipViewModelRipLifecycleTests {
         #expect(completionNotifier.completedOutputURLs == [outputURL])
         #expect(viewModel.primaryAction == .eject)
         #expect(logText.contains("Outcome: Completed"))
+        #expect(logText.contains("SwiftRip: Selected DVD: Movie"))
+        #expect(logText.contains("SwiftRip: Output file: \(outputURL.path)"))
+        #expect(logText.contains("SwiftRip: Started ripping Movie"))
+        #expect(logText.contains("SwiftRip: Rip completed successfully"))
         #expect(logText.contains("Completed output protected from cancellation cleanup"))
         #expect(!viewModel.isEncoding)
     }
@@ -150,6 +154,7 @@ struct RipViewModelRipLifecycleTests {
         #expect(FileManager.default.fileExists(atPath: testEnvironment.outputURL.path))
         #expect(viewModel.statusMessage.contains("HandBrakeCLI failed with exit code 4"))
         #expect(logText.contains("Outcome: Failed"))
+        #expect(logText.contains("SwiftRip: Rip failed; output preserved for inspection"))
         #expect(logText.contains("Output preserved for inspection"))
         #expect(!viewModel.isEncoding)
     }
@@ -176,6 +181,7 @@ struct RipViewModelRipLifecycleTests {
 
         #expect(!FileManager.default.fileExists(atPath: outputURL.path))
         #expect(logText.contains("Outcome: Canceled"))
+        #expect(logText.contains("SwiftRip: User requested stop"))
         #expect(logText.contains("Deleted incomplete output file"))
         #expect(!viewModel.isEncoding)
     }
