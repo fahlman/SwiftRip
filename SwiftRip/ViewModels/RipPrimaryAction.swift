@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum RipPrimaryAction {
+enum RipPrimaryAction: Sendable {
     case chooseDVD
     case rip
     case stop

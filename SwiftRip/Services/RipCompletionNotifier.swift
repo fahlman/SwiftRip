@@ -13,7 +13,7 @@ protocol RipCompletionNotifying {
     @MainActor
     func notifyRipCompleted(
         outputURL: URL,
-        logError: @escaping @MainActor (String) -> Void
+        logError: @escaping @MainActor @Sendable (String) -> Void
     )
 }
 
@@ -21,7 +21,7 @@ struct SystemRipCompletionNotifier: RipCompletionNotifying {
     @MainActor
     func notifyRipCompleted(
         outputURL: URL,
-        logError: @escaping @MainActor (String) -> Void
+        logError: @escaping @MainActor @Sendable (String) -> Void
     ) {
         NSSound(named: "Glass")?.play()
 

@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct RipConfiguration {
+struct RipConfiguration: Sendable {
     static let appName = "SwiftRip"
     static let presetResourceName = "SwiftRip"
     static let presetFileExtension = "json"

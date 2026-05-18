@@ -207,7 +207,7 @@ final class RipViewModel {
         updateState { $0.selectDVD(dvd, outputURL: resolvedOutputURL, statusMessage: resolvedStatusMessage) }
     }
 
-    func startRip(revealOutput: @escaping @MainActor (URL) -> Void) async {
+    func startRip(revealOutput: @escaping @MainActor @Sendable (URL) -> Void) async {
         guard !isEncoding else { return }
         ripTask = Task { [weak self] in
             guard let self else { return }
@@ -262,7 +262,7 @@ final class RipViewModel {
         updateState { $0.clearDVDSelection(statusMessage: statusMessage) }
     }
 
-    private func performRip(revealOutput: @escaping @MainActor (URL) -> Void) async {
+    private func performRip(revealOutput: @escaping @MainActor @Sendable (URL) -> Void) async {
         guard let selectedDVD, let outputURL else { return }
 
         let arguments = beginRipSession(input: selectedDVD, outputURL: outputURL)
@@ -338,7 +338,7 @@ final class RipViewModel {
     private func finishSuccessfulRip(
         outputURL: URL,
         exitCode: Int32,
-        revealOutput: @escaping @MainActor (URL) -> Void
+        revealOutput: @escaping @MainActor @Sendable (URL) -> Void
     ) {
         activeRip?.protectCompletedOutput()
         activeRip?.log.appendBlankLine("SwiftRip: Rip completed successfully")

@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct RipLog {
+struct RipLog: Sendable {
     private static let fallbackDVDName = "DVD"
     private static let timestampFormat = "yyyy-MM-dd-HHmmss"
 

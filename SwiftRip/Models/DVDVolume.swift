@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct DVDVolume: Identifiable, Hashable {
+struct DVDVolume: Identifiable, Hashable, Sendable {
     static let videoTSDirectoryName = "VIDEO_TS"
 
     let id: String

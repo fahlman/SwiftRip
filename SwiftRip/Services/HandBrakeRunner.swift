@@ -7,11 +7,11 @@
 
 import Foundation
 
-struct HandBrakeResult {
+struct HandBrakeResult: Sendable {
     let exitCode: Int32
 }
 
-protocol HandBrakeRunning {
+protocol HandBrakeRunning: Sendable {
     func run(
         executablePath: String,
         arguments: [String],

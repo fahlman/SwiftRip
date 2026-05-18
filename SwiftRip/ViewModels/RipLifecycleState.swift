@@ -7,8 +7,8 @@
 
 import Foundation
 
-struct RipLifecycleState {
-    enum Phase {
+struct RipLifecycleState: Sendable {
+    enum Phase: Sendable {
         case idle(statusMessage: String)
         case selected(dvd: DVDVolume, outputURL: URL, statusMessage: String)
         case ripping(dvd: DVDVolume, outputURL: URL, progress: Double, statusMessage: String)

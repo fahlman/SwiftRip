@@ -119,7 +119,7 @@ enum RipTestSupport {
     struct NoOpRipCompletionNotifier: RipCompletionNotifying {
         func notifyRipCompleted(
             outputURL: URL,
-            logError: @escaping @MainActor (String) -> Void
+            logError: @escaping @MainActor @Sendable (String) -> Void
         ) {}
     }
 
@@ -129,7 +129,7 @@ enum RipTestSupport {
 
         func notifyRipCompleted(
             outputURL: URL,
-            logError: @escaping @MainActor (String) -> Void
+            logError: @escaping @MainActor @Sendable (String) -> Void
         ) {
             completedOutputURLs.append(outputURL)
         }

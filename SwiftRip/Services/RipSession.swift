@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct RipSession {
+struct RipSession: Sendable {
     let input: DVDVolume
     let outputURL: URL
     let arguments: [String]
