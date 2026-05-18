@@ -13,23 +13,39 @@ struct RipConfiguration {
     static let presetFileExtension = "json"
     static let handBrakeCLIExecutableName = "HandBrakeCLI"
     static let libdvdcssLibraryName = "libdvdcss.2.dylib"
+    private static let missingBundledResourceDirectory = "/missing-bundled-resource"
 
     let handBrakeCLIPath: String
     let libdvdcssPath: String
     let presetURL: URL
 
     static let production = RipConfiguration(
-        handBrakeCLIPath: Bundle.main.url(
-            forAuxiliaryExecutable: handBrakeCLIExecutableName
-        )?.path ?? "",
-        libdvdcssPath: Bundle.main.url(
-            forAuxiliaryExecutable: libdvdcssLibraryName
-        )?.path ?? "",
-        presetURL: Bundle.main.url(
-            forResource: presetResourceName,
-            withExtension: presetFileExtension
-        ) ?? URL(fileURLWithPath: "")
+        handBrakeCLIPath: bundledAuxiliaryExecutablePath(
+            named: handBrakeCLIExecutableName
+        ),
+        libdvdcssPath: bundledAuxiliaryExecutablePath(
+            named: libdvdcssLibraryName
+        ),
+        presetURL: bundledResourceURL(
+            named: presetResourceName,
+            extension: presetFileExtension
+        )
     )
+
+    private static func bundledAuxiliaryExecutablePath(named name: String) -> String {
+        Bundle.main.url(forAuxiliaryExecutable: name)?.path
+            ?? missingBundledResourceURL(named: name).path
+    }
+
+    private static func bundledResourceURL(named name: String, extension fileExtension: String) -> URL {
+        Bundle.main.url(forResource: name, withExtension: fileExtension)
+            ?? missingBundledResourceURL(named: "\(name).\(fileExtension)")
+    }
+
+    private static func missingBundledResourceURL(named name: String) -> URL {
+        URL(fileURLWithPath: missingBundledResourceDirectory, isDirectory: true)
+            .appendingPathComponent(name)
+    }
 
     func handBrakeArguments(input: DVDVolume, outputURL: URL) -> [String] {
         [
