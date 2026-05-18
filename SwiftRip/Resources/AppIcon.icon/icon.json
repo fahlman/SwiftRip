@@ -1,0 +1,40 @@
+{
+  "fill" : {
+    "automatic-gradient" : "srgb:0.26052,0.26052,0.26052,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "blend-mode" : "darken",
+          "fill" : {
+            "solid" : "srgb:0.83742,0.83744,0.83743,1.00000"
+          },
+          "image-name" : "SwiftRip.svg",
+          "name" : "SwiftRip",
+          "position" : {
+            "scale" : 0.4,
+            "translation-in-points" : [
+              -40.849292000000105,
+              -13.599999999999909
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
