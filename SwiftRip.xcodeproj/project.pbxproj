@@ -39,6 +39,7 @@
 		9412AF042FB9503F004E17B6 /* SwiftRip.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftRip.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9412AF112FB95040004E17B6 /* SwiftRipTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftRipTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9412AF1B2FB95040004E17B6 /* SwiftRipUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftRipUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		94B378792FBAC0A400D4C4C8 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		94FC321B2FBA2CA200B23D1F /* ArtifactLayout.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ArtifactLayout.md; sourceTree = "<group>"; };
 		94FC321D2FBA2CA200B23D1F /* build-swiftrip-tools.zsh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-swiftrip-tools.zsh"; sourceTree = "<group>"; };
 		94FC32202FBA2CA200B23D1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -98,6 +99,7 @@
 		9412AEFB2FB9503F004E17B6 = {
 			isa = PBXGroup;
 			children = (
+				94B378792FBAC0A400D4C4C8 /* README.md */,
 				94FC32312FBA6B9600B23D1F /* ROADMAP.md */,
 				94FC32292FBA3F1600B23D1F /* LEGAL.md */,
 				94FC322A2FBA3F1600B23D1F /* SOURCE_OFFER.md */,

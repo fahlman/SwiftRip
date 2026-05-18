@@ -11,7 +11,9 @@ enum AppStrings {
     static let chooseDVDTitle = localized("Choose DVD…")
     static let ripTitle = localized("Rip")
     static let stopTitle = localized("Stop")
+    static let ejectTitle = localized("Eject")
     static let noValidDVDTitle = localized("No valid DVD")
+    static let ripCompleteNotificationTitle = localized("Rip Complete")
     static let initialStatusMessage = localized("Choose a DVD and output file to begin.")
     static let fallbackMovieName = localized("Movie")
     static let readyStatusPrefix = localized("Ready to rip ")
@@ -55,6 +57,10 @@ enum AppStrings {
 
     static func ripping(_ dvdName: String) -> String {
         String(format: localized("Ripping %@..."), dvdName)
+    }
+
+    static func ripCompleteNotificationBody(fileName: String) -> String {
+        String(format: localized("Saved %@"), fileName)
     }
 
     static let ripStopped = localized("Rip stopped.")

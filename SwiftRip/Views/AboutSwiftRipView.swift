@@ -10,28 +10,11 @@ import SwiftUI
 
 struct AboutSwiftRipView: View {
     private static let appDescription = AppStrings.aboutDescription
-    private static let appIconName = "opticaldisc.fill"
-    private static let handBrakeCLIIconName = "wineglass.fill"
-    private static let libdvdcssIconName = "cone.fill"
-    private static let licenseIconName = "doc.text"
     private static let openLicensesFolderTitle = AppStrings.showLicensesTitle
-    private static let openLicensesFolderIconName = "folder"
     private static let licenseFileSuffix = "COPYING"
 
-    private enum Layout {
-        static let contentSpacing: CGFloat = 18
-        static let contentPadding: CGFloat = 24
-        static let windowWidth: CGFloat = 520
-        static let windowHeight: CGFloat = 420
-        static let headerSpacing: CGFloat = 14
-        static let titleSpacing: CGFloat = 4
-        static let appIconSize: CGFloat = 44
-        static let sectionSpacing: CGFloat = 8
-        static let buttonTopPadding: CGFloat = 4
-    }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: Layout.contentSpacing) {
+        VStack(alignment: .leading, spacing: SwiftRipLayout.AboutWindow.contentSpacing) {
             headerSection
             descriptionSection
             Divider()
@@ -40,49 +23,49 @@ struct AboutSwiftRipView: View {
             licensesSection
             Spacer(minLength: 0)
         }
-        .padding(Layout.contentPadding)
-        .frame(width: Layout.windowWidth, height: Layout.windowHeight)
+        .padding(SwiftRipLayout.AboutWindow.contentPadding)
+        .swiftRipWindowFrame(width: SwiftRipLayout.AboutWindow.width, height: SwiftRipLayout.AboutWindow.height)
     }
 
     private var headerSection: some View {
-        HStack(spacing: Layout.headerSpacing) {
-            Image(systemName: Self.appIconName)
-                .font(.system(size: Layout.appIconSize))
+        HStack(spacing: SwiftRipLayout.AboutWindow.headerSpacing) {
+            Image(systemName: SwiftRipSymbols.selectedOpticalDisc)
+                .font(.system(size: SwiftRipLayout.AboutWindow.appIconSize))
                 .symbolRenderingMode(.hierarchical)
 
-            VStack(alignment: .leading, spacing: Layout.titleSpacing) {
+            VStack(alignment: .leading, spacing: SwiftRipLayout.AboutWindow.titleSpacing) {
                 Text(RipConfiguration.appName)
                     .font(.title2.bold())
 
                 Text(appVersionText)
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .swiftRipSecondaryText()
             }
         }
     }
 
     private var descriptionSection: some View {
         Text(Self.appDescription)
-            .foregroundStyle(.secondary)
+            .swiftRipSecondaryText()
     }
 
     private var bundledToolsSection: some View {
-        VStack(alignment: .leading, spacing: Layout.sectionSpacing) {
+        VStack(alignment: .leading, spacing: SwiftRipLayout.AboutWindow.sectionSpacing) {
             Text(AppStrings.bundledToolsTitle)
-                .font(.headline)
+                .swiftRipSectionTitle()
 
-            Label(RipConfiguration.handBrakeCLIExecutableName, systemImage: Self.handBrakeCLIIconName)
-            Label(RipConfiguration.libdvdcssLibraryName, systemImage: Self.libdvdcssIconName)
+            Label(RipConfiguration.handBrakeCLIExecutableName, systemImage: SwiftRipSymbols.handBrakeCLI)
+            Label(RipConfiguration.libdvdcssLibraryName, systemImage: SwiftRipSymbols.libdvdcss)
         }
     }
 
     private var licensesSection: some View {
-        VStack(alignment: .leading, spacing: Layout.sectionSpacing) {
+        VStack(alignment: .leading, spacing: SwiftRipLayout.AboutWindow.sectionSpacing) {
             Text(AppStrings.licensesTitle)
-                .font(.headline)
+                .swiftRipSectionTitle()
 
             Text(AppStrings.licenseDescription(appName: RipConfiguration.appName))
-                .foregroundStyle(.secondary)
+                .swiftRipSecondaryText()
 
             licenseList
             showLicensesButton
@@ -93,10 +76,10 @@ struct AboutSwiftRipView: View {
         Group {
             if licenseNames.isEmpty {
                 Text(AppStrings.noLicensesFound)
-                    .foregroundStyle(.secondary)
+                    .swiftRipSecondaryText()
             } else {
                 ForEach(licenseNames, id: \.self) { name in
-                    Label(name, systemImage: Self.licenseIconName)
+                    Label(name, systemImage: SwiftRipSymbols.license)
                 }
             }
         }
@@ -106,10 +89,11 @@ struct AboutSwiftRipView: View {
         Button {
             openLicensesFolder()
         } label: {
-            Label(Self.openLicensesFolderTitle, systemImage: Self.openLicensesFolderIconName)
+            Text(Self.openLicensesFolderTitle)
         }
+        .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
         .disabled(licensesURL == nil)
-        .padding(.top, Layout.buttonTopPadding)
+        .padding(.top, SwiftRipLayout.AboutWindow.buttonTopPadding)
     }
 
     private var appVersionText: String {

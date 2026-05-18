@@ -1,22 +1,35 @@
 # SwiftRip Roadmap
 
-## Completed Milestones
+## Completed
 
-### Bundled ARM64 DVD ripping tools verified
+- Bundled ARM64 `HandBrakeCLI` inside the app.
+- Bundled ARM64 `libdvdcss.2.dylib` inside the app.
+- Added the SwiftRip HandBrake preset.
+- Verified the bundled tools run without `/opt/local` runtime dependencies.
+- Added DVD volume detection for mounted discs with a `VIDEO_TS` folder.
+- Added DVD folder normalization when selecting `VIDEO_TS` directly.
+- Added rip progress parsing and display.
+- Added Stop behavior for active rips.
+- Added cancellation cleanup for incomplete output files.
+- Preserved completed output files and failed output files.
+- Added detailed rip logs.
+- Added an About window with bundled tool and license information.
+- Added localized user-facing strings.
+- Added tests for selection, preflight, progress parsing, rip lifecycle, cancellation cleanup, logging, and localization formatting.
 
-SwiftRip now builds as an ARM64-only macOS app and bundles its required ripping tools inside the app bundle.
+## In Progress
 
-Verified:
-- `HandBrakeCLI` is bundled in `Contents/MacOS`
-- `libdvdcss.2.dylib` is bundled in `Contents/Frameworks`
-- both bundled tools are ARM64
-- no `/opt/local` runtime dependencies are present
-- DVD ripping works from the app workflow
-- disc/rip button icon states are working
+- Add an Eject primary-button state after a successful rip.
 
-## Next Up
+## Next
 
-- Improve rip progress presentation and status messages.
-- Add safer handling for failed or interrupted rips.
-- Decide how completed output files should be surfaced to the user.
-- Continue UI polish after the core ripping workflow remains stable.
+- Improve output destination selection and completed-file surfacing.
+- Add a rip-complete notification.
+- Continue small UI polish around the main window and About window.
+- Review distribution and license requirements before sharing builds outside development.
+
+## Later
+
+- Explore better title/audio/subtitle selection.
+- Consider more presets or user-selectable encoding options.
+- Consider a first-run setup/check screen for bundled tools and license notes.

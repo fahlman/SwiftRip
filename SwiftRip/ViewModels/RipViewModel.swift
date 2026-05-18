@@ -5,8 +5,10 @@
 //  Created by Ryan Fahlsing on 5/16/26.
 //
 
+import AppKit
 import Combine
 import Foundation
+import UserNotifications
 
 @MainActor
 final class RipViewModel: ObservableObject {
@@ -22,6 +24,7 @@ final class RipViewModel: ObservableObject {
     @Published private(set) var logFileURL: URL?
     @Published var isEncoding = false
     @Published private(set) var progress: Double = 0
+    @Published private(set) var canEjectCompletedDVD = false
 
     private var ripTask: Task<Void, Never>?
     private var activeRip: RipSession?
@@ -29,6 +32,7 @@ final class RipViewModel: ObservableObject {
     private let fileManager: FileManager
     private let handBrakeRunner: HandBrakeRunning
     private let volumeFinder: DVDVolumeFinding
+    private let appSettings: AppSettings
     private let logDirectoryOverride: URL?
 
 
@@ -41,17 +45,36 @@ final class RipViewModel: ObservableObject {
         )
     }
 
-    init(
+    convenience init(
         configuration: RipConfiguration,
         fileManager: FileManager,
         handBrakeRunner: HandBrakeRunning,
         volumeFinder: DVDVolumeFinding,
         logDirectoryOverride: URL? = nil
     ) {
+        self.init(
+            configuration: configuration,
+            fileManager: fileManager,
+            handBrakeRunner: handBrakeRunner,
+            volumeFinder: volumeFinder,
+            appSettings: .shared,
+            logDirectoryOverride: logDirectoryOverride
+        )
+    }
+
+    init(
+        configuration: RipConfiguration,
+        fileManager: FileManager,
+        handBrakeRunner: HandBrakeRunning,
+        volumeFinder: DVDVolumeFinding,
+        appSettings: AppSettings,
+        logDirectoryOverride: URL? = nil
+    ) {
         self.configuration = configuration
         self.fileManager = fileManager
         self.handBrakeRunner = handBrakeRunner
         self.volumeFinder = volumeFinder
+        self.appSettings = appSettings
         self.logDirectoryOverride = logDirectoryOverride
     }
 
@@ -72,8 +95,7 @@ final class RipViewModel: ObservableObject {
     }
 
     var defaultOutputDirectory: URL {
-        fileManager.urls(for: .moviesDirectory, in: .userDomainMask).first
-            ?? fileManager.homeDirectoryForCurrentUser.appendingPathComponent("Movies", isDirectory: true)
+        appSettings.outputDirectoryURL
     }
 
     var defaultLogDirectory: URL {
@@ -97,6 +119,7 @@ final class RipViewModel: ObservableObject {
         }
 
         selectedDVD = dvdVolumes.first
+        canEjectCompletedDVD = false
         updateDefaultOutputURL()
     }
 
@@ -106,11 +129,13 @@ final class RipViewModel: ObservableObject {
         guard isValidDVD(at: dvdURL) else {
             selectedDVD = nil
             outputURL = nil
+            canEjectCompletedDVD = false
             statusMessage = AppStrings.chooseVideoTSFolder(directoryName: DVDVolume.videoTSDirectoryName)
             return
         }
 
         selectedDVD = DVDVolume(id: dvdURL.path, name: dvdURL.lastPathComponent, path: dvdURL.path)
+        canEjectCompletedDVD = false
         updateDefaultOutputURL()
         statusMessage = AppStrings.readyToRip(dvdURL.lastPathComponent)
     }
@@ -124,6 +149,7 @@ final class RipViewModel: ObservableObject {
     private func updateDefaultOutputURL() {
         guard selectedDVD != nil else {
             outputURL = nil
+            canEjectCompletedDVD = false
             return
         }
 
@@ -143,6 +169,7 @@ final class RipViewModel: ObservableObject {
 
     func startRip(revealOutput: @escaping @MainActor (URL) -> Void) async {
         guard !isEncoding else { return }
+        canEjectCompletedDVD = false
         ripTask = Task { [weak self] in
             guard let self else { return }
             await self.performRip(revealOutput: revealOutput)
@@ -160,6 +187,23 @@ final class RipViewModel: ObservableObject {
 
         isEncoding = false
         statusMessage = AppStrings.ripStopped
+    }
+
+    func ejectCompletedDVD() {
+        guard canEjectCompletedDVD, let selectedDVD else { return }
+
+        let dvdURL = URL(fileURLWithPath: selectedDVD.path, isDirectory: true)
+        do {
+            try NSWorkspace.shared.unmountAndEjectDevice(at: dvdURL)
+        } catch {
+            statusMessage = error.localizedDescription
+            return
+        }
+        self.selectedDVD = nil
+        outputURL = nil
+        canEjectCompletedDVD = false
+        progress = 0
+        statusMessage = Self.initialStatusMessage
     }
 
     private func performRip(revealOutput: @escaping @MainActor (URL) -> Void) async {
@@ -216,6 +260,9 @@ final class RipViewModel: ObservableObject {
             activeRip?.protectCompletedOutput()
             activeRip?.log.appendLine("Completed output protected from cancellation cleanup: \(outputURL.path)")
             progress = 1
+            canEjectCompletedDVD = true
+            playRipCompletedSound()
+            showRipCompletedNotification(outputURL: outputURL)
         }
 
         isEncoding = false
@@ -238,6 +285,36 @@ final class RipViewModel: ObservableObject {
 
         appendLogWriteErrorIfNeeded(logWriteError)
         clearActiveRipFiles()
+    }
+
+    private func playRipCompletedSound() {
+        NSSound(named: "Glass")?.play()
+    }
+
+    private func showRipCompletedNotification(outputURL: URL) {
+        Task {
+            let center = UNUserNotificationCenter.current()
+
+            do {
+                let isAllowed = try await center.requestAuthorization(options: [.alert, .sound])
+                guard isAllowed else { return }
+
+                let content = UNMutableNotificationContent()
+                content.title = AppStrings.ripCompleteNotificationTitle
+                content.body = AppStrings.ripCompleteNotificationBody(fileName: outputURL.lastPathComponent)
+                content.sound = .default
+
+                let request = UNNotificationRequest(
+                    identifier: UUID().uuidString,
+                    content: content,
+                    trigger: nil
+                )
+
+                try await center.add(request)
+            } catch {
+                activeRip?.log.appendBlankLine("Could not show completion notification: \(error.localizedDescription)")
+            }
+        }
     }
 
     private func deleteIncompleteOutputFile(at url: URL) {

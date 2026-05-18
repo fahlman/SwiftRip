@@ -16,30 +16,8 @@ struct ContentView: View {
     private static let chooseDVDTitle = AppStrings.chooseDVDTitle
     private static let ripTitle = AppStrings.ripTitle
     private static let stopTitle = AppStrings.stopTitle
+    private static let ejectTitle = AppStrings.ejectTitle
     private static let noValidDVDTitle = AppStrings.noValidDVDTitle
-    private static let opticalDiscIconName = "opticaldisc"
-    private static let selectedOpticalDiscIconName = "opticaldisc.fill"
-    private static let ripIconName = "arrow.trianglehead.2.clockwise"
-    private static let stopIconName = "stop.fill"
-    private static let selectedBadgeIconName = "checkmark.circle.fill"
-    private static let missingBadgeIconName = "questionmark.circle.fill"
-
-    private enum Layout {
-        static let contentSpacing: CGFloat = 16
-        static let contentPadding: CGFloat = 18
-        static let windowWidth: CGFloat = 272
-        static let windowHeight: CGFloat = 300
-        static let discIconSize: CGFloat = 104
-        static let badgeIconSize: CGFloat = 34
-        static let badgeOffsetX: CGFloat = 6
-        static let badgeOffsetY: CGFloat = 4
-        static let discIconFrameWidth: CGFloat = 122
-        static let discIconFrameHeight: CGFloat = 114
-        static let primaryButtonWidth: CGFloat = 116
-        static let progressWidth: CGFloat = 180
-        static let statusSpacing: CGFloat = 10
-        static let statusHeight: CGFloat = 38
-    }
 
     private var hasSelectedDVD: Bool {
         viewModel.selectedDVD != nil
@@ -49,6 +27,7 @@ struct ContentView: View {
         case chooseDVD
         case rip
         case stop
+        case eject
 
         var title: String {
             switch self {
@@ -58,24 +37,20 @@ struct ContentView: View {
                 return ContentView.ripTitle
             case .stop:
                 return ContentView.stopTitle
+            case .eject:
+                return ContentView.ejectTitle
             }
         }
 
-        var systemImage: String {
-            switch self {
-            case .chooseDVD:
-                return ContentView.opticalDiscIconName
-            case .rip:
-                return ContentView.ripIconName
-            case .stop:
-                return ContentView.stopIconName
-            }
-        }
     }
 
     private var primaryButtonState: PrimaryButtonState {
         if viewModel.isEncoding {
             return .stop
+        }
+
+        if viewModel.canEjectCompletedDVD {
+            return .eject
         }
 
         if !hasSelectedDVD {
@@ -86,14 +61,14 @@ struct ContentView: View {
     }
 
     var body: some View {
-        VStack(spacing: Layout.contentSpacing) {
+        VStack(spacing: SwiftRipLayout.MainWindow.contentSpacing) {
             dvdIcon
             dvdLabel
             primaryButton
             statusSection
         }
-        .padding(Layout.contentPadding)
-        .frame(width: Layout.windowWidth, height: Layout.windowHeight)
+        .padding(SwiftRipLayout.MainWindow.contentPadding)
+        .swiftRipWindowFrame(width: SwiftRipLayout.MainWindow.width, height: SwiftRipLayout.MainWindow.height)
         .fixedSize()
         .fileImporter(
             isPresented: $isDVDPickerPresented,
@@ -116,25 +91,34 @@ struct ContentView: View {
             discImage
             discBadge
         }
-        .frame(width: Layout.discIconFrameWidth, height: Layout.discIconFrameHeight)
+        .frame(
+            width: SwiftRipLayout.MainWindow.discIconFrameWidth,
+            height: SwiftRipLayout.MainWindow.discIconFrameHeight
+        )
         .accessibilityElement(children: .combine)
     }
 
     private var discImage: some View {
-        Image(systemName: hasSelectedDVD ? Self.selectedOpticalDiscIconName : Self.opticalDiscIconName)
-            .font(.system(size: Layout.discIconSize, weight: .regular))
+        Image(systemName: hasSelectedDVD ? SwiftRipSymbols.selectedOpticalDisc : SwiftRipSymbols.opticalDisc)
+            .font(.system(size: SwiftRipLayout.MainWindow.discIconSize, weight: .regular))
             .symbolRenderingMode(.hierarchical)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(SwiftRipColors.discIcon)
             .opacity(hasSelectedDVD ? 1 : 0.45)
             .symbolEffect(.rotate.byLayer, options: .repeat(.continuous), isActive: viewModel.isEncoding)
     }
 
     private var discBadge: some View {
-        Image(systemName: hasSelectedDVD ? Self.selectedBadgeIconName : Self.missingBadgeIconName)
-            .font(.system(size: Layout.badgeIconSize, weight: .semibold))
+        Image(systemName: hasSelectedDVD ? SwiftRipSymbols.selectedBadge : SwiftRipSymbols.missingBadge)
+            .font(.system(size: SwiftRipLayout.MainWindow.badgeIconSize, weight: .semibold))
             .symbolRenderingMode(.palette)
-            .foregroundStyle(hasSelectedDVD ? .white : .black, hasSelectedDVD ? .green : .gray)
-            .offset(x: Layout.badgeOffsetX, y: Layout.badgeOffsetY)
+            .foregroundStyle(
+                hasSelectedDVD ? SwiftRipColors.selectedBadgeForeground : SwiftRipColors.missingBadgeForeground,
+                hasSelectedDVD ? SwiftRipColors.selectedBadgeBackground : SwiftRipColors.missingBadgeBackground
+            )
+            .offset(
+                x: SwiftRipLayout.MainWindow.badgeOffsetX,
+                y: SwiftRipLayout.MainWindow.badgeOffsetY
+            )
     }
 
     private var dvdLabel: some View {
@@ -151,11 +135,11 @@ struct ContentView: View {
         Button {
             performPrimaryButtonAction()
         } label: {
-            Label(primaryButtonState.title, systemImage: primaryButtonState.systemImage)
-                .frame(width: Layout.primaryButtonWidth)
+            Text(primaryButtonState.title)
+                .frame(width: SwiftRipLayout.Button.mainWidth)
         }
         .keyboardShortcut(.defaultAction)
-        .buttonStyle(.borderedProminent)
+        .buttonStyle(SwiftRipButtonStyle(prominence: SwiftRipButtonStyle.Prominence.primary))
         .controlSize(.large)
     }
 
@@ -171,21 +155,22 @@ struct ContentView: View {
             }
         case .stop:
             viewModel.cancelRip()
+        case .eject:
+            viewModel.ejectCompletedDVD()
         }
     }
 
     private var statusSection: some View {
-        VStack(spacing: Layout.statusSpacing) {
+        VStack(spacing: SwiftRipLayout.MainWindow.statusSpacing) {
             ProgressView(value: viewModel.progress)
-                .frame(width: Layout.progressWidth)
+                .frame(width: SwiftRipLayout.MainWindow.progressWidth)
 
             Text("\(Int(viewModel.progress * 100))%")
-                .font(.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
+                .swiftRipProgressCaption()
         }
         .opacity(viewModel.isEncoding ? 1 : 0)
         .frame(maxWidth: .infinity)
-        .frame(height: Layout.statusHeight)
+        .frame(height: SwiftRipLayout.MainWindow.statusHeight)
     }
 }
 

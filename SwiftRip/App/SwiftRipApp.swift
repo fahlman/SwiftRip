@@ -20,6 +20,10 @@ struct SwiftRipApp: App {
             ContentView()
         }
 
+        Settings {
+            SettingsView()
+        }
+
         Window(Self.aboutTitle, id: Self.aboutWindowID) {
             AboutSwiftRipView()
         }
@@ -34,3 +38,4 @@ struct SwiftRipApp: App {
         }
     }
 }
+

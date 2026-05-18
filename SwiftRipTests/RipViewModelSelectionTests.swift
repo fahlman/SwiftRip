@@ -36,7 +36,19 @@ struct RipViewModelSelectionTests {
             try? FileManager.default.removeItem(at: dvdURL.deletingLastPathComponent())
         }
 
-        let viewModel = RipViewModel()
+        let userDefaultsSuiteName = "RipViewModelSelectionTests-\(UUID().uuidString)"
+        let userDefaults = try #require(UserDefaults(suiteName: userDefaultsSuiteName))
+        defer {
+            userDefaults.removePersistentDomain(forName: userDefaultsSuiteName)
+        }
+        let appSettings = AppSettings(userDefaults: userDefaults, fileManager: .default)
+        let viewModel = RipViewModel(
+            configuration: .production,
+            fileManager: .default,
+            handBrakeRunner: RipTestSupport.StubHandBrakeRunner(exitCode: 0, outputURLToCreate: nil),
+            volumeFinder: FileSystemDVDVolumeFinder(),
+            appSettings: appSettings
+        )
         viewModel.chooseDVD(at: dvdURL)
 
         let moviesURL = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first
