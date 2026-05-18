@@ -36,7 +36,7 @@ struct ContentView: View {
         .fileDialogDefaultDirectory(URL(fileURLWithPath: "/Volumes", isDirectory: true))
         .fileDialogConfirmationLabel(Self.chooseDVDTitle)
         .onDisappear {
-            viewModel.cancelRip()
+            viewModel.cancelRipForWindowCloseOrAppQuit()
         }
         .focusedSceneValue(\.ripCommandActions, ripCommandActions)
     }

@@ -57,4 +57,21 @@ struct AppSettingsTests {
         #expect(settings.completionSound == .glass)
         #expect(settings.outputFilenameFormat == .titleCase)
     }
+
+    @Test func invalidOutputDirectoryBookmarkFallsBackToMovies() throws {
+        let suiteName = "AppSettingsTests-\(UUID().uuidString)"
+        let userDefaults = try #require(UserDefaults(suiteName: suiteName))
+        defer {
+            userDefaults.removePersistentDomain(forName: suiteName)
+        }
+
+        userDefaults.set(Data("invalid bookmark data".utf8), forKey: "outputDirectoryBookmark")
+
+        let settings = AppSettings(userDefaults: userDefaults, fileManager: .default)
+        let moviesURL = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first
+            ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Movies", isDirectory: true)
+
+        #expect(settings.outputDirectoryURL == moviesURL)
+        #expect(settings.isUsingDefaultOutputDirectory)
+    }
 }

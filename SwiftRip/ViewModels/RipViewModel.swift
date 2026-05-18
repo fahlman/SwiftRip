@@ -200,6 +200,10 @@ final class RipViewModel {
         updateState { $0.finishEncoding(statusMessage: AppStrings.ripStopped) }
     }
 
+    func cancelRipForWindowCloseOrAppQuit() {
+        cancelRip()
+    }
+
     func ejectCompletedDVD() {
         guard canEjectCompletedDVD, let selectedDVD else { return }
 
