@@ -16,6 +16,9 @@ struct AppStringsTests {
         #expect(AppStrings.ripMenuTitle == "Rip")
         #expect(AppStrings.revealOutputTitle == "Reveal Output in Finder")
         #expect(AppStrings.revealLogTitle == "Reveal Log in Finder")
+        #expect(AppStrings.stopRipConfirmationTitle == "Stop Rip?")
+        #expect(AppStrings.stopRipConfirmationMessage == "Stopping now will terminate HandBrakeCLI and delete the incomplete output file.")
+        #expect(AppStrings.keepRippingTitle == "Keep Ripping")
     }
 
     @Test func formatsCompletionAndFailureMessages() {

@@ -3,11 +3,13 @@
 //  SwiftRip
 //
 
+import AppKit
 import SwiftUI
 
 @main
 struct SwiftRipApp: App {
 
+    @NSApplicationDelegateAdaptor(SwiftRipAppDelegate.self) private var appDelegate
     @Environment(\.openWindow) private var openWindow
 
     private static let aboutWindowID = "about-swiftrip"
@@ -33,5 +35,20 @@ struct SwiftRipApp: App {
         .commandsRemoved()
         .windowResizability(.contentSize)
         .defaultPosition(.center)
+    }
+}
+
+@MainActor
+final class SwiftRipAppDelegate: NSObject, NSApplicationDelegate {
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        let coordinator = RipInterruptionCoordinator.shared
+
+        guard coordinator.shouldConfirmAppQuit else {
+            return .terminateNow
+        }
+
+        coordinator.requestAppQuitConfirmation()
+        return .terminateCancel
     }
 }

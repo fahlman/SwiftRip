@@ -9,6 +9,7 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     @State private var viewModel = RipViewModel()
+    @State private var interruptionCoordinator = RipInterruptionCoordinator.shared
     @State private var isDVDPickerPresented = false
 
     private static let chooseDVDTitle = AppStrings.chooseDVDTitle
@@ -37,6 +38,24 @@ struct ContentView: View {
         .fileDialogConfirmationLabel(Self.chooseDVDTitle)
         .onDisappear {
             viewModel.cancelRipForWindowCloseOrAppQuit()
+        }
+        .onAppear {
+            interruptionCoordinator.isRipActive = viewModel.isEncoding
+        }
+        .onChange(of: viewModel.isEncoding) { _, isEncoding in
+            interruptionCoordinator.updateRipActivity(isEncoding)
+        }
+        .background(WindowCloseConfirmationGate())
+        .alert(AppStrings.stopRipConfirmationTitle, isPresented: stopRipConfirmationBinding) {
+            Button(AppStrings.keepRippingTitle, role: .cancel) {
+                interruptionCoordinator.clearPendingRequest()
+            }
+
+            Button(AppStrings.stopTitle, role: .destructive) {
+                confirmStopRipForInterruption()
+            }
+        } message: {
+            Text(AppStrings.stopRipConfirmationMessage)
         }
         .focusedSceneValue(\.ripCommandActions, ripCommandActions)
     }
@@ -134,6 +153,31 @@ struct ContentView: View {
         viewModel.cancelRip()
     }
 
+    private var stopRipConfirmationBinding: Binding<Bool> {
+        Binding {
+            interruptionCoordinator.hasPendingRequest
+        } set: { isPresented in
+            if !isPresented {
+                interruptionCoordinator.clearPendingRequest()
+            }
+        }
+    }
+
+    private func confirmStopRipForInterruption() {
+        let pendingRequest = interruptionCoordinator.pendingRequest
+
+        viewModel.cancelRipForWindowCloseOrAppQuit()
+
+        switch pendingRequest {
+        case .windowClose:
+            interruptionCoordinator.closePendingWindowAfterConfirmation()
+        case .appQuit:
+            interruptionCoordinator.quitAppAfterConfirmation()
+        case nil:
+            interruptionCoordinator.clearPendingRequest()
+        }
+    }
+
     private func ejectDVD() {
         viewModel.ejectCompletedDVD()
     }
@@ -164,4 +208,105 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+}
+
+enum RipInterruptionRequest {
+    case windowClose
+    case appQuit
+}
+
+@MainActor
+@Observable
+final class RipInterruptionCoordinator {
+    static let shared = RipInterruptionCoordinator()
+
+    var isRipActive = false
+    private(set) var pendingRequest: RipInterruptionRequest?
+    private(set) var shouldAllowConfirmedAppQuit = false
+    private(set) var shouldAllowConfirmedWindowClose = false
+
+    @ObservationIgnored
+    weak var pendingWindow: NSWindow?
+
+    var hasPendingRequest: Bool {
+        pendingRequest != nil
+    }
+
+    var shouldConfirmAppQuit: Bool {
+        isRipActive && !shouldAllowConfirmedAppQuit
+    }
+
+    func updateRipActivity(_ isRipActive: Bool) {
+        self.isRipActive = isRipActive
+
+        if !isRipActive {
+            clearPendingRequest()
+        }
+    }
+
+    func shouldConfirmWindowClose(_ window: NSWindow) -> Bool {
+        guard isRipActive, !shouldAllowConfirmedWindowClose else { return false }
+
+        pendingWindow = window
+        pendingRequest = .windowClose
+        return true
+    }
+
+    func requestAppQuitConfirmation() {
+        pendingRequest = .appQuit
+    }
+
+    func clearPendingRequest() {
+        pendingRequest = nil
+        pendingWindow = nil
+        shouldAllowConfirmedAppQuit = false
+        shouldAllowConfirmedWindowClose = false
+    }
+
+    func closePendingWindowAfterConfirmation() {
+        shouldAllowConfirmedWindowClose = true
+        let window = pendingWindow
+        pendingRequest = nil
+        pendingWindow = nil
+        window?.performClose(nil)
+        shouldAllowConfirmedWindowClose = false
+    }
+
+    func quitAppAfterConfirmation() {
+        pendingRequest = nil
+        pendingWindow = nil
+        shouldAllowConfirmedAppQuit = true
+        NSApp.terminate(nil)
+    }
+}
+
+private struct WindowCloseConfirmationGate: NSViewRepresentable {
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    func makeNSView(context: Context) -> NSView {
+        NSView()
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async {
+            guard let window = nsView.window, window.delegate !== context.coordinator else { return }
+            context.coordinator.previousDelegate = window.delegate
+            window.delegate = context.coordinator
+        }
+    }
+
+    final class Coordinator: NSObject, NSWindowDelegate {
+        weak var previousDelegate: NSWindowDelegate?
+
+        func windowShouldClose(_ sender: NSWindow) -> Bool {
+            if RipInterruptionCoordinator.shared.shouldConfirmWindowClose(sender) {
+                return false
+            }
+
+            return previousDelegate?.windowShouldClose?(sender) ?? true
+        }
+    }
 }
