@@ -157,20 +157,6 @@ final class RipViewModel: ObservableObject {
             .appendingPathComponent("SwiftRip", isDirectory: true)
     }
 
-    private func updateState(_ update: (inout RipLifecycleState) -> Void) {
-        var updatedState = state
-        update(&updatedState)
-        state = updatedState
-    }
-
-    private func suggestedOutputName(for dvd: DVDVolume) -> String {
-        let baseName = dvd.name
-            .replacingOccurrences(of: "_", with: " ")
-            .capitalized
-
-        return "\(baseName).\(Self.movieFileExtension)"
-    }
-
     func refreshDVDs() {
         updateState { $0.replaceMountedDVDs(volumeFinder.findMountedDVDs()) }
 
@@ -211,25 +197,6 @@ final class RipViewModel: ObservableObject {
         updateState { $0.selectDVD(dvd, outputURL: resolvedOutputURL, statusMessage: resolvedStatusMessage) }
     }
 
-    private func clearDVDSelection() {
-        clearDVDSelection(statusMessage: AppStrings.initialStatusMessage)
-    }
-
-    private func clearDVDSelection(statusMessage: String) {
-        updateState { $0.clearDVDSelection(statusMessage: statusMessage) }
-    }
-
-    private func normalizedDVDURL(from url: URL) -> URL {
-        url.lastPathComponent == DVDVolume.videoTSDirectoryName ? url.deletingLastPathComponent() : url
-    }
-
-    private func isValidDVD(at url: URL) -> Bool {
-        let videoTSURL = url.appendingPathComponent(DVDVolume.videoTSDirectoryName, isDirectory: true)
-        var isDirectory: ObjCBool = false
-
-        return fileManager.fileExists(atPath: videoTSURL.path, isDirectory: &isDirectory) && isDirectory.boolValue
-    }
-
     func startRip(revealOutput: @escaping @MainActor (URL) -> Void) async {
         guard !isEncoding else { return }
         ripTask = Task { [weak self] in
@@ -246,7 +213,6 @@ final class RipViewModel: ObservableObject {
         ripTask?.cancel()
 
         cleanupCancelledRip()
-
         updateState { $0.finishEncoding(statusMessage: AppStrings.ripStopped) }
     }
 
@@ -262,6 +228,28 @@ final class RipViewModel: ObservableObject {
         }
 
         updateState { $0.resetAfterEject() }
+    }
+
+    private func updateState(_ update: (inout RipLifecycleState) -> Void) {
+        var updatedState = state
+        update(&updatedState)
+        state = updatedState
+    }
+
+    private func suggestedOutputName(for dvd: DVDVolume) -> String {
+        let baseName = dvd.name
+            .replacingOccurrences(of: "_", with: " ")
+            .capitalized
+
+        return "\(baseName).\(Self.movieFileExtension)"
+    }
+
+    private func clearDVDSelection() {
+        clearDVDSelection(statusMessage: AppStrings.initialStatusMessage)
+    }
+
+    private func clearDVDSelection(statusMessage: String) {
+        updateState { $0.clearDVDSelection(statusMessage: statusMessage) }
     }
 
     private func performRip(revealOutput: @escaping @MainActor (URL) -> Void) async {
@@ -371,6 +359,17 @@ final class RipViewModel: ObservableObject {
         completionNotifier.notifyRipCompleted(outputURL: outputURL) { [weak self] message in
             self?.activeRip?.log.appendBlankLine(message)
         }
+    }
+
+    private func normalizedDVDURL(from url: URL) -> URL {
+        url.lastPathComponent == DVDVolume.videoTSDirectoryName ? url.deletingLastPathComponent() : url
+    }
+
+    private func isValidDVD(at url: URL) -> Bool {
+        let videoTSURL = url.appendingPathComponent(DVDVolume.videoTSDirectoryName, isDirectory: true)
+        var isDirectory: ObjCBool = false
+
+        return fileManager.fileExists(atPath: videoTSURL.path, isDirectory: &isDirectory) && isDirectory.boolValue
     }
 
     private func deleteIncompleteOutputFile(at url: URL) {
