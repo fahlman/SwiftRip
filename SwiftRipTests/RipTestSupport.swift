@@ -20,6 +20,29 @@ enum RipTestSupport {
     }
 
     @MainActor
+    static func makeViewModel(
+        configuration: RipConfiguration = .production,
+        fileManager: FileManager = .default,
+        handBrakeRunner: HandBrakeRunning = StubHandBrakeRunner(exitCode: 0, outputURLToCreate: nil),
+        volumeFinder: DVDVolumeFinding = FileSystemDVDVolumeFinder(),
+        appSettings: AppSettings? = nil,
+        ripNotifier: RipNotifying = NoOpRipNotifier(),
+        dvdDeviceEjector: DVDDeviceEjecting = NoOpDVDDeviceEjector(),
+        logDirectoryOverride: URL? = nil
+    ) -> RipViewModel {
+        RipViewModel(environment: RipEnvironment(
+            configuration: configuration,
+            fileManager: fileManager,
+            handBrakeRunner: handBrakeRunner,
+            volumeFinder: volumeFinder,
+            appSettings: appSettings ?? makeTestAppSettings(),
+            ripNotifier: ripNotifier,
+            dvdDeviceEjector: dvdDeviceEjector,
+            logDirectoryOverride: logDirectoryOverride
+        ))
+    }
+
+    @MainActor
     static func makeRunnableViewModel(
         environment: RunnableTestEnvironment,
         runner: HandBrakeRunning,
@@ -27,17 +50,16 @@ enum RipTestSupport {
         ripNotifier: RipNotifying = NoOpRipNotifier(),
         dvdDeviceEjector: DVDDeviceEjecting = NoOpDVDDeviceEjector()
     ) -> RipViewModel {
-        let resolvedAppSettings = appSettings ?? makeTestAppSettings()
-        let viewModel = RipViewModel(
+        let viewModel = RipViewModel(environment: RipEnvironment(
             configuration: environment.configuration,
             fileManager: .default,
             handBrakeRunner: runner,
             volumeFinder: FileSystemDVDVolumeFinder(),
-            appSettings: resolvedAppSettings,
+            appSettings: appSettings ?? makeTestAppSettings(),
             ripNotifier: ripNotifier,
             dvdDeviceEjector: dvdDeviceEjector,
             logDirectoryOverride: environment.logDirectory
-        )
+        ))
 
         viewModel.selectDVD(environment.dvd, outputURL: environment.outputURL)
         return viewModel
@@ -176,6 +198,18 @@ enum RipTestSupport {
 
     struct NoOpDVDDeviceEjector: DVDDeviceEjecting {
         func ejectDVD(at url: URL) throws {}
+    }
+
+    struct ThrowingDVDDeviceEjector: DVDDeviceEjecting {
+        let errorDescription: String
+
+        func ejectDVD(at url: URL) throws {
+            throw NSError(
+                domain: "SwiftRipTests.ThrowingDVDDeviceEjector",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: errorDescription]
+            )
+        }
     }
 
     @MainActor

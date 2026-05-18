@@ -7,6 +7,50 @@ import Foundation
 import Observation
 
 @MainActor
+struct RipEnvironment {
+    let configuration: RipConfiguration
+    let fileManager: FileManager
+    let handBrakeRunner: HandBrakeRunning
+    let volumeFinder: DVDVolumeFinding
+    let appSettings: AppSettings
+    let ripNotifier: RipNotifying
+    let dvdDeviceEjector: DVDDeviceEjecting
+    let logDirectoryOverride: URL?
+
+    static var production: RipEnvironment {
+        RipEnvironment(
+            configuration: .production,
+            fileManager: .default,
+            handBrakeRunner: ProcessHandBrakeRunner(),
+            volumeFinder: FileSystemDVDVolumeFinder(),
+            appSettings: .shared,
+            ripNotifier: SystemRipNotifier(),
+            dvdDeviceEjector: WorkspaceDVDDeviceEjector()
+        )
+    }
+
+    init(
+        configuration: RipConfiguration,
+        fileManager: FileManager,
+        handBrakeRunner: HandBrakeRunning,
+        volumeFinder: DVDVolumeFinding,
+        appSettings: AppSettings,
+        ripNotifier: RipNotifying = SystemRipNotifier(),
+        dvdDeviceEjector: DVDDeviceEjecting = WorkspaceDVDDeviceEjector(),
+        logDirectoryOverride: URL? = nil
+    ) {
+        self.configuration = configuration
+        self.fileManager = fileManager
+        self.handBrakeRunner = handBrakeRunner
+        self.volumeFinder = volumeFinder
+        self.appSettings = appSettings
+        self.ripNotifier = ripNotifier
+        self.dvdDeviceEjector = dvdDeviceEjector
+        self.logDirectoryOverride = logDirectoryOverride
+    }
+}
+
+@MainActor
 @Observable
 final class RipViewModel {
     static let initialStatusMessage = AppStrings.initialStatusMessage
@@ -21,88 +65,10 @@ final class RipViewModel {
     @ObservationIgnored
     private var activeRip: RipSession?
     @ObservationIgnored
-    private let configuration: RipConfiguration
-    @ObservationIgnored
-    private let fileManager: FileManager
-    @ObservationIgnored
-    private let handBrakeRunner: HandBrakeRunning
-    @ObservationIgnored
-    private let volumeFinder: DVDVolumeFinding
-    @ObservationIgnored
-    private let appSettings: AppSettings
-    @ObservationIgnored
-    private let ripNotifier: RipNotifying
-    @ObservationIgnored
-    private let dvdDeviceEjector: DVDDeviceEjecting
-    @ObservationIgnored
-    private let logDirectoryOverride: URL?
+    private let environment: RipEnvironment
 
-    convenience init() {
-        self.init(
-            configuration: .production,
-            fileManager: .default,
-            handBrakeRunner: ProcessHandBrakeRunner(),
-            volumeFinder: FileSystemDVDVolumeFinder()
-        )
-    }
-
-    convenience init(
-        configuration: RipConfiguration,
-        fileManager: FileManager,
-        handBrakeRunner: HandBrakeRunning,
-        volumeFinder: DVDVolumeFinding,
-        logDirectoryOverride: URL? = nil
-    ) {
-        self.init(
-            configuration: configuration,
-            fileManager: fileManager,
-            handBrakeRunner: handBrakeRunner,
-            volumeFinder: volumeFinder,
-            appSettings: .shared,
-            ripNotifier: SystemRipNotifier(),
-            dvdDeviceEjector: WorkspaceDVDDeviceEjector(),
-            logDirectoryOverride: logDirectoryOverride
-        )
-    }
-
-    convenience init(
-        configuration: RipConfiguration,
-        fileManager: FileManager,
-        handBrakeRunner: HandBrakeRunning,
-        volumeFinder: DVDVolumeFinding,
-        appSettings: AppSettings,
-        logDirectoryOverride: URL? = nil
-    ) {
-        self.init(
-            configuration: configuration,
-            fileManager: fileManager,
-            handBrakeRunner: handBrakeRunner,
-            volumeFinder: volumeFinder,
-            appSettings: appSettings,
-            ripNotifier: SystemRipNotifier(),
-            dvdDeviceEjector: WorkspaceDVDDeviceEjector(),
-            logDirectoryOverride: logDirectoryOverride
-        )
-    }
-
-    init(
-        configuration: RipConfiguration,
-        fileManager: FileManager,
-        handBrakeRunner: HandBrakeRunning,
-        volumeFinder: DVDVolumeFinding,
-        appSettings: AppSettings,
-        ripNotifier: RipNotifying,
-        dvdDeviceEjector: DVDDeviceEjecting = WorkspaceDVDDeviceEjector(),
-        logDirectoryOverride: URL? = nil
-    ) {
-        self.configuration = configuration
-        self.fileManager = fileManager
-        self.handBrakeRunner = handBrakeRunner
-        self.volumeFinder = volumeFinder
-        self.appSettings = appSettings
-        self.ripNotifier = ripNotifier
-        self.dvdDeviceEjector = dvdDeviceEjector
-        self.logDirectoryOverride = logDirectoryOverride
+    init(environment: RipEnvironment = .production) {
+        self.environment = environment
     }
 
     var dvdVolumes: [DVDVolume] {
@@ -159,16 +125,16 @@ final class RipViewModel {
     }
 
     var defaultOutputDirectory: URL {
-        appSettings.outputDirectoryURL
+        environment.appSettings.outputDirectoryURL
     }
 
     var defaultLogDirectory: URL {
-        if let logDirectoryOverride {
+        if let logDirectoryOverride = environment.logDirectoryOverride {
             return logDirectoryOverride
         }
 
-        let libraryURL = fileManager.urls(for: .libraryDirectory, in: .userDomainMask).first
-            ?? fileManager.homeDirectoryForCurrentUser.appendingPathComponent("Library", isDirectory: true)
+        let libraryURL = environment.fileManager.urls(for: .libraryDirectory, in: .userDomainMask).first
+            ?? environment.fileManager.homeDirectoryForCurrentUser.appendingPathComponent("Library", isDirectory: true)
 
         return libraryURL
             .appendingPathComponent("Logs", isDirectory: true)
@@ -176,7 +142,7 @@ final class RipViewModel {
     }
 
     func refreshDVDs() {
-        updateState { $0.replaceMountedDVDs(volumeFinder.findMountedDVDs()) }
+        updateState { $0.replaceMountedDVDs(environment.volumeFinder.findMountedDVDs()) }
 
         if let selectedDVD, dvdVolumes.contains(selectedDVD) {
             return
@@ -239,7 +205,7 @@ final class RipViewModel {
 
         let dvdURL = URL(fileURLWithPath: selectedDVD.path, isDirectory: true)
         do {
-            try dvdDeviceEjector.ejectDVD(at: dvdURL)
+            try environment.dvdDeviceEjector.ejectDVD(at: dvdURL)
         } catch {
             updateState { $0.setStatusMessage(error.localizedDescription) }
             return
@@ -257,7 +223,7 @@ final class RipViewModel {
     private func suggestedOutputName(for dvd: DVDVolume) -> String {
         outputFilenameFormatter.outputName(
             for: dvd.name,
-            format: appSettings.outputFilenameFormat
+            format: environment.appSettings.outputFilenameFormat
         )
     }
 
@@ -275,8 +241,8 @@ final class RipViewModel {
         let arguments = beginRipSession(input: selectedDVD, outputURL: outputURL)
 
         if let preflightFailure = RipPreflightCheck(
-            configuration: configuration,
-            fileManager: fileManager
+            configuration: environment.configuration,
+            fileManager: environment.fileManager
         ).failureMessage() {
             savePreflightFailure(preflightFailure)
             clearActiveRipFiles()
@@ -285,8 +251,8 @@ final class RipViewModel {
 
         beginEncoding(selectedDVD)
 
-        let result = await handBrakeRunner.run(
-            executablePath: configuration.handBrakeCLIPath,
+        let result = await environment.handBrakeRunner.run(
+            executablePath: environment.configuration.handBrakeCLIPath,
             arguments: arguments,
             onOutput: { [weak self] line in
                 self?.handleHandBrakeOutputLine(line)
@@ -306,15 +272,15 @@ final class RipViewModel {
     }
 
     private func beginRipSession(input: DVDVolume, outputURL: URL) -> [String] {
-        let arguments = configuration.handBrakeArguments(input: input, outputURL: outputURL)
+        let arguments = environment.configuration.handBrakeArguments(input: input, outputURL: outputURL)
         activeRip = RipSession(
             input: input,
             outputURL: outputURL,
             arguments: arguments,
             logDirectoryURL: defaultLogDirectory,
-            executablePath: configuration.handBrakeCLIPath,
-            libdvdcssPath: configuration.libdvdcssPath,
-            presetURL: configuration.presetURL
+            executablePath: environment.configuration.handBrakeCLIPath,
+            libdvdcssPath: environment.configuration.libdvdcssPath,
+            presetURL: environment.configuration.presetURL
         )
         updateState { $0.setLogFileURL(activeRip?.log.url) }
         activeRip?.log.appendBlankLine("SwiftRip: Selected DVD: \(input.name)")
@@ -356,10 +322,10 @@ final class RipViewModel {
         )
         updateState { $0.completeRip(statusMessage: AppStrings.done(outputPath: outputURL.path, logPath: activeLogPath)) }
         appendLogWriteErrorIfNeeded(logWriteError)
-        if appSettings.shouldRevealCompletedFile {
+        if environment.appSettings.shouldRevealCompletedFile {
             revealOutput(outputURL)
         }
-        if appSettings.shouldAutoEjectAfterSuccessfulRip {
+        if environment.appSettings.shouldAutoEjectAfterSuccessfulRip {
             ejectCompletedDVD()
         }
         clearActiveRipFiles()
@@ -384,20 +350,20 @@ final class RipViewModel {
     }
 
     private func notifyRipCompleted(outputURL: URL) {
-        ripNotifier.notifyRipCompleted(
+        environment.ripNotifier.notifyRipCompleted(
             outputURL: outputURL,
-            sound: appSettings.completionSound,
-            isNotificationEnabled: appSettings.isCompletionNotificationEnabled
+            sound: environment.appSettings.completionSound,
+            isNotificationEnabled: environment.appSettings.isCompletionNotificationEnabled
         ) { [weak self] message in
             self?.activeRip?.log.appendBlankLine(message)
         }
     }
 
     private func notifyRipFailed(outputURL: URL, exitCode: Int32) {
-        ripNotifier.notifyRipFailed(
+        environment.ripNotifier.notifyRipFailed(
             outputURL: outputURL,
             exitCode: exitCode,
-            isNotificationEnabled: appSettings.isCompletionNotificationEnabled
+            isNotificationEnabled: environment.appSettings.isCompletionNotificationEnabled
         ) { [weak self] message in
             self?.activeRip?.log.appendBlankLine(message)
         }
@@ -411,14 +377,14 @@ final class RipViewModel {
         let videoTSURL = url.appendingPathComponent(DVDVolume.videoTSDirectoryName, isDirectory: true)
         var isDirectory: ObjCBool = false
 
-        return fileManager.fileExists(atPath: videoTSURL.path, isDirectory: &isDirectory) && isDirectory.boolValue
+        return environment.fileManager.fileExists(atPath: videoTSURL.path, isDirectory: &isDirectory) && isDirectory.boolValue
     }
 
     private func deleteIncompleteOutputFile(at url: URL) {
-        guard fileManager.fileExists(atPath: url.path) else { return }
+        guard environment.fileManager.fileExists(atPath: url.path) else { return }
 
         do {
-            try fileManager.removeItem(at: url)
+            try environment.fileManager.removeItem(at: url)
             activeRip?.log.appendBlankLine("Deleted incomplete output file: \(url.path)")
         } catch {
             activeRip?.log.appendBlankLine("Could not delete incomplete output file: \(error.localizedDescription)")
@@ -467,7 +433,7 @@ final class RipViewModel {
     }
 
     private func saveActiveLog() -> Error? {
-        activeRip?.log.save(using: fileManager)
+        activeRip?.log.save(using: environment.fileManager)
     }
 
 }

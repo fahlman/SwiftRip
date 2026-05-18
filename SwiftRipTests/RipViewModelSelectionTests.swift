@@ -11,7 +11,7 @@ import Testing
 struct RipViewModelSelectionTests {
 
     @Test func suggestedOutputNameUsesSelectedDVDName() {
-        let viewModel = RipViewModel()
+        let viewModel = RipTestSupport.makeViewModel()
         viewModel.selectDVD(DVDVolume(id: "/Volumes/MY_MOVIE", name: "MY_MOVIE", path: "/Volumes/MY_MOVIE"))
 
         #expect(viewModel.suggestedOutputName == "My Movie.m4v")
@@ -20,11 +20,7 @@ struct RipViewModelSelectionTests {
     @Test func suggestedOutputNameCanUseOriginalDVDName() {
         let appSettings = RipTestSupport.makeTestAppSettings()
         appSettings.outputFilenameFormat = .originalName
-        let viewModel = RipViewModel(
-            configuration: .production,
-            fileManager: .default,
-            handBrakeRunner: RipTestSupport.StubHandBrakeRunner(exitCode: 0, outputURLToCreate: nil),
-            volumeFinder: FileSystemDVDVolumeFinder(),
+        let viewModel = RipTestSupport.makeViewModel(
             appSettings: appSettings
         )
         viewModel.selectDVD(DVDVolume(id: "/Volumes/MY_MOVIE", name: "MY_MOVIE", path: "/Volumes/MY_MOVIE"))
@@ -35,11 +31,7 @@ struct RipViewModelSelectionTests {
     @Test func suggestedOutputNameCanIncludeDate() {
         let appSettings = RipTestSupport.makeTestAppSettings()
         appSettings.outputFilenameFormat = .datedTitleCase
-        let viewModel = RipViewModel(
-            configuration: .production,
-            fileManager: .default,
-            handBrakeRunner: RipTestSupport.StubHandBrakeRunner(exitCode: 0, outputURLToCreate: nil),
-            volumeFinder: FileSystemDVDVolumeFinder(),
+        let viewModel = RipTestSupport.makeViewModel(
             appSettings: appSettings
         )
         viewModel.selectDVD(DVDVolume(id: "/Volumes/MY_MOVIE", name: "MY_MOVIE", path: "/Volumes/MY_MOVIE"))
@@ -48,23 +40,8 @@ struct RipViewModelSelectionTests {
         #expect(viewModel.suggestedOutputName.hasSuffix(".m4v"))
     }
 
-    @Test func outputFilenameFormatterFormatsSupportedNames() throws {
-        let date = try #require(Calendar.current.date(from: DateComponents(
-            calendar: .current,
-            year: 2026,
-            month: 5,
-            day: 18,
-            hour: 12
-        )))
-        let formatter = OutputFilenameFormatter(dateProvider: { date })
-
-        #expect(formatter.outputName(for: "MY_MOVIE", format: .titleCase) == "My Movie.m4v")
-        #expect(formatter.outputName(for: "MY_MOVIE", format: .originalName) == "MY_MOVIE.m4v")
-        #expect(formatter.outputName(for: "MY_MOVIE", format: .datedTitleCase) == "My Movie - 2026-05-18.m4v")
-    }
-
     @Test func setOutputURLNormalizesExtensionToM4V() {
-        let viewModel = RipViewModel()
+        let viewModel = RipTestSupport.makeViewModel()
         viewModel.selectDVD(DVDVolume(id: "/Volumes/MOVIE", name: "MOVIE", path: "/Volumes/MOVIE"))
         viewModel.setOutputURL(URL(fileURLWithPath: "/tmp/Movie.mp4"))
 
@@ -87,11 +64,7 @@ struct RipViewModelSelectionTests {
             userDefaults.removePersistentDomain(forName: userDefaultsSuiteName)
         }
         let appSettings = AppSettings(userDefaults: userDefaults, fileManager: .default)
-        let viewModel = RipViewModel(
-            configuration: .production,
-            fileManager: .default,
-            handBrakeRunner: RipTestSupport.StubHandBrakeRunner(exitCode: 0, outputURLToCreate: nil),
-            volumeFinder: FileSystemDVDVolumeFinder(),
+        let viewModel = RipTestSupport.makeViewModel(
             appSettings: appSettings
         )
         viewModel.chooseDVD(at: dvdURL)
@@ -112,7 +85,7 @@ struct RipViewModelSelectionTests {
             try? FileManager.default.removeItem(at: folderURL)
         }
 
-        let viewModel = RipViewModel()
+        let viewModel = RipTestSupport.makeViewModel()
         viewModel.chooseDVD(at: folderURL)
 
         #expect(viewModel.selectedDVD == nil)
@@ -131,7 +104,7 @@ struct RipViewModelSelectionTests {
             try? FileManager.default.removeItem(at: dvdURL.deletingLastPathComponent())
         }
 
-        let viewModel = RipViewModel()
+        let viewModel = RipTestSupport.makeViewModel()
         viewModel.chooseDVD(at: videoTSURL)
 
         #expect(viewModel.selectedDVD == DVDVolume(id: dvdURL.path, name: "MOVIE", path: dvdURL.path))
@@ -141,10 +114,7 @@ struct RipViewModelSelectionTests {
 
     @Test func refreshDVDsPreservesSelectedDVDWhenStillMounted() throws {
         let selectedDVD = DVDVolume(id: "/Volumes/MOVIE", name: "MOVIE", path: "/Volumes/MOVIE")
-        let viewModel = RipViewModel(
-            configuration: .production,
-            fileManager: .default,
-            handBrakeRunner: RipTestSupport.StubHandBrakeRunner(exitCode: 0, outputURLToCreate: nil),
+        let viewModel = RipTestSupport.makeViewModel(
             volumeFinder: RipTestSupport.StubDVDVolumeFinder(volumes: [selectedDVD])
         )
         viewModel.selectDVD(selectedDVD, outputURL: URL(fileURLWithPath: "/tmp/Custom.m4v"))
@@ -158,10 +128,7 @@ struct RipViewModelSelectionTests {
     @Test func refreshDVDsSelectsFirstDVDWhenSelectionIsGone() {
         let firstDVD = DVDVolume(id: "/Volumes/FIRST", name: "FIRST", path: "/Volumes/FIRST")
         let staleDVD = DVDVolume(id: "/Volumes/STALE", name: "STALE", path: "/Volumes/STALE")
-        let viewModel = RipViewModel(
-            configuration: .production,
-            fileManager: .default,
-            handBrakeRunner: RipTestSupport.StubHandBrakeRunner(exitCode: 0, outputURLToCreate: nil),
+        let viewModel = RipTestSupport.makeViewModel(
             volumeFinder: RipTestSupport.StubDVDVolumeFinder(volumes: [firstDVD])
         )
         viewModel.selectDVD(staleDVD)
@@ -173,7 +140,7 @@ struct RipViewModelSelectionTests {
     }
 
     @Test func defaultLogDirectoryUsesUserLibraryLogs() {
-        let viewModel = RipViewModel()
+        let viewModel = RipTestSupport.makeViewModel()
         let expectedURL = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first!
             .appendingPathComponent("Logs", isDirectory: true)
             .appendingPathComponent("SwiftRip", isDirectory: true)

@@ -17,7 +17,7 @@ struct RipViewModelRipLifecycleTests {
             try? FileManager.default.removeItem(at: logDirectory)
         }
 
-        let viewModel = RipViewModel(
+        let viewModel = RipTestSupport.makeViewModel(
             configuration: RipConfiguration(
                 handBrakeCLIPath: "/missing/\(RipConfiguration.handBrakeCLIExecutableName)",
                 libdvdcssPath: "/missing/\(RipConfiguration.libdvdcssLibraryName)",
@@ -193,6 +193,32 @@ struct RipViewModelRipLifecycleTests {
         #expect(viewModel.primaryAction == .chooseDVD)
     }
 
+    @Test func successfulRipWithAutoEjectFailureKeepsOutputAndCompletedState() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+
+        let appSettings = RipTestSupport.makeTestAppSettings()
+        appSettings.shouldAutoEjectAfterSuccessfulRip = true
+        let runner = RipTestSupport.StubHandBrakeRunner(
+            exitCode: 0,
+            outputURLToCreate: testEnvironment.outputURL
+        )
+        let viewModel = RipTestSupport.makeRunnableViewModel(
+            environment: testEnvironment,
+            runner: runner,
+            appSettings: appSettings,
+            dvdDeviceEjector: RipTestSupport.ThrowingDVDDeviceEjector(errorDescription: "Could not eject disc")
+        )
+
+        try "complete output".write(to: testEnvironment.outputURL, atomically: true, encoding: .utf8)
+
+        await viewModel.startRip { _ in }
+
+        #expect(FileManager.default.fileExists(atPath: testEnvironment.outputURL.path))
+        #expect(viewModel.primaryAction == .eject)
+        #expect(viewModel.statusMessage == "Could not eject disc")
+    }
+
     @Test func failedRipKeepsOutputFileForInspection() async throws {
         let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
         defer { testEnvironment.cleanup() }
@@ -224,6 +250,74 @@ struct RipViewModelRipLifecycleTests {
         #expect(logText.contains("SwiftRip: Rip failed; output preserved for inspection"))
         #expect(logText.contains("Output preserved for inspection"))
         #expect(!viewModel.isEncoding)
+    }
+
+    @Test func failedRipDoesNotAutoEjectDVD() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+
+        let appSettings = RipTestSupport.makeTestAppSettings()
+        appSettings.shouldAutoEjectAfterSuccessfulRip = true
+        let runner = RipTestSupport.StubHandBrakeRunner(
+            exitCode: 4,
+            outputURLToCreate: testEnvironment.outputURL
+        )
+        let dvdDeviceEjector = RipTestSupport.RecordingDVDDeviceEjector()
+        let viewModel = RipTestSupport.makeRunnableViewModel(
+            environment: testEnvironment,
+            runner: runner,
+            appSettings: appSettings,
+            dvdDeviceEjector: dvdDeviceEjector
+        )
+
+        await viewModel.startRip { _ in }
+
+        #expect(dvdDeviceEjector.ejectedURLs.isEmpty)
+        #expect(viewModel.primaryAction == .rip)
+    }
+
+    @Test func failedRipUsesDisabledNotificationPreference() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+
+        let appSettings = RipTestSupport.makeTestAppSettings()
+        appSettings.isCompletionNotificationEnabled = false
+        let runner = RipTestSupport.StubHandBrakeRunner(
+            exitCode: 4,
+            outputURLToCreate: testEnvironment.outputURL
+        )
+        let ripNotifier = RipTestSupport.RecordingRipNotifier()
+        let viewModel = RipTestSupport.makeRunnableViewModel(
+            environment: testEnvironment,
+            runner: runner,
+            appSettings: appSettings,
+            ripNotifier: ripNotifier
+        )
+
+        await viewModel.startRip { _ in }
+
+        #expect(ripNotifier.failedOutputURLs == [testEnvironment.outputURL])
+        #expect(ripNotifier.failureExitCodes == [4])
+        #expect(ripNotifier.failureNotificationEnabledValues == [false])
+    }
+
+    @Test func preflightFailureDoesNotNotify() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+        try FileManager.default.removeItem(atPath: testEnvironment.configuration.handBrakeCLIPath)
+
+        let ripNotifier = RipTestSupport.RecordingRipNotifier()
+        let viewModel = RipTestSupport.makeRunnableViewModel(
+            environment: testEnvironment,
+            runner: RipTestSupport.StubHandBrakeRunner(exitCode: 0, outputURLToCreate: nil),
+            ripNotifier: ripNotifier
+        )
+
+        await viewModel.startRip { _ in }
+
+        #expect(ripNotifier.completedOutputURLs.isEmpty)
+        #expect(ripNotifier.failedOutputURLs.isEmpty)
+        #expect(viewModel.statusMessage.contains("HandBrakeCLI was not found"))
     }
 
     @Test func cancelRipDeletesIncompleteOutputFile() async throws {
