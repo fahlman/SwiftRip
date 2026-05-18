@@ -171,7 +171,9 @@ final class RipViewModel: ObservableObject {
             outputURL: outputURL,
             arguments: arguments,
             logDirectoryURL: defaultLogDirectory,
-            executablePath: configuration.handBrakeCLIPath
+            executablePath: configuration.handBrakeCLIPath,
+            libdvdcssPath: configuration.libdvdcssPath,
+            presetURL: configuration.presetURL
         )
         logFileURL = activeRip?.log.url
 
@@ -212,10 +214,18 @@ final class RipViewModel: ObservableObject {
 
         if result.exitCode == 0 {
             activeRip?.protectCompletedOutput()
+            activeRip?.log.appendLine("Completed output protected from cancellation cleanup: \(outputURL.path)")
             progress = 1
         }
 
         isEncoding = false
+
+        if result.exitCode == 0 {
+            activeRip?.log.appendOutcome("Completed")
+        } else {
+            activeRip?.log.appendLine("Output preserved for inspection: \(outputURL.path)")
+            activeRip?.log.appendOutcome("Failed")
+        }
 
         let logWriteError = appendExitCodeAndSaveLog(result.exitCode)
 
@@ -249,6 +259,7 @@ final class RipViewModel: ObservableObject {
         }
 
         self.activeRip?.log.appendBlankLine("Rip stopped by user.")
+        self.activeRip?.log.appendOutcome("Canceled")
         _ = saveActiveLog()
         clearActiveRipFiles()
     }
@@ -273,6 +284,7 @@ final class RipViewModel: ObservableObject {
 
     private func savePreflightFailure(_ message: String) {
         activeRip?.log.appendLine(message)
+        activeRip?.log.appendOutcome("Preflight failed")
         let logWriteError = saveActiveLog()
         statusMessage = "\(message) Log saved to \(activeLogPath)."
         appendLogWriteErrorIfNeeded(logWriteError)

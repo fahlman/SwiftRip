@@ -11,6 +11,26 @@ import Testing
 @MainActor
 struct ProcessHandBrakeRunnerTests {
 
+    @Test func forwardsStandardOutputAndStandardError() async {
+        let runner = ProcessHandBrakeRunner()
+        var output = ""
+
+        let result = await runner.run(
+            executablePath: "/bin/sh",
+            arguments: ["-c", "echo standard-output; echo standard-error >&2"],
+            onOutput: { text in
+                output += text
+            }
+        )
+        await RipTestSupport.waitUntil {
+            output.contains("standard-output") && output.contains("standard-error")
+        }
+
+        #expect(result.exitCode == 0)
+        #expect(output.contains("standard-output"))
+        #expect(output.contains("standard-error"))
+    }
+
     @Test func cancellationTerminatesRunningProcess() async {
         let runner = ProcessHandBrakeRunner()
         let task = Task {

@@ -40,7 +40,14 @@ struct RipViewModelRipLifecycleTests {
 
         #expect(logURL.deletingLastPathComponent() == logDirectory)
         #expect(logText.contains("SwiftRip Log"))
+        #expect(logText.contains("Started:"))
+        #expect(logText.contains("HandBrakeCLI:"))
+        #expect(logText.contains("libdvdcss:"))
+        #expect(logText.contains("Preset:"))
         #expect(logText.contains("HandBrakeCLI was not found"))
+        #expect(logText.contains("Outcome: Preflight failed"))
+        #expect(logText.contains("Finished:"))
+        #expect(logText.contains("Elapsed:"))
     }
 
     @Test func missingLibdvdcssWritesLogFile() async throws {
@@ -59,6 +66,7 @@ struct RipViewModelRipLifecycleTests {
         let logText = try String(contentsOf: logURL, encoding: .utf8)
 
         #expect(logText.contains("libdvdcss.2.dylib was not found"))
+        #expect(logText.contains("Outcome: Preflight failed"))
         #expect(viewModel.statusMessage.contains("libdvdcss.2.dylib was not found"))
         #expect(!viewModel.isEncoding)
     }
@@ -79,6 +87,7 @@ struct RipViewModelRipLifecycleTests {
         let logText = try String(contentsOf: logURL, encoding: .utf8)
 
         #expect(logText.contains("SwiftRip preset was not found"))
+        #expect(logText.contains("Outcome: Preflight failed"))
         #expect(viewModel.statusMessage.contains("SwiftRip preset was not found"))
         #expect(!viewModel.isEncoding)
     }
@@ -102,8 +111,13 @@ struct RipViewModelRipLifecycleTests {
         }
         await RipTestSupport.waitUntil { revealedURL != nil }
 
+        let logURL = try #require(viewModel.logFileURL)
+        let logText = try String(contentsOf: logURL, encoding: .utf8)
+
         #expect(FileManager.default.fileExists(atPath: outputURL.path))
         #expect(revealedURL == outputURL)
+        #expect(logText.contains("Outcome: Completed"))
+        #expect(logText.contains("Completed output protected from cancellation cleanup"))
         #expect(!viewModel.isEncoding)
     }
 
@@ -121,8 +135,13 @@ struct RipViewModelRipLifecycleTests {
         await viewModel.startRip { _ in }
         await RipTestSupport.waitUntil { viewModel.statusMessage.contains("HandBrakeCLI failed with exit code 4") }
 
+        let logURL = try #require(viewModel.logFileURL)
+        let logText = try String(contentsOf: logURL, encoding: .utf8)
+
         #expect(FileManager.default.fileExists(atPath: testEnvironment.outputURL.path))
         #expect(viewModel.statusMessage.contains("HandBrakeCLI failed with exit code 4"))
+        #expect(logText.contains("Outcome: Failed"))
+        #expect(logText.contains("Output preserved for inspection"))
         #expect(!viewModel.isEncoding)
     }
 
@@ -142,7 +161,12 @@ struct RipViewModelRipLifecycleTests {
         viewModel.cancelRip()
         await ripTask.value
 
+        let logURL = try #require(viewModel.logFileURL)
+        let logText = try String(contentsOf: logURL, encoding: .utf8)
+
         #expect(!FileManager.default.fileExists(atPath: outputURL.path))
+        #expect(logText.contains("Outcome: Canceled"))
+        #expect(logText.contains("Deleted incomplete output file"))
         #expect(!viewModel.isEncoding)
     }
 }

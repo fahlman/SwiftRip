@@ -19,7 +19,9 @@ struct RipSession {
         outputURL: URL,
         arguments: [String],
         logDirectoryURL: URL,
-        executablePath: String
+        executablePath: String,
+        libdvdcssPath: String,
+        presetURL: URL
     ) {
         self.input = input
         self.outputURL = outputURL
@@ -31,6 +33,8 @@ struct RipSession {
             outputURL: outputURL,
             arguments: arguments,
             executablePath: executablePath,
+            libdvdcssPath: libdvdcssPath,
+            presetURL: presetURL,
             url: logURL,
             directoryURL: logDirectoryURL
         )
