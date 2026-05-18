@@ -8,6 +8,8 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct ContentView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @State private var viewModel = RipViewModel()
     @State private var interruptionCoordinator = RipInterruptionCoordinator.shared
     @State private var isDVDPickerPresented = false
@@ -70,6 +72,9 @@ struct ContentView: View {
             height: SwiftRipLayout.MainWindow.discIconFrameHeight
         )
         .accessibilityElement(children: .combine)
+        .accessibilityLabel(AppStrings.dvdStatusAccessibilityLabel)
+        .accessibilityValue(dvdStatusAccessibilityValue)
+        .accessibilityIdentifier("dvdStatus")
     }
 
     private var discImage: some View {
@@ -78,7 +83,7 @@ struct ContentView: View {
             .symbolRenderingMode(.hierarchical)
             .foregroundStyle(SwiftRipColors.discIcon)
             .opacity(hasSelectedDVD ? 1 : 0.45)
-            .symbolEffect(.rotate.byLayer, options: .repeat(.continuous), isActive: viewModel.isEncoding)
+            .symbolEffect(.rotate.byLayer, options: .repeat(.continuous), isActive: viewModel.isEncoding && !reduceMotion)
     }
 
     private var discBadge: some View {
@@ -102,6 +107,7 @@ struct ContentView: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .frame(maxWidth: .infinity)
+                .accessibilityIdentifier("dvdName")
         }
     }
 
@@ -115,6 +121,7 @@ struct ContentView: View {
         .keyboardShortcut(.defaultAction)
         .buttonStyle(SwiftRipButtonStyle(prominence: .primary))
         .controlSize(.large)
+        .accessibilityIdentifier("primaryActionButton")
     }
 
     private func performPrimaryButtonAction() {
@@ -139,6 +146,14 @@ struct ContentView: View {
 
     private var hasSelectedDVD: Bool {
         viewModel.hasSelectedDVD
+    }
+
+    private var dvdStatusAccessibilityValue: String {
+        if viewModel.isEncoding, let selectedDVDName = viewModel.selectedDVDName {
+            return AppStrings.ripping(selectedDVDName)
+        }
+
+        return viewModel.selectedDVDName ?? Self.noValidDVDTitle
     }
 
     private func startRip() {
@@ -196,13 +211,21 @@ struct ContentView: View {
         VStack(spacing: SwiftRipLayout.MainWindow.statusSpacing) {
             ProgressView(value: viewModel.progress)
                 .frame(width: SwiftRipLayout.MainWindow.progressWidth)
+                .accessibilityLabel(AppStrings.progressAccessibilityLabel)
+                .accessibilityValue(AppStrings.percentComplete(progressPercent))
+                .accessibilityIdentifier("ripProgress")
 
-            Text("\(Int(viewModel.progress * 100))%")
+            Text("\(progressPercent)%")
                 .swiftRipProgressCaption()
+                .accessibilityHidden(true)
         }
         .opacity(viewModel.isEncoding ? 1 : 0)
         .frame(maxWidth: .infinity)
         .frame(height: SwiftRipLayout.MainWindow.statusHeight)
+    }
+
+    private var progressPercent: Int {
+        Int(viewModel.progress * 100)
     }
 }
 

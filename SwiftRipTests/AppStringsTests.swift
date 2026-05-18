@@ -19,6 +19,9 @@ struct AppStringsTests {
         #expect(AppStrings.stopRipConfirmationTitle == "Stop Rip?")
         #expect(AppStrings.stopRipConfirmationMessage == "Stopping now will terminate HandBrakeCLI and delete the incomplete output file.")
         #expect(AppStrings.keepRippingTitle == "Keep Ripping")
+        #expect(AppStrings.dvdStatusAccessibilityLabel == "DVD status")
+        #expect(AppStrings.progressAccessibilityLabel == "Rip progress")
+        #expect(AppStrings.percentComplete(42) == "42 percent")
     }
 
     @Test func formatsCompletionAndFailureMessages() {

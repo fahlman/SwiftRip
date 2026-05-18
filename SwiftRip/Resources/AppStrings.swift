@@ -19,6 +19,8 @@ enum AppStrings {
     nonisolated static let stopRipConfirmationTitle = localized("Stop Rip?")
     nonisolated static let stopRipConfirmationMessage = localized("Stopping now will terminate HandBrakeCLI and delete the incomplete output file.")
     nonisolated static let keepRippingTitle = localized("Keep Ripping")
+    nonisolated static let dvdStatusAccessibilityLabel = localized("DVD status")
+    nonisolated static let progressAccessibilityLabel = localized("Rip progress")
     nonisolated static let initialStatusMessage = localized("Choose a DVD and output file to begin.")
     nonisolated static let fallbackMovieName = localized("Movie")
     nonisolated static let readyStatusPrefix = localized("Ready to rip ")
@@ -82,6 +84,10 @@ enum AppStrings {
 
     nonisolated static func ripping(_ dvdName: String) -> String {
         String(format: localized("Ripping %@..."), dvdName)
+    }
+
+    nonisolated static func percentComplete(_ percent: Int) -> String {
+        String(format: localized("%d percent"), percent)
     }
 
     nonisolated static func ripCompleteNotificationBody(fileName: String) -> String {

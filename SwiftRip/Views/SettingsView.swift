@@ -26,6 +26,7 @@ struct SettingsView: View {
             footer
         }
         .swiftRipWindowFrame(width: SwiftRipLayout.SettingsWindow.width, height: SwiftRipLayout.SettingsWindow.height)
+        .accessibilityIdentifier("settingsWindow")
     }
 
     private var settingsHeader: some View {
@@ -37,6 +38,8 @@ struct SettingsView: View {
             Text(AppStrings.settingsFilesTitle)
                 .swiftRipSectionTitle()
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("settingsHeader")
     }
 
     private var filesSection: some View {
@@ -50,6 +53,7 @@ struct SettingsView: View {
                     .foregroundStyle(SwiftRipColors.errorText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
+                    .accessibilityIdentifier("settingsErrorMessage")
             }
         }
     }
@@ -63,12 +67,15 @@ struct SettingsView: View {
 
             Toggle(AppStrings.settingsNotificationTitle, isOn: $settings.isCompletionNotificationEnabled)
                 .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
+                .accessibilityIdentifier("completionNotificationToggle")
 
             Toggle(AppStrings.settingsRevealCompletedFileTitle, isOn: $settings.shouldRevealCompletedFile)
                 .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
+                .accessibilityIdentifier("revealCompletedFileToggle")
 
             Toggle(AppStrings.settingsAutoEjectTitle, isOn: $settings.shouldAutoEjectAfterSuccessfulRip)
                 .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
+                .accessibilityIdentifier("autoEjectToggle")
         }
     }
 
@@ -84,6 +91,7 @@ struct SettingsView: View {
             }
             .keyboardShortcut(.cancelAction)
             .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
+            .accessibilityIdentifier("settingsCancelButton")
 
             Button {
                 dismissSettingsWindow()
@@ -93,6 +101,7 @@ struct SettingsView: View {
             }
             .keyboardShortcut(.defaultAction)
             .buttonStyle(SwiftRipButtonStyle(prominence: .primary))
+            .accessibilityIdentifier("settingsOKButton")
         }
         .swiftRipDialogFooterPadding()
     }
@@ -120,6 +129,7 @@ struct SettingsView: View {
                     .frame(width: SwiftRipLayout.Button.settingsWidth)
             }
             .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
+            .accessibilityIdentifier("changeOutputDirectoryButton")
 
             Button {
                 settings.resetOutputDirectoryToMovies()
@@ -130,6 +140,7 @@ struct SettingsView: View {
             }
             .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
             .disabled(settings.isUsingDefaultOutputDirectory)
+            .accessibilityIdentifier("resetOutputDirectoryButton")
 
             Spacer(minLength: 0)
         }
@@ -149,6 +160,8 @@ struct SettingsView: View {
             }
             .labelsHidden()
             .frame(width: 240, alignment: .leading)
+            .accessibilityLabel(AppStrings.settingsFilenameFormatTitle)
+            .accessibilityIdentifier("filenameFormatPicker")
         }
     }
 
@@ -166,6 +179,8 @@ struct SettingsView: View {
             }
             .labelsHidden()
             .frame(width: 160, alignment: .leading)
+            .accessibilityLabel(AppStrings.settingsCompletionSoundTitle)
+            .accessibilityIdentifier("completionSoundPicker")
         }
     }
 
@@ -193,6 +208,10 @@ struct SettingsView: View {
         .lineLimit(1)
         .truncationMode(.middle)
         .textSelection(.enabled)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(AppStrings.settingsOutputLocationTitle)
+        .accessibilityValue(settings.outputDirectoryURL.path)
+        .accessibilityIdentifier("outputDirectoryBreadcrumb")
     }
 
     private var outputDirectoryBreadcrumbItems: [String] {

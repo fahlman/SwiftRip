@@ -23,6 +23,7 @@ struct AboutSwiftRipView: View {
         }
         .padding(SwiftRipLayout.AboutWindow.contentPadding)
         .swiftRipWindowFrame(width: SwiftRipLayout.AboutWindow.width, height: SwiftRipLayout.AboutWindow.height)
+        .accessibilityIdentifier("aboutWindow")
     }
 
     private var headerSection: some View {
@@ -40,11 +41,14 @@ struct AboutSwiftRipView: View {
                     .swiftRipSecondaryText()
             }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("aboutHeader")
     }
 
     private var descriptionSection: some View {
         Text(Self.appDescription)
             .swiftRipSecondaryText()
+            .accessibilityIdentifier("aboutDescription")
     }
 
     private var bundledToolsSection: some View {
@@ -92,6 +96,7 @@ struct AboutSwiftRipView: View {
         .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
         .disabled(licensesURL == nil)
         .padding(.top, SwiftRipLayout.AboutWindow.buttonTopPadding)
+        .accessibilityIdentifier("showLicensesButton")
     }
 
     private var appVersionText: String {
