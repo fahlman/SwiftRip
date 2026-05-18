@@ -13,15 +13,15 @@ struct RipPreflightCheck {
 
     func failureMessage() -> String? {
         if !fileManager.isExecutableFile(atPath: configuration.handBrakeCLIPath) {
-            return "\(RipConfiguration.handBrakeCLIExecutableName) was not found at \(configuration.handBrakeCLIPath)."
+            return AppStrings.missingHandBrakeCLI(path: configuration.handBrakeCLIPath)
         }
 
         if !fileManager.fileExists(atPath: configuration.libdvdcssPath) {
-            return "\(RipConfiguration.libdvdcssLibraryName) was not found at \(configuration.libdvdcssPath)."
+            return AppStrings.missingLibdvdcss(path: configuration.libdvdcssPath)
         }
 
         if !fileManager.fileExists(atPath: configuration.presetURL.path) {
-            return "\(RipConfiguration.appName) preset was not found at \(configuration.presetURL.path)."
+            return AppStrings.missingPreset(appName: RipConfiguration.appName, path: configuration.presetURL.path)
         }
 
         return nil

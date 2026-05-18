@@ -10,9 +10,9 @@ import Foundation
 
 @MainActor
 final class RipViewModel: ObservableObject {
-    static let initialStatusMessage = "Choose a DVD and output file to begin."
-    private static let fallbackMovieName = "Movie"
-    private static let readyStatusPrefix = "Ready to rip "
+    static let initialStatusMessage = AppStrings.initialStatusMessage
+    private static let fallbackMovieName = AppStrings.fallbackMovieName
+    private static let readyStatusPrefix = AppStrings.readyStatusPrefix
     private static let movieFileExtension = "m4v"
 
     @Published var dvdVolumes: [DVDVolume] = []
@@ -106,13 +106,13 @@ final class RipViewModel: ObservableObject {
         guard isValidDVD(at: dvdURL) else {
             selectedDVD = nil
             outputURL = nil
-            statusMessage = "Choose a folder that contains a \(DVDVolume.videoTSDirectoryName) directory."
+            statusMessage = AppStrings.chooseVideoTSFolder(directoryName: DVDVolume.videoTSDirectoryName)
             return
         }
 
         selectedDVD = DVDVolume(id: dvdURL.path, name: dvdURL.lastPathComponent, path: dvdURL.path)
         updateDefaultOutputURL()
-        statusMessage = "\(Self.readyStatusPrefix)\(dvdURL.lastPathComponent)."
+        statusMessage = AppStrings.readyToRip(dvdURL.lastPathComponent)
     }
 
     func setOutputURL(_ url: URL) {
@@ -159,7 +159,7 @@ final class RipViewModel: ObservableObject {
         cleanupCancelledRip()
 
         isEncoding = false
-        statusMessage = "Rip stopped."
+        statusMessage = AppStrings.ripStopped
     }
 
     private func performRip(revealOutput: @escaping @MainActor (URL) -> Void) async {
@@ -188,7 +188,7 @@ final class RipViewModel: ObservableObject {
 
         progress = 0
         isEncoding = true
-        statusMessage = "Ripping \(selectedDVD.name)..."
+        statusMessage = AppStrings.ripping(selectedDVD.name)
 
         let result = await handBrakeRunner.run(
             executablePath: configuration.handBrakeCLIPath,
@@ -208,7 +208,7 @@ final class RipViewModel: ObservableObject {
             activeRip?.log.appendExitCode(result.exitCode)
             cleanupCancelledRip()
             isEncoding = false
-            statusMessage = "Rip stopped."
+            statusMessage = AppStrings.ripStopped
             return
         }
 
@@ -230,10 +230,10 @@ final class RipViewModel: ObservableObject {
         let logWriteError = appendExitCodeAndSaveLog(result.exitCode)
 
         if result.exitCode == 0 {
-            statusMessage = "Done. Saved to \(outputURL.path). Log saved to \(activeLogPath)."
+            statusMessage = AppStrings.done(outputPath: outputURL.path, logPath: activeLogPath)
             revealOutput(outputURL)
         } else {
-            statusMessage = "HandBrakeCLI failed with exit code \(result.exitCode). Log saved to \(activeLogPath)."
+            statusMessage = AppStrings.handBrakeFailed(exitCode: result.exitCode, logPath: activeLogPath)
         }
 
         appendLogWriteErrorIfNeeded(logWriteError)
@@ -279,14 +279,14 @@ final class RipViewModel: ObservableObject {
 
     private func appendLogWriteErrorIfNeeded(_ error: Error?) {
         guard let error else { return }
-        statusMessage += " Could not write log: \(error.localizedDescription)"
+        statusMessage += " \(AppStrings.couldNotWriteLog(error.localizedDescription))"
     }
 
     private func savePreflightFailure(_ message: String) {
         activeRip?.log.appendLine(message)
         activeRip?.log.appendOutcome("Preflight failed")
         let logWriteError = saveActiveLog()
-        statusMessage = "\(message) Log saved to \(activeLogPath)."
+        statusMessage = "\(message) \(AppStrings.logSaved(to: activeLogPath))"
         appendLogWriteErrorIfNeeded(logWriteError)
     }
 

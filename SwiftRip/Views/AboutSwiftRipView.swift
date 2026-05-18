@@ -9,12 +9,12 @@ import AppKit
 import SwiftUI
 
 struct AboutSwiftRipView: View {
-    private static let appDescription = "A small macOS DVD ripping tool built around bundled ARM64 ripping tools."
+    private static let appDescription = AppStrings.aboutDescription
     private static let appIconName = "opticaldisc.fill"
     private static let handBrakeCLIIconName = "wineglass.fill"
     private static let libdvdcssIconName = "cone.fill"
     private static let licenseIconName = "doc.text"
-    private static let openLicensesFolderTitle = "Show Licenses"
+    private static let openLicensesFolderTitle = AppStrings.showLicensesTitle
     private static let openLicensesFolderIconName = "folder"
     private static let licenseFileSuffix = "COPYING"
 
@@ -68,7 +68,7 @@ struct AboutSwiftRipView: View {
 
     private var bundledToolsSection: some View {
         VStack(alignment: .leading, spacing: Layout.sectionSpacing) {
-            Text("Bundled Tools")
+            Text(AppStrings.bundledToolsTitle)
                 .font(.headline)
 
             Label(RipConfiguration.handBrakeCLIExecutableName, systemImage: Self.handBrakeCLIIconName)
@@ -78,10 +78,10 @@ struct AboutSwiftRipView: View {
 
     private var licensesSection: some View {
         VStack(alignment: .leading, spacing: Layout.sectionSpacing) {
-            Text("Licenses")
+            Text(AppStrings.licensesTitle)
                 .font(.headline)
 
-            Text("\(RipConfiguration.appName) includes bundled third-party tools. Their license files are included in the app bundle resources.")
+            Text(AppStrings.licenseDescription(appName: RipConfiguration.appName))
                 .foregroundStyle(.secondary)
 
             licenseList
@@ -92,7 +92,7 @@ struct AboutSwiftRipView: View {
     private var licenseList: some View {
         Group {
             if licenseNames.isEmpty {
-                Text("No bundled license files were found.")
+                Text(AppStrings.noLicensesFound)
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(licenseNames, id: \.self) { name in
@@ -119,13 +119,13 @@ struct AboutSwiftRipView: View {
 
         switch (version, build) {
         case let (.some(version), .some(build)):
-            return "Version \(version) (\(build))"
+            return AppStrings.version(version, build: build)
         case let (.some(version), .none):
-            return "Version \(version)"
+            return AppStrings.version(version)
         case let (.none, .some(build)):
-            return "Build \(build)"
+            return AppStrings.build(build)
         case (.none, .none):
-            return "Version unknown"
+            return AppStrings.versionUnknown
         }
     }
 

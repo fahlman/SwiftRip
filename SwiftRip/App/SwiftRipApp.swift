@@ -13,7 +13,7 @@ struct SwiftRipApp: App {
     @Environment(\.openWindow) private var openWindow
 
     private static let aboutWindowID = "about-swiftrip"
-    private static let aboutTitle = "About \(RipConfiguration.appName)"
+    private static let aboutTitle = AppStrings.aboutTitle(appName: RipConfiguration.appName)
 
     var body: some Scene {
         WindowGroup {

@@ -1,0 +1,317 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%@ includes bundled third-party tools. Their license files are included in the app bundle resources." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ includes bundled third-party tools. Their license files are included in the app bundle resources."
+          }
+        }
+      }
+    },
+    "%@ preset was not found at %@." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ preset was not found at %@."
+          }
+        }
+      }
+    },
+    "%@ was not found at %@." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ was not found at %@."
+          }
+        }
+      }
+    },
+    "%lld%%" : {
+
+    },
+    "A small macOS DVD ripping tool built around bundled ARM64 ripping tools." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A small macOS DVD ripping tool built around bundled ARM64 ripping tools."
+          }
+        }
+      }
+    },
+    "About %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "About %@"
+          }
+        }
+      }
+    },
+    "Build %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Build %@"
+          }
+        }
+      }
+    },
+    "Bundled Tools" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bundled Tools"
+          }
+        }
+      }
+    },
+    "Choose a DVD and output file to begin." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a DVD and output file to begin."
+          }
+        }
+      }
+    },
+    "Choose a folder that contains a %@ directory." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a folder that contains a %@ directory."
+          }
+        }
+      }
+    },
+    "Choose DVD…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose DVD…"
+          }
+        }
+      }
+    },
+    "Could not write log: %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not write log: %@"
+          }
+        }
+      }
+    },
+    "Done. Saved to %@. Log saved to %@." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done. Saved to %@. Log saved to %@."
+          }
+        }
+      }
+    },
+    "HandBrakeCLI failed with exit code %d. Log saved to %@." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HandBrakeCLI failed with exit code %d. Log saved to %@."
+          }
+        }
+      }
+    },
+    "Licenses" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Licenses"
+          }
+        }
+      }
+    },
+    "Log saved to %@." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Log saved to %@."
+          }
+        }
+      }
+    },
+    "Movie" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Movie"
+          }
+        }
+      }
+    },
+    "No bundled license files were found." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No bundled license files were found."
+          }
+        }
+      }
+    },
+    "No valid DVD" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No valid DVD"
+          }
+        }
+      }
+    },
+    "Ready to rip " : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready to rip "
+          }
+        }
+      }
+    },
+    "Ready to rip %@." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready to rip %@."
+          }
+        }
+      }
+    },
+    "Rip" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rip"
+          }
+        }
+      }
+    },
+    "Rip stopped." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rip stopped."
+          }
+        }
+      }
+    },
+    "Ripping %@..." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ripping %@..."
+          }
+        }
+      }
+    },
+    "Show Licenses" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Licenses"
+          }
+        }
+      }
+    },
+    "Stop" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop"
+          }
+        }
+      }
+    },
+    "Version %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@"
+          }
+        }
+      }
+    },
+    "Version %@ (%@)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@ (%@)"
+          }
+        }
+      }
+    },
+    "Version unknown" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version unknown"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

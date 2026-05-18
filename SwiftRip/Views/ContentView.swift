@@ -13,10 +13,10 @@ struct ContentView: View {
     @StateObject private var viewModel = RipViewModel()
     @State private var isDVDPickerPresented = false
 
-    private static let chooseDVDTitle = "Choose DVD…"
-    private static let ripTitle = "Rip"
-    private static let stopTitle = "Stop"
-    private static let noValidDVDTitle = "No valid DVD"
+    private static let chooseDVDTitle = AppStrings.chooseDVDTitle
+    private static let ripTitle = AppStrings.ripTitle
+    private static let stopTitle = AppStrings.stopTitle
+    private static let noValidDVDTitle = AppStrings.noValidDVDTitle
     private static let opticalDiscIconName = "opticaldisc"
     private static let selectedOpticalDiscIconName = "opticaldisc.fill"
     private static let ripIconName = "arrow.trianglehead.2.clockwise"
