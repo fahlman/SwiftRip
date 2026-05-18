@@ -19,6 +19,37 @@ struct RipViewModelSelectionTests {
         #expect(viewModel.suggestedOutputName == "My Movie.m4v")
     }
 
+    @Test func suggestedOutputNameCanUseOriginalDVDName() {
+        let appSettings = RipTestSupport.makeTestAppSettings()
+        appSettings.outputFilenameFormat = .originalName
+        let viewModel = RipViewModel(
+            configuration: .production,
+            fileManager: .default,
+            handBrakeRunner: RipTestSupport.StubHandBrakeRunner(exitCode: 0, outputURLToCreate: nil),
+            volumeFinder: FileSystemDVDVolumeFinder(),
+            appSettings: appSettings
+        )
+        viewModel.selectDVD(DVDVolume(id: "/Volumes/MY_MOVIE", name: "MY_MOVIE", path: "/Volumes/MY_MOVIE"))
+
+        #expect(viewModel.suggestedOutputName == "MY_MOVIE.m4v")
+    }
+
+    @Test func suggestedOutputNameCanIncludeDate() {
+        let appSettings = RipTestSupport.makeTestAppSettings()
+        appSettings.outputFilenameFormat = .datedTitleCase
+        let viewModel = RipViewModel(
+            configuration: .production,
+            fileManager: .default,
+            handBrakeRunner: RipTestSupport.StubHandBrakeRunner(exitCode: 0, outputURLToCreate: nil),
+            volumeFinder: FileSystemDVDVolumeFinder(),
+            appSettings: appSettings
+        )
+        viewModel.selectDVD(DVDVolume(id: "/Volumes/MY_MOVIE", name: "MY_MOVIE", path: "/Volumes/MY_MOVIE"))
+
+        #expect(viewModel.suggestedOutputName.hasPrefix("My Movie - "))
+        #expect(viewModel.suggestedOutputName.hasSuffix(".m4v"))
+    }
+
     @Test func setOutputURLNormalizesExtensionToM4V() {
         let viewModel = RipViewModel()
         viewModel.selectDVD(DVDVolume(id: "/Volumes/MOVIE", name: "MOVIE", path: "/Volumes/MOVIE"))

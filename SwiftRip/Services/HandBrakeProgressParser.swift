@@ -8,11 +8,11 @@
 import Foundation
 
 struct HandBrakeProgressParser {
-    private static let progressRegex = try? NSRegularExpression(
+    private nonisolated static let progressRegex = try? NSRegularExpression(
         pattern: #"Encoding:\s+task\s+\d+\s+of\s+\d+,\s+([0-9]+(?:\.[0-9]+)?)\s*%"#
     )
 
-    static func progressValue(from text: String) -> Double? {
+    nonisolated static func progressValue(from text: String) -> Double? {
         guard let progressRegex else { return nil }
 
         let range = NSRange(text.startIndex..<text.endIndex, in: text)

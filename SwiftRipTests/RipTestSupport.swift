@@ -25,20 +25,30 @@ enum RipTestSupport {
     static func makeRunnableViewModel(
         environment: RunnableTestEnvironment,
         runner: HandBrakeRunning,
+        appSettings: AppSettings? = nil,
         completionNotifier: RipCompletionNotifying = NoOpRipCompletionNotifier()
     ) -> RipViewModel {
+        let resolvedAppSettings = appSettings ?? makeTestAppSettings()
         let viewModel = RipViewModel(
             configuration: environment.configuration,
             fileManager: .default,
             handBrakeRunner: runner,
             volumeFinder: FileSystemDVDVolumeFinder(),
-            appSettings: .shared,
+            appSettings: resolvedAppSettings,
             completionNotifier: completionNotifier,
             logDirectoryOverride: environment.logDirectory
         )
 
         viewModel.selectDVD(environment.dvd, outputURL: environment.outputURL)
         return viewModel
+    }
+
+    @MainActor
+    static func makeTestAppSettings() -> AppSettings {
+        let suiteName = "SwiftRipTests-\(UUID().uuidString)"
+        let userDefaults = UserDefaults(suiteName: suiteName) ?? .standard
+        userDefaults.removePersistentDomain(forName: suiteName)
+        return AppSettings(userDefaults: userDefaults, fileManager: .default)
     }
 
     static func makeRunnableTestEnvironment() throws -> RunnableTestEnvironment {
@@ -119,6 +129,8 @@ enum RipTestSupport {
     struct NoOpRipCompletionNotifier: RipCompletionNotifying {
         func notifyRipCompleted(
             outputURL: URL,
+            sound: CompletionSound,
+            isNotificationEnabled: Bool,
             logError: @escaping @MainActor @Sendable (String) -> Void
         ) {}
     }
@@ -126,12 +138,18 @@ enum RipTestSupport {
     @MainActor
     final class RecordingRipCompletionNotifier: RipCompletionNotifying {
         private(set) var completedOutputURLs: [URL] = []
+        private(set) var completionSounds: [CompletionSound] = []
+        private(set) var notificationEnabledValues: [Bool] = []
 
         func notifyRipCompleted(
             outputURL: URL,
+            sound: CompletionSound,
+            isNotificationEnabled: Bool,
             logError: @escaping @MainActor @Sendable (String) -> Void
         ) {
             completedOutputURLs.append(outputURL)
+            completionSounds.append(sound)
+            notificationEnabledValues.append(isNotificationEnabled)
         }
     }
 

@@ -8,7 +8,6 @@
 import Testing
 @testable import SwiftRip
 
-@MainActor
 struct HandBrakeProgressParserTests {
 
     @Test func parsesProgressPercentage() {

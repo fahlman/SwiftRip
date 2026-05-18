@@ -9,7 +9,6 @@ import Foundation
 import Testing
 @testable import SwiftRip
 
-@MainActor
 struct RipConfigurationTests {
 
     @Test func handBrakeArgumentsContainInputOutputAndPresetOptions() {

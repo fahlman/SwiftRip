@@ -8,7 +8,6 @@
 import Testing
 @testable import SwiftRip
 
-@MainActor
 struct AppStringsTests {
 
     @Test func formatsCoreStatusMessages() {
@@ -27,5 +26,21 @@ struct AppStringsTests {
         #expect(AppStrings.aboutTitle(appName: "SwiftRip") == "About SwiftRip")
         #expect(AppStrings.version("1.0", build: "1") == "Version 1.0 (1)")
         #expect(AppStrings.build("1") == "Build 1")
+    }
+
+    @Test func exposesSettingsLabels() {
+        #expect(AppStrings.settingsFilesTitle == "Files")
+        #expect(AppStrings.settingsOutputLocationTitle == "Output Location:")
+        #expect(AppStrings.settingsChangeTitle == "Change…")
+        #expect(AppStrings.settingsResetTitle == "Reset")
+        #expect(AppStrings.settingsCancelTitle == "Cancel")
+        #expect(AppStrings.settingsOKTitle == "OK")
+        #expect(AppStrings.settingsCompletionTitle == "Completion")
+        #expect(AppStrings.settingsCompletionSoundTitle == "Sound:")
+        #expect(AppStrings.settingsNotificationTitle == "Show notification when finished")
+        #expect(AppStrings.settingsRevealCompletedFileTitle == "Reveal completed file in Finder")
+        #expect(AppStrings.settingsFilenameFormatTitle == "Filename Format:")
+        #expect(AppStrings.completionSoundNoneTitle == "None")
+        #expect(AppStrings.filenameFormatDatedTitleCaseTitle == "Movie Name - YYYY-MM-DD.m4v")
     }
 }

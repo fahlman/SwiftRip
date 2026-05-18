@@ -9,7 +9,6 @@ import Foundation
 import Testing
 @testable import SwiftRip
 
-@MainActor
 struct BundleIntegrityTests {
 
     @Test func productionConfigurationReferencesBundledToolsAndPreset() {

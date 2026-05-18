@@ -13,6 +13,8 @@ protocol RipCompletionNotifying: Sendable {
     @MainActor
     func notifyRipCompleted(
         outputURL: URL,
+        sound: CompletionSound,
+        isNotificationEnabled: Bool,
         logError: @escaping @MainActor @Sendable (String) -> Void
     )
 }
@@ -21,9 +23,15 @@ struct SystemRipCompletionNotifier: RipCompletionNotifying {
     @MainActor
     func notifyRipCompleted(
         outputURL: URL,
+        sound: CompletionSound,
+        isNotificationEnabled: Bool,
         logError: @escaping @MainActor @Sendable (String) -> Void
     ) {
-        NSSound(named: "Glass")?.play()
+        if let soundName = sound.soundName {
+            NSSound(named: soundName)?.play()
+        }
+
+        guard isNotificationEnabled else { return }
 
         Task {
             let center = UNUserNotificationCenter.current()

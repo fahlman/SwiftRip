@@ -15,6 +15,7 @@ final class RipViewModel {
     static let initialStatusMessage = AppStrings.initialStatusMessage
     private static let fallbackMovieName = AppStrings.fallbackMovieName
     private static let movieFileExtension = "m4v"
+    private static let datedFilenameDateFormat = "yyyy-MM-dd"
 
     private var state = RipLifecycleState()
 
@@ -247,11 +248,22 @@ final class RipViewModel {
     }
 
     private func suggestedOutputName(for dvd: DVDVolume) -> String {
-        let baseName = dvd.name
+        let baseName: String
+        switch appSettings.outputFilenameFormat {
+        case .titleCase:
+            baseName = titleCasedDVDName(dvd.name)
+        case .originalName:
+            baseName = dvd.name
+        case .datedTitleCase:
+            baseName = "\(titleCasedDVDName(dvd.name)) - \(Self.filenameDateFormatter.string(from: Date()))"
+        }
+        return "\(baseName).\(Self.movieFileExtension)"
+    }
+
+    private func titleCasedDVDName(_ name: String) -> String {
+        name
             .replacingOccurrences(of: "_", with: " ")
             .capitalized
-
-        return "\(baseName).\(Self.movieFileExtension)"
     }
 
     private func clearDVDSelection() {
@@ -349,7 +361,9 @@ final class RipViewModel {
         )
         updateState { $0.completeRip(statusMessage: AppStrings.done(outputPath: outputURL.path, logPath: activeLogPath)) }
         appendLogWriteErrorIfNeeded(logWriteError)
-        revealOutput(outputURL)
+        if appSettings.shouldRevealCompletedFile {
+            revealOutput(outputURL)
+        }
         clearActiveRipFiles()
     }
 
@@ -371,7 +385,11 @@ final class RipViewModel {
     }
 
     private func notifyRipCompleted(outputURL: URL) {
-        completionNotifier.notifyRipCompleted(outputURL: outputURL) { [weak self] message in
+        completionNotifier.notifyRipCompleted(
+            outputURL: outputURL,
+            sound: appSettings.completionSound,
+            isNotificationEnabled: appSettings.isCompletionNotificationEnabled
+        ) { [weak self] message in
             self?.activeRip?.log.appendBlankLine(message)
         }
     }
@@ -441,5 +459,11 @@ final class RipViewModel {
 
     private func saveActiveLog() -> Error? {
         activeRip?.log.save(using: fileManager)
+    }
+
+    private static var filenameDateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = datedFilenameDateFormat
+        return formatter
     }
 }

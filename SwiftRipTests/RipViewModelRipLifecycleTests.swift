@@ -134,6 +134,40 @@ struct RipViewModelRipLifecycleTests {
         #expect(!viewModel.isEncoding)
     }
 
+    @Test func successfulRipUsesCompletionPreferencesAndCanSkipReveal() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+
+        let appSettings = RipTestSupport.makeTestAppSettings()
+        appSettings.completionSound = .none
+        appSettings.isCompletionNotificationEnabled = false
+        appSettings.shouldRevealCompletedFile = false
+        let runner = RipTestSupport.StubHandBrakeRunner(
+            exitCode: 0,
+            outputURLToCreate: testEnvironment.outputURL
+        )
+        let completionNotifier = RipTestSupport.RecordingRipCompletionNotifier()
+        let viewModel = RipTestSupport.makeRunnableViewModel(
+            environment: testEnvironment,
+            runner: runner,
+            appSettings: appSettings,
+            completionNotifier: completionNotifier
+        )
+        var revealedURL: URL?
+
+        try "complete output".write(to: testEnvironment.outputURL, atomically: true, encoding: .utf8)
+
+        await viewModel.startRip { url in
+            revealedURL = url
+        }
+
+        #expect(revealedURL == nil)
+        #expect(completionNotifier.completedOutputURLs == [testEnvironment.outputURL])
+        #expect(completionNotifier.completionSounds == [.none])
+        #expect(completionNotifier.notificationEnabledValues == [false])
+        #expect(viewModel.primaryAction == .eject)
+    }
+
     @Test func failedRipKeepsOutputFileForInspection() async throws {
         let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
         defer { testEnvironment.cleanup() }

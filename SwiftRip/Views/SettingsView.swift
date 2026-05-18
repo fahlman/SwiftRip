@@ -20,46 +20,16 @@ struct SettingsView: View {
                         .font(.system(size: SwiftRipLayout.SettingsWindow.iconSize))
                         .symbolRenderingMode(.hierarchical)
 
-                    Text("Files")
+                    Text(AppStrings.settingsFilesTitle)
                         .swiftRipSectionTitle()
                 }
 
                 Divider()
 
                 VStack(alignment: .leading, spacing: SwiftRipLayout.SettingsWindow.rowSpacing) {
-                    HStack(alignment: .center, spacing: 10) {
-                        Text("Output Location:")
-                            .swiftRipSettingsLabel()
-                            .frame(width: SwiftRipLayout.SettingsWindow.labelWidth, alignment: .trailing)
-
-                        outputDirectoryBreadcrumb
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-
-                    HStack(spacing: SwiftRipLayout.SettingsWindow.controlSpacing) {
-                        Spacer()
-                            .frame(width: SwiftRipLayout.SettingsWindow.controlIndent)
-
-                        Button {
-                            chooseOutputDirectory()
-                        } label: {
-                            Text("Change…")
-                                .frame(width: SwiftRipLayout.Button.settingsWidth)
-                        }
-                        .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
-
-                        Button {
-                            settings.resetOutputDirectoryToMovies()
-                            errorMessage = nil
-                        } label: {
-                            Text("Reset")
-                                .frame(width: SwiftRipLayout.Button.settingsWidth)
-                        }
-                        .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
-                        .disabled(settings.isUsingDefaultOutputDirectory)
-
-                        Spacer(minLength: 0)
-                    }
+                    outputLocationRow
+                    outputLocationControls
+                    filenameFormatRow
 
                     if let errorMessage {
                         Text(errorMessage)
@@ -67,6 +37,21 @@ struct SettingsView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
                     }
+                }
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: SwiftRipLayout.SettingsWindow.rowSpacing) {
+                    Text(AppStrings.settingsCompletionTitle)
+                        .swiftRipSectionTitle()
+
+                    completionSoundRow
+
+                    Toggle(AppStrings.settingsNotificationTitle, isOn: $settings.isCompletionNotificationEnabled)
+                        .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
+
+                    Toggle(AppStrings.settingsRevealCompletedFileTitle, isOn: $settings.shouldRevealCompletedFile)
+                        .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
                 }
 
                 Spacer(minLength: 0)
@@ -81,7 +66,7 @@ struct SettingsView: View {
                 Button {
                     dismissSettingsWindow()
                 } label: {
-                    Text("Cancel")
+                    Text(AppStrings.settingsCancelTitle)
                         .frame(width: SwiftRipLayout.Button.dialogFooterWidth)
                 }
                 .keyboardShortcut(.cancelAction)
@@ -90,7 +75,7 @@ struct SettingsView: View {
                 Button {
                     dismissSettingsWindow()
                 } label: {
-                    Text("OK")
+                    Text(AppStrings.settingsOKTitle)
                         .frame(width: SwiftRipLayout.Button.dialogFooterWidth)
                 }
                 .keyboardShortcut(.defaultAction)
@@ -99,6 +84,78 @@ struct SettingsView: View {
             .swiftRipDialogFooterPadding()
         }
         .swiftRipWindowFrame(width: SwiftRipLayout.SettingsWindow.width, height: SwiftRipLayout.SettingsWindow.height)
+    }
+
+    private var outputLocationRow: some View {
+        HStack(alignment: .center, spacing: 10) {
+            Text(AppStrings.settingsOutputLocationTitle)
+                .swiftRipSettingsLabel()
+                .frame(width: SwiftRipLayout.SettingsWindow.labelWidth, alignment: .trailing)
+
+            outputDirectoryBreadcrumb
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var outputLocationControls: some View {
+        HStack(spacing: SwiftRipLayout.SettingsWindow.controlSpacing) {
+            Spacer()
+                .frame(width: SwiftRipLayout.SettingsWindow.controlIndent)
+
+            Button {
+                chooseOutputDirectory()
+            } label: {
+                Text(AppStrings.settingsChangeTitle)
+                    .frame(width: SwiftRipLayout.Button.settingsWidth)
+            }
+            .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
+
+            Button {
+                settings.resetOutputDirectoryToMovies()
+                errorMessage = nil
+            } label: {
+                Text(AppStrings.settingsResetTitle)
+                    .frame(width: SwiftRipLayout.Button.settingsWidth)
+            }
+            .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
+            .disabled(settings.isUsingDefaultOutputDirectory)
+
+            Spacer(minLength: 0)
+        }
+    }
+
+    private var filenameFormatRow: some View {
+        HStack {
+            Text(AppStrings.settingsFilenameFormatTitle)
+                .swiftRipSettingsLabel()
+                .frame(width: SwiftRipLayout.SettingsWindow.labelWidth, alignment: .trailing)
+
+            Picker("", selection: $settings.outputFilenameFormat) {
+                ForEach(OutputFilenameFormat.allCases) { format in
+                    Text(format.title)
+                        .tag(format)
+                }
+            }
+            .labelsHidden()
+            .frame(width: 240, alignment: .leading)
+        }
+    }
+
+    private var completionSoundRow: some View {
+        HStack {
+            Text(AppStrings.settingsCompletionSoundTitle)
+                .swiftRipSettingsLabel()
+                .frame(width: SwiftRipLayout.SettingsWindow.labelWidth, alignment: .trailing)
+
+            Picker("", selection: $settings.completionSound) {
+                ForEach(CompletionSound.allCases) { sound in
+                    Text(sound.title)
+                        .tag(sound)
+                }
+            }
+            .labelsHidden()
+            .frame(width: 160, alignment: .leading)
+        }
     }
 
     private var outputDirectoryBreadcrumb: some View {
@@ -153,7 +210,7 @@ struct SettingsView: View {
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
         panel.canCreateDirectories = true
-        panel.prompt = "Change"
+        panel.prompt = AppStrings.settingsChangePrompt
 
         guard panel.runModal() == .OK, let url = panel.url else { return }
 
