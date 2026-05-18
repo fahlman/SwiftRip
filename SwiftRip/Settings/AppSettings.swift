@@ -5,19 +5,23 @@
 //  Created by Ryan Fahlsing on 5/18/26.
 //
 
-import Combine
 import Foundation
+import Observation
 
 @MainActor
-final class AppSettings: ObservableObject {
+@Observable
+final class AppSettings {
     static let shared = AppSettings()
 
     private static let outputDirectoryBookmarkKey = "outputDirectoryBookmark"
 
-    @Published private(set) var outputDirectoryURL: URL
+    private(set) var outputDirectoryURL: URL
 
+    @ObservationIgnored
     private let userDefaults: UserDefaults
+    @ObservationIgnored
     private let fileManager: FileManager
+    @ObservationIgnored
     private var securityScopedOutputDirectoryURL: URL?
 
     convenience init() {

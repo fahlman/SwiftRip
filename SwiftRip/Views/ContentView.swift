@@ -10,7 +10,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct ContentView: View {
-    @StateObject private var viewModel = RipViewModel()
+    @State private var viewModel = RipViewModel()
     @State private var isDVDPickerPresented = false
 
     private static let chooseDVDTitle = AppStrings.chooseDVDTitle

@@ -6,25 +6,35 @@
 //
 
 import AppKit
-import Combine
 import Foundation
+import Observation
 
 @MainActor
-final class RipViewModel: ObservableObject {
+@Observable
+final class RipViewModel {
     static let initialStatusMessage = AppStrings.initialStatusMessage
     private static let fallbackMovieName = AppStrings.fallbackMovieName
     private static let movieFileExtension = "m4v"
 
-    @Published private var state = RipLifecycleState()
+    private var state = RipLifecycleState()
 
+    @ObservationIgnored
     private var ripTask: Task<Void, Never>?
+    @ObservationIgnored
     private var activeRip: RipSession?
+    @ObservationIgnored
     private let configuration: RipConfiguration
+    @ObservationIgnored
     private let fileManager: FileManager
+    @ObservationIgnored
     private let handBrakeRunner: HandBrakeRunning
+    @ObservationIgnored
     private let volumeFinder: DVDVolumeFinding
+    @ObservationIgnored
     private let appSettings: AppSettings
+    @ObservationIgnored
     private let completionNotifier: RipCompletionNotifying
+    @ObservationIgnored
     private let logDirectoryOverride: URL?
 
     convenience init() {

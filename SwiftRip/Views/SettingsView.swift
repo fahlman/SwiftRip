@@ -9,7 +9,7 @@ import AppKit
 import SwiftUI
 
 struct SettingsView: View {
-    @StateObject private var settings = AppSettings.shared
+    @State private var settings = AppSettings.shared
     @State private var errorMessage: String?
 
     var body: some View {
