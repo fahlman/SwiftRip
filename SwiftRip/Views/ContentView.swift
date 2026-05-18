@@ -9,6 +9,31 @@ import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
 
+struct RipCommandActions {
+    let canRip: Bool
+    let canStop: Bool
+    let canEject: Bool
+    let canRevealOutput: Bool
+    let canRevealLog: Bool
+    let chooseDVD: @MainActor () -> Void
+    let rip: @MainActor () -> Void
+    let stop: @MainActor () -> Void
+    let eject: @MainActor () -> Void
+    let revealOutput: @MainActor () -> Void
+    let revealLog: @MainActor () -> Void
+}
+
+private struct RipCommandActionsKey: FocusedValueKey {
+    typealias Value = RipCommandActions
+}
+
+extension FocusedValues {
+    var ripCommandActions: RipCommandActions? {
+        get { self[RipCommandActionsKey.self] }
+        set { self[RipCommandActionsKey.self] = newValue }
+    }
+}
+
 struct ContentView: View {
     @State private var viewModel = RipViewModel()
     @State private var isDVDPickerPresented = false
@@ -44,6 +69,7 @@ struct ContentView: View {
         .onDisappear {
             viewModel.cancelRip()
         }
+        .focusedSceneValue(\.ripCommandActions, ripCommandActions)
     }
 
     private var dvdIcon: some View {
@@ -106,18 +132,60 @@ struct ContentView: View {
     private func performPrimaryButtonAction() {
         switch viewModel.primaryAction {
         case .chooseDVD:
-            isDVDPickerPresented = true
+            chooseDVD()
         case .rip:
-            Task {
-                await viewModel.startRip { outputURL in
-                    NSWorkspace.shared.activateFileViewerSelecting([outputURL])
-                }
-            }
+            startRip()
         case .stop:
-            viewModel.cancelRip()
+            stopRip()
         case .eject:
-            viewModel.ejectCompletedDVD()
+            ejectDVD()
         }
+    }
+
+    private var ripCommandActions: RipCommandActions {
+        RipCommandActions(
+            canRip: viewModel.primaryAction == .rip,
+            canStop: viewModel.primaryAction == .stop,
+            canEject: viewModel.primaryAction == .eject,
+            canRevealOutput: viewModel.outputURL != nil,
+            canRevealLog: viewModel.logFileURL != nil,
+            chooseDVD: chooseDVD,
+            rip: startRip,
+            stop: stopRip,
+            eject: ejectDVD,
+            revealOutput: revealOutput,
+            revealLog: revealLog
+        )
+    }
+
+    private func chooseDVD() {
+        isDVDPickerPresented = true
+    }
+
+    private func startRip() {
+        Task {
+            await viewModel.startRip { outputURL in
+                NSWorkspace.shared.activateFileViewerSelecting([outputURL])
+            }
+        }
+    }
+
+    private func stopRip() {
+        viewModel.cancelRip()
+    }
+
+    private func ejectDVD() {
+        viewModel.ejectCompletedDVD()
+    }
+
+    private func revealOutput() {
+        guard let outputURL = viewModel.outputURL else { return }
+        NSWorkspace.shared.activateFileViewerSelecting([outputURL])
+    }
+
+    private func revealLog() {
+        guard let logFileURL = viewModel.logFileURL else { return }
+        NSWorkspace.shared.activateFileViewerSelecting([logFileURL])
     }
 
     private var statusSection: some View {

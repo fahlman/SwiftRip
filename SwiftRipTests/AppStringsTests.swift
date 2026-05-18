@@ -15,6 +15,9 @@ struct AppStringsTests {
         #expect(AppStrings.readyToRip("Movie") == "Ready to rip Movie.")
         #expect(AppStrings.ripping("Movie") == "Ripping Movie...")
         #expect(AppStrings.ripStopped == "Rip stopped.")
+        #expect(AppStrings.ripMenuTitle == "Rip")
+        #expect(AppStrings.revealOutputTitle == "Reveal Output in Finder")
+        #expect(AppStrings.revealLogTitle == "Reveal Log in Finder")
     }
 
     @Test func formatsCompletionAndFailureMessages() {
