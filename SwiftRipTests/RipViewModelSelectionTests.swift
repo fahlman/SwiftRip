@@ -1,5 +1,5 @@
 //
-//  SwiftRipTests.swift
+//  RipViewModelSelectionTests.swift
 //  SwiftRipTests
 //
 //  Created by Ryan Fahlsing on 5/16/26.
@@ -61,6 +61,57 @@ struct RipViewModelSelectionTests {
         #expect(viewModel.selectedDVD == nil)
         #expect(viewModel.outputURL == nil)
         #expect(!viewModel.isPrimaryActionAvailable)
+    }
+
+    @Test func chooseDVDNormalizesVideoTSFolderToParentDVD() throws {
+        let dvdURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+            .appendingPathComponent("MOVIE", isDirectory: true)
+        let videoTSURL = dvdURL.appendingPathComponent(DVDVolume.videoTSDirectoryName, isDirectory: true)
+        try FileManager.default.createDirectory(at: videoTSURL, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.removeItem(at: dvdURL.deletingLastPathComponent())
+        }
+
+        let viewModel = RipViewModel()
+        viewModel.chooseDVD(at: videoTSURL)
+
+        #expect(viewModel.selectedDVD == DVDVolume(id: dvdURL.path, name: "MOVIE", path: dvdURL.path))
+        #expect(viewModel.outputURL?.lastPathComponent == "Movie.m4v")
+    }
+
+    @Test func refreshDVDsPreservesSelectedDVDWhenStillMounted() throws {
+        let selectedDVD = DVDVolume(id: "/Volumes/MOVIE", name: "MOVIE", path: "/Volumes/MOVIE")
+        let viewModel = RipViewModel(
+            configuration: .production,
+            fileManager: .default,
+            handBrakeRunner: RipTestSupport.StubHandBrakeRunner(exitCode: 0, outputURLToCreate: nil),
+            volumeFinder: RipTestSupport.StubDVDVolumeFinder(volumes: [selectedDVD])
+        )
+        viewModel.selectedDVD = selectedDVD
+        viewModel.outputURL = URL(fileURLWithPath: "/tmp/Custom.m4v")
+
+        viewModel.refreshDVDs()
+
+        #expect(viewModel.selectedDVD == selectedDVD)
+        #expect(viewModel.outputURL?.path == "/tmp/Custom.m4v")
+    }
+
+    @Test func refreshDVDsSelectsFirstDVDWhenSelectionIsGone() {
+        let firstDVD = DVDVolume(id: "/Volumes/FIRST", name: "FIRST", path: "/Volumes/FIRST")
+        let staleDVD = DVDVolume(id: "/Volumes/STALE", name: "STALE", path: "/Volumes/STALE")
+        let viewModel = RipViewModel(
+            configuration: .production,
+            fileManager: .default,
+            handBrakeRunner: RipTestSupport.StubHandBrakeRunner(exitCode: 0, outputURLToCreate: nil),
+            volumeFinder: RipTestSupport.StubDVDVolumeFinder(volumes: [firstDVD])
+        )
+        viewModel.selectedDVD = staleDVD
+
+        viewModel.refreshDVDs()
+
+        #expect(viewModel.selectedDVD == firstDVD)
+        #expect(viewModel.outputURL?.lastPathComponent == "First.m4v")
     }
 
     @Test func defaultLogDirectoryUsesUserLibraryLogs() {

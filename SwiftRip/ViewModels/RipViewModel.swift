@@ -10,9 +10,6 @@ import Foundation
 
 @MainActor
 final class RipViewModel: ObservableObject {
-    private static let progressRegex = try? NSRegularExpression(
-        pattern: #"Encoding:\s+task\s+\d+\s+of\s+\d+,\s+([0-9]+(?:\.[0-9]+)?)\s*%"#
-    )
     static let initialStatusMessage = "Choose a DVD and output file to begin."
     private static let fallbackMovieName = "Movie"
     private static let fallbackDVDName = "DVD"
@@ -29,17 +26,21 @@ final class RipViewModel: ObservableObject {
 
     private var logText = ""
     private var ripTask: Task<Void, Never>?
-    private var activeRip: ActiveRip?
+    private var activeRip: RipSession?
     private let configuration: RipConfiguration
     private let fileManager: FileManager
     private let handBrakeRunner: HandBrakeRunning
     private let volumeFinder: DVDVolumeFinding
     private let logDirectoryOverride: URL?
 
-    private struct ActiveRip {
+    private struct RipSession {
         let outputURL: URL
         let logURL: URL
-        var shouldDeleteOutputOnCancel = true
+        private(set) var shouldDeleteOutputOnCancel = true
+
+        mutating func protectCompletedOutput() {
+            shouldDeleteOutputOnCancel = false
+        }
     }
 
     convenience init() {
@@ -177,24 +178,15 @@ final class RipViewModel: ObservableObject {
 
         let arguments = configuration.handBrakeArguments(input: selectedDVD, outputURL: outputURL)
         let logURL = makeLogFileURL(for: selectedDVD)
-        activeRip = ActiveRip(outputURL: outputURL, logURL: logURL)
+        activeRip = RipSession(outputURL: outputURL, logURL: logURL)
         logFileURL = logURL
         logText = makeLogHeader(input: selectedDVD, outputURL: outputURL, arguments: arguments)
 
-        guard fileManager.isExecutableFile(atPath: configuration.handBrakeCLIPath) else {
-            savePreflightFailure("\(RipConfiguration.handBrakeCLIExecutableName) was not found at \(configuration.handBrakeCLIPath).", logURL: logURL)
-            clearActiveRipFiles()
-            return
-        }
-
-        guard fileManager.fileExists(atPath: configuration.libdvdcssPath) else {
-            savePreflightFailure("\(RipConfiguration.libdvdcssLibraryName) was not found at \(configuration.libdvdcssPath).", logURL: logURL)
-            clearActiveRipFiles()
-            return
-        }
-
-        guard fileManager.fileExists(atPath: configuration.presetURL.path) else {
-            savePreflightFailure("\(RipConfiguration.appName) preset was not found at \(configuration.presetURL.path).", logURL: logURL)
+        if let preflightFailure = RipPreflightCheck(
+            configuration: configuration,
+            fileManager: fileManager
+        ).failureMessage() {
+            savePreflightFailure(preflightFailure, logURL: logURL)
             clearActiveRipFiles()
             return
         }
@@ -211,7 +203,7 @@ final class RipViewModel: ObservableObject {
 
                 self.logText += line
 
-                if let parsedProgress = Self.progressValue(from: line) {
+                if let parsedProgress = HandBrakeProgressParser.progressValue(from: line) {
                     self.progress = parsedProgress
                 }
             }
@@ -226,7 +218,7 @@ final class RipViewModel: ObservableObject {
         }
 
         if result.exitCode == 0 {
-            activeRip?.shouldDeleteOutputOnCancel = false
+            activeRip?.protectCompletedOutput()
             progress = 1
         }
 
@@ -272,18 +264,6 @@ final class RipViewModel: ObservableObject {
         activeRip = nil
     }
 
-    private static func progressValue(from text: String) -> Double? {
-        guard let progressRegex else { return nil }
-
-        let range = NSRange(text.startIndex..<text.endIndex, in: text)
-        guard let match = progressRegex.matches(in: text, range: range).last,
-              let percentRange = Range(match.range(at: 1), in: text),
-              let percent = Double(text[percentRange]) else {
-            return nil
-        }
-
-        return min(max(percent / 100, 0), 1)
-    }
 
     private func appendExitCodeAndSaveLog(_ exitCode: Int32, to logURL: URL) -> Error? {
         logText += "\nExit code: \(exitCode)\n"

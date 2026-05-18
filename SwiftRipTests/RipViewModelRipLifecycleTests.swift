@@ -43,6 +43,46 @@ struct RipViewModelRipLifecycleTests {
         #expect(logText.contains("HandBrakeCLI was not found"))
     }
 
+    @Test func missingLibdvdcssWritesLogFile() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+        try FileManager.default.removeItem(atPath: testEnvironment.configuration.libdvdcssPath)
+
+        let viewModel = RipTestSupport.makeRunnableViewModel(
+            environment: testEnvironment,
+            runner: RipTestSupport.StubHandBrakeRunner(exitCode: 0, outputURLToCreate: nil)
+        )
+
+        await viewModel.startRip { _ in }
+
+        let logURL = try #require(viewModel.logFileURL)
+        let logText = try String(contentsOf: logURL, encoding: .utf8)
+
+        #expect(logText.contains("libdvdcss.2.dylib was not found"))
+        #expect(viewModel.statusMessage.contains("libdvdcss.2.dylib was not found"))
+        #expect(!viewModel.isEncoding)
+    }
+
+    @Test func missingPresetWritesLogFile() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+        try FileManager.default.removeItem(at: testEnvironment.configuration.presetURL)
+
+        let viewModel = RipTestSupport.makeRunnableViewModel(
+            environment: testEnvironment,
+            runner: RipTestSupport.StubHandBrakeRunner(exitCode: 0, outputURLToCreate: nil)
+        )
+
+        await viewModel.startRip { _ in }
+
+        let logURL = try #require(viewModel.logFileURL)
+        let logText = try String(contentsOf: logURL, encoding: .utf8)
+
+        #expect(logText.contains("SwiftRip preset was not found"))
+        #expect(viewModel.statusMessage.contains("SwiftRip preset was not found"))
+        #expect(!viewModel.isEncoding)
+    }
+
     @Test func successfulRipKeepsOutputFileAndRevealsIt() async throws {
         let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
         defer { testEnvironment.cleanup() }

@@ -106,6 +106,14 @@ enum RipTestSupport {
         }
     }
 
+    struct StubDVDVolumeFinder: DVDVolumeFinding {
+        let volumes: [DVDVolume]
+
+        func findMountedDVDs() -> [DVDVolume] {
+            volumes
+        }
+    }
+
     final class WaitingHandBrakeRunner: HandBrakeRunning {
         func run(
             executablePath: String,
