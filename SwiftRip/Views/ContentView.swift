@@ -24,6 +24,27 @@ struct ContentView: View {
     private static let selectedBadgeIconName = "checkmark.circle.fill"
     private static let missingBadgeIconName = "questionmark.circle.fill"
 
+    private enum Layout {
+        static let contentSpacing: CGFloat = 16
+        static let contentPadding: CGFloat = 18
+        static let windowWidth: CGFloat = 272
+        static let windowHeight: CGFloat = 300
+        static let discIconSize: CGFloat = 104
+        static let badgeIconSize: CGFloat = 34
+        static let badgeOffsetX: CGFloat = 6
+        static let badgeOffsetY: CGFloat = 4
+        static let discIconFrameWidth: CGFloat = 122
+        static let discIconFrameHeight: CGFloat = 114
+        static let primaryButtonWidth: CGFloat = 116
+        static let progressWidth: CGFloat = 180
+        static let statusSpacing: CGFloat = 10
+        static let statusHeight: CGFloat = 38
+    }
+
+    private var hasSelectedDVD: Bool {
+        viewModel.selectedDVD != nil
+    }
+
     private enum PrimaryButtonState {
         case chooseDVD
         case rip
@@ -57,7 +78,7 @@ struct ContentView: View {
             return .stop
         }
 
-        if viewModel.selectedDVD == nil {
+        if !hasSelectedDVD {
             return .chooseDVD
         }
 
@@ -65,14 +86,14 @@ struct ContentView: View {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: Layout.contentSpacing) {
             dvdIcon
             dvdLabel
             primaryButton
             statusSection
         }
-        .padding(18)
-        .frame(width: 272, height: 300)
+        .padding(Layout.contentPadding)
+        .frame(width: Layout.windowWidth, height: Layout.windowHeight)
         .fixedSize()
         .fileImporter(
             isPresented: $isDVDPickerPresented,
@@ -92,34 +113,28 @@ struct ContentView: View {
 
     private var dvdIcon: some View {
         ZStack(alignment: .bottomTrailing) {
-            if viewModel.selectedDVD != nil {
-                Image(systemName: Self.selectedOpticalDiscIconName)
-                    .font(.system(size: 104, weight: .regular))
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(.secondary)
-                    .symbolEffect(.rotate.byLayer, options: .repeat(.continuous), isActive: viewModel.isEncoding)
-
-                Image(systemName: Self.selectedBadgeIconName)
-                    .font(.system(size: 34, weight: .semibold))
-                    .symbolRenderingMode(.palette)
-                    .foregroundStyle(.white, .green)
-                    .offset(x: 6, y: 4)
-            } else {
-                Image(systemName: Self.opticalDiscIconName)
-                    .font(.system(size: 104, weight: .regular))
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(.secondary)
-                    .opacity(0.45)
-
-                Image(systemName: Self.missingBadgeIconName)
-                    .font(.system(size: 34, weight: .semibold))
-                    .symbolRenderingMode(.palette)
-                    .foregroundStyle(.black, .gray)
-                    .offset(x: 6, y: 4)
-            }
+            discImage
+            discBadge
         }
-        .frame(width: 122, height: 114)
+        .frame(width: Layout.discIconFrameWidth, height: Layout.discIconFrameHeight)
         .accessibilityElement(children: .combine)
+    }
+
+    private var discImage: some View {
+        Image(systemName: hasSelectedDVD ? Self.selectedOpticalDiscIconName : Self.opticalDiscIconName)
+            .font(.system(size: Layout.discIconSize, weight: .regular))
+            .symbolRenderingMode(.hierarchical)
+            .foregroundStyle(.secondary)
+            .opacity(hasSelectedDVD ? 1 : 0.45)
+            .symbolEffect(.rotate.byLayer, options: .repeat(.continuous), isActive: viewModel.isEncoding)
+    }
+
+    private var discBadge: some View {
+        Image(systemName: hasSelectedDVD ? Self.selectedBadgeIconName : Self.missingBadgeIconName)
+            .font(.system(size: Layout.badgeIconSize, weight: .semibold))
+            .symbolRenderingMode(.palette)
+            .foregroundStyle(hasSelectedDVD ? .white : .black, hasSelectedDVD ? .green : .gray)
+            .offset(x: Layout.badgeOffsetX, y: Layout.badgeOffsetY)
     }
 
     private var dvdLabel: some View {
@@ -137,7 +152,7 @@ struct ContentView: View {
             performPrimaryButtonAction()
         } label: {
             Label(primaryButtonState.title, systemImage: primaryButtonState.systemImage)
-                .frame(width: 116)
+                .frame(width: Layout.primaryButtonWidth)
         }
         .keyboardShortcut(.defaultAction)
         .buttonStyle(.borderedProminent)
@@ -160,9 +175,9 @@ struct ContentView: View {
     }
 
     private var statusSection: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: Layout.statusSpacing) {
             ProgressView(value: viewModel.progress)
-                .frame(width: 180)
+                .frame(width: Layout.progressWidth)
 
             Text("\(Int(viewModel.progress * 100))%")
                 .font(.caption.monospacedDigit())
@@ -170,7 +185,7 @@ struct ContentView: View {
         }
         .opacity(viewModel.isEncoding ? 1 : 0)
         .frame(maxWidth: .infinity)
-        .frame(height: 38)
+        .frame(height: Layout.statusHeight)
     }
 }
 
