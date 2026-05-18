@@ -44,7 +44,7 @@ struct SwiftRipTests {
 
         #expect(viewModel.selectedDVD?.name == "MY_MOVIE")
         #expect(viewModel.outputURL == moviesURL.appendingPathComponent("My Movie.m4v"))
-        #expect(viewModel.canRip)
+        #expect(viewModel.isPrimaryActionAvailable)
     }
 
     @Test func chooseDVDRejectsFolderWithoutVideoTS() throws {
@@ -60,7 +60,7 @@ struct SwiftRipTests {
 
         #expect(viewModel.selectedDVD == nil)
         #expect(viewModel.outputURL == nil)
-        #expect(!viewModel.canRip)
+        #expect(!viewModel.isPrimaryActionAvailable)
     }
 
     @Test func defaultLogDirectoryUsesUserLibraryLogs() {
@@ -81,8 +81,9 @@ struct SwiftRipTests {
 
         let viewModel = RipViewModel(
             configuration: RipConfiguration(
-                handBrakeCLIPath: "/missing/HandBrakeCLI",
-                libdvdcssPath: "/missing/libdvdcss.2.dylib"
+                handBrakeCLIPath: "/missing/\(RipConfiguration.handBrakeCLIExecutableName)",
+                libdvdcssPath: "/missing/\(RipConfiguration.libdvdcssLibraryName)",
+                presetURL: URL(fileURLWithPath: "/missing/\(RipConfiguration.presetResourceName).\(RipConfiguration.presetFileExtension)")
             ),
             fileManager: .default,
             handBrakeRunner: ProcessHandBrakeRunner(),
@@ -103,9 +104,11 @@ struct SwiftRipTests {
     }
 
     @Test func handBrakeArgumentsContainInputOutputAndEncodingOptions() {
+        let presetURL = URL(fileURLWithPath: "/tmp/\(RipConfiguration.presetResourceName).\(RipConfiguration.presetFileExtension)")
         let configuration = RipConfiguration(
-            handBrakeCLIPath: "/usr/local/bin/HandBrakeCLI",
-            libdvdcssPath: "/usr/local/lib/libdvdcss.2.dylib"
+            handBrakeCLIPath: "/usr/local/bin/\(RipConfiguration.handBrakeCLIExecutableName)",
+            libdvdcssPath: "/usr/local/lib/\(RipConfiguration.libdvdcssLibraryName)",
+            presetURL: presetURL
         )
         let volume = DVDVolume(id: "/Volumes/Movie", name: "Movie", path: "/Volumes/Movie")
         let outputURL = URL(fileURLWithPath: "/tmp/Movie.m4v")
@@ -113,15 +116,11 @@ struct SwiftRipTests {
         let arguments = configuration.handBrakeArguments(input: volume, outputURL: outputURL)
 
         #expect(arguments == [
+            "--preset-import-file", presetURL.path,
+            "-Z", RipConfiguration.appName,
             "-i", "/Volumes/Movie",
             "-t", "1",
-            "-o", "/tmp/Movie.m4v",
-            "--preset", "Fast 480p30",
-            "--encoder", "vt_h265",
-            "--quality", "65",
-            "--audio", "1",
-            "--aencoder", "copy:ac3",
-            "--subtitle", "none"
+            "-o", "/tmp/Movie.m4v"
         ])
     }
 }
