@@ -100,7 +100,12 @@ struct RipViewModelRipLifecycleTests {
             exitCode: 0,
             outputURLToCreate: testEnvironment.outputURL
         )
-        let viewModel = RipTestSupport.makeRunnableViewModel(environment: testEnvironment, runner: runner)
+        let completionNotifier = RipTestSupport.RecordingRipCompletionNotifier()
+        let viewModel = RipTestSupport.makeRunnableViewModel(
+            environment: testEnvironment,
+            runner: runner,
+            completionNotifier: completionNotifier
+        )
         let outputURL = testEnvironment.outputURL
         var revealedURL: URL?
 
@@ -116,6 +121,7 @@ struct RipViewModelRipLifecycleTests {
 
         #expect(FileManager.default.fileExists(atPath: outputURL.path))
         #expect(revealedURL == outputURL)
+        #expect(completionNotifier.completedOutputURLs == [outputURL])
         #expect(logText.contains("Outcome: Completed"))
         #expect(logText.contains("Completed output protected from cancellation cleanup"))
         #expect(!viewModel.isEncoding)

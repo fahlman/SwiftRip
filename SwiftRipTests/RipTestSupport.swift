@@ -24,13 +24,16 @@ enum RipTestSupport {
     @MainActor
     static func makeRunnableViewModel(
         environment: RunnableTestEnvironment,
-        runner: HandBrakeRunning
+        runner: HandBrakeRunning,
+        completionNotifier: RipCompletionNotifying = NoOpRipCompletionNotifier()
     ) -> RipViewModel {
         let viewModel = RipViewModel(
             configuration: environment.configuration,
             fileManager: .default,
             handBrakeRunner: runner,
             volumeFinder: FileSystemDVDVolumeFinder(),
+            appSettings: .shared,
+            completionNotifier: completionNotifier,
             logDirectoryOverride: environment.logDirectory
         )
 
@@ -111,6 +114,25 @@ enum RipTestSupport {
 
         func findMountedDVDs() -> [DVDVolume] {
             volumes
+        }
+    }
+
+    struct NoOpRipCompletionNotifier: RipCompletionNotifying {
+        func notifyRipCompleted(
+            outputURL: URL,
+            logError: @escaping @MainActor (String) -> Void
+        ) {}
+    }
+
+    @MainActor
+    final class RecordingRipCompletionNotifier: RipCompletionNotifying {
+        private(set) var completedOutputURLs: [URL] = []
+
+        func notifyRipCompleted(
+            outputURL: URL,
+            logError: @escaping @MainActor (String) -> Void
+        ) {
+            completedOutputURLs.append(outputURL)
         }
     }
 
