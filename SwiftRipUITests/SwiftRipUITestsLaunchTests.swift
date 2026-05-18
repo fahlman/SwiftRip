@@ -2,8 +2,6 @@
 //  SwiftRipUITestsLaunchTests.swift
 //  SwiftRipUITests
 //
-//  Created by Ryan Fahlsing on 5/16/26.
-//
 
 import XCTest
 

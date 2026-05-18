@@ -208,6 +208,19 @@ struct ContentView: View {
     }
 
     private var statusSection: some View {
+        Group {
+            if viewModel.isEncoding {
+                progressSection
+            } else {
+                Color.clear
+                    .accessibilityHidden(true)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: SwiftRipLayout.MainWindow.statusHeight)
+    }
+
+    private var progressSection: some View {
         VStack(spacing: SwiftRipLayout.MainWindow.statusSpacing) {
             ProgressView(value: viewModel.progress)
                 .frame(width: SwiftRipLayout.MainWindow.progressWidth)
@@ -219,9 +232,6 @@ struct ContentView: View {
                 .swiftRipProgressCaption()
                 .accessibilityHidden(true)
         }
-        .opacity(viewModel.isEncoding ? 1 : 0)
-        .frame(maxWidth: .infinity)
-        .frame(height: SwiftRipLayout.MainWindow.statusHeight)
     }
 
     private var progressPercent: Int {

@@ -39,7 +39,6 @@ enum SwiftRipLayout {
         static let rowSpacing: CGFloat = 12
         static let headerSpacing: CGFloat = 6
         static let controlSpacing: CGFloat = 12
-        static let breadcrumbSpacing: CGFloat = 6
         static let iconSize: CGFloat = 24
         static let labelWidth: CGFloat = 144
         static let controlIndent: CGFloat = labelWidth + 10

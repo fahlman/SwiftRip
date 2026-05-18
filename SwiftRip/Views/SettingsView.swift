@@ -88,20 +88,20 @@ struct SettingsView: View {
             } label: {
                 Text(AppStrings.settingsCancelTitle)
                     .frame(width: SwiftRipLayout.Button.dialogFooterWidth)
+                    .accessibilityIdentifier("settingsCancelButton")
             }
             .keyboardShortcut(.cancelAction)
             .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
-            .accessibilityIdentifier("settingsCancelButton")
 
             Button {
                 dismissSettingsWindow()
             } label: {
                 Text(AppStrings.settingsOKTitle)
                     .frame(width: SwiftRipLayout.Button.dialogFooterWidth)
+                    .accessibilityIdentifier("settingsOKButton")
             }
             .keyboardShortcut(.defaultAction)
             .buttonStyle(SwiftRipButtonStyle(prominence: .primary))
-            .accessibilityIdentifier("settingsOKButton")
         }
         .swiftRipDialogFooterPadding()
     }
@@ -112,8 +112,12 @@ struct SettingsView: View {
                 .swiftRipSettingsLabel()
                 .frame(width: SwiftRipLayout.SettingsWindow.labelWidth, alignment: .trailing)
 
-            outputDirectoryBreadcrumb
+            OutputDirectoryPathControl(url: settings.outputDirectoryURL)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: 24)
+                .accessibilityLabel(AppStrings.settingsOutputLocationTitle)
+                .accessibilityValue(settings.outputDirectoryURL.path)
+                .accessibilityIdentifier("outputDirectoryPathControl")
         }
     }
 
@@ -127,9 +131,9 @@ struct SettingsView: View {
             } label: {
                 Text(AppStrings.settingsChangeTitle)
                     .frame(width: SwiftRipLayout.Button.settingsWidth)
+                    .accessibilityIdentifier("changeOutputDirectoryButton")
             }
             .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
-            .accessibilityIdentifier("changeOutputDirectoryButton")
 
             Button {
                 settings.resetOutputDirectoryToMovies()
@@ -137,10 +141,10 @@ struct SettingsView: View {
             } label: {
                 Text(AppStrings.settingsResetTitle)
                     .frame(width: SwiftRipLayout.Button.settingsWidth)
+                    .accessibilityIdentifier("resetOutputDirectoryButton")
             }
             .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
             .disabled(settings.isUsingDefaultOutputDirectory)
-            .accessibilityIdentifier("resetOutputDirectoryButton")
 
             Spacer(minLength: 0)
         }
@@ -184,52 +188,6 @@ struct SettingsView: View {
         }
     }
 
-    private var outputDirectoryBreadcrumb: some View {
-        HStack(spacing: SwiftRipLayout.SettingsWindow.breadcrumbSpacing) {
-            ForEach(outputDirectoryBreadcrumbItems.indices, id: \.self) { index in
-                if index > 0 {
-                    Image(systemName: SwiftRipSymbols.chevronRight)
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(SwiftRipColors.secondaryText)
-                }
-
-                Label {
-                    Text(outputDirectoryBreadcrumbItems[index])
-                        .foregroundStyle(SwiftRipColors.secondaryText)
-                } icon: {
-                    Image(systemName: SwiftRipSymbols.folderFill)
-                        .foregroundStyle(SwiftRipColors.folderIcon)
-                }
-                .labelStyle(.titleAndIcon)
-                .lineLimit(1)
-            }
-        }
-        .font(.body.weight(.semibold))
-        .lineLimit(1)
-        .truncationMode(.middle)
-        .textSelection(.enabled)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(AppStrings.settingsOutputLocationTitle)
-        .accessibilityValue(settings.outputDirectoryURL.path)
-        .accessibilityIdentifier("outputDirectoryBreadcrumb")
-    }
-
-    private var outputDirectoryBreadcrumbItems: [String] {
-        if settings.isUsingDefaultOutputDirectory {
-            return [NSUserName(), "Movies"]
-        }
-
-        let homeURL = FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL
-        let outputURL = settings.outputDirectoryURL.standardizedFileURL
-
-        if outputURL.path.hasPrefix(homeURL.path) {
-            let relativePath = outputURL.path.replacingOccurrences(of: homeURL.path + "/", with: "")
-            return [NSUserName()] + relativePath.split(separator: "/").map(String.init)
-        }
-
-        return outputURL.pathComponents.filter { $0 != "/" }
-    }
-
     private func dismissSettingsWindow() {
         NSApp.keyWindow?.close()
     }
@@ -255,4 +213,21 @@ struct SettingsView: View {
 
 #Preview {
     SettingsView()
+}
+
+private struct OutputDirectoryPathControl: NSViewRepresentable {
+    let url: URL
+
+    func makeNSView(context: Context) -> NSPathControl {
+        let pathControl = NSPathControl()
+        pathControl.pathStyle = .standard
+        pathControl.isEditable = false
+        pathControl.controlSize = .regular
+        pathControl.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return pathControl
+    }
+
+    func updateNSView(_ pathControl: NSPathControl, context: Context) {
+        pathControl.url = url
+    }
 }

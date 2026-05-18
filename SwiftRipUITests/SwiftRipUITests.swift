@@ -2,42 +2,79 @@
 //  SwiftRipUITests.swift
 //  SwiftRipUITests
 //
-//  Created by Ryan Fahlsing on 5/16/26.
-//
 
 import XCTest
 
 final class SwiftRipUITests: XCTestCase {
 
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-
-        // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
-
-        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
-    }
-
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
     }
 
     @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
+    func testAccessibilitySurfacesAndMenus() throws {
+        let app = launchApp()
+
+        XCTAssertTrue(element("primaryActionButton", in: app).waitForExistence(timeout: 5))
+        XCTAssertTrue(element("dvdStatus", in: app).exists)
+        XCTAssertTrue(element("dvdName", in: app).exists)
+
+        app.typeKey(",", modifierFlags: .command)
+
+        XCTAssertTrue(element("settingsWindow", in: app).waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Output Location:"].exists)
+        XCTAssertTrue(app.staticTexts["Filename Format:"].exists)
+        XCTAssertTrue(app.staticTexts["Completion"].exists)
+        XCTAssertTrue(app.staticTexts["Sound:"].exists)
+        XCTAssertTrue(app.checkBoxes["Show notification when finished"].exists)
+        XCTAssertTrue(app.checkBoxes["Reveal completed file in Finder"].exists)
+        XCTAssertTrue(app.checkBoxes["Eject DVD after successful rip"].exists)
+        XCTAssertTrue(app.buttons["Change…"].exists)
+        XCTAssertTrue(app.buttons["OK"].exists)
+
+        app.buttons["OK"].click()
+
+        assertAppMenuExposesItem("About SwiftRip", in: app)
+        app.typeKey(.escape, modifierFlags: [])
+
+        openMenu("File", in: app)
+        XCTAssertTrue(app.menuItems["Choose DVD…"].exists)
+        app.typeKey(.escape, modifierFlags: [])
+
+        openMenu("Rip", in: app)
+        XCTAssertTrue(app.menuItems["Rip"].exists)
+        XCTAssertTrue(app.menuItems["Stop"].exists)
+        XCTAssertTrue(app.menuItems["Eject"].exists)
+        XCTAssertTrue(app.menuItems["Reveal Output in Finder"].exists)
+        XCTAssertTrue(app.menuItems["Reveal Log in Finder"].exists)
+        app.typeKey(.escape, modifierFlags: [])
+    }
+
+    @MainActor
+    private func launchApp() -> XCUIApplication {
         let app = XCUIApplication()
         app.launch()
-
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // XCUIAutomation Documentation
-        // https://developer.apple.com/documentation/xcuiautomation
+        return app
     }
 
     @MainActor
-    func testLaunchPerformance() throws {
-        // This measures how long it takes to launch your application.
-        measure(metrics: [XCTApplicationLaunchMetric()]) {
-            XCUIApplication().launch()
-        }
+    private func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any)[identifier]
+    }
+
+    @MainActor
+    private func assertAppMenuExposesItem(_ title: String, in app: XCUIApplication) {
+        let menu = openMenu("SwiftRip", in: app)
+        let menuItem = menu.menuItems[title]
+        XCTAssertTrue(menuItem.waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    @discardableResult
+    private func openMenu(_ title: String, in app: XCUIApplication) -> XCUIElement {
+        let menu = app.menuBars.menuBarItems[title]
+        XCTAssertTrue(menu.waitForExistence(timeout: 5))
+        menu.click()
+        return menu
     }
 }

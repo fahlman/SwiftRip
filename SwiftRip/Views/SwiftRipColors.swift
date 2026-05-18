@@ -16,7 +16,6 @@ enum SwiftRipColors {
     static let selectedBadgeBackground = Color.green
     static let missingBadgeForeground = Color.black
     static let missingBadgeBackground = Color.gray
-    static let folderIcon = Color.blue
     static let errorText = Color.red
 
     static func primaryButtonBackground(isPressed: Bool) -> Color {
