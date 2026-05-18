@@ -1,0 +1,108 @@
+//
+//  RipViewModelRipLifecycleTests.swift
+//  SwiftRipTests
+//
+//  Created by Ryan Fahlsing on 5/16/26.
+//
+
+import Foundation
+import Testing
+@testable import SwiftRip
+
+@MainActor
+struct RipViewModelRipLifecycleTests {
+
+    @Test func missingHandBrakeWritesLogFile() async throws {
+        let logDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer {
+            try? FileManager.default.removeItem(at: logDirectory)
+        }
+
+        let viewModel = RipViewModel(
+            configuration: RipConfiguration(
+                handBrakeCLIPath: "/missing/\(RipConfiguration.handBrakeCLIExecutableName)",
+                libdvdcssPath: "/missing/\(RipConfiguration.libdvdcssLibraryName)",
+                presetURL: URL(fileURLWithPath: "/missing/\(RipConfiguration.presetResourceName).\(RipConfiguration.presetFileExtension)")
+            ),
+            fileManager: .default,
+            handBrakeRunner: ProcessHandBrakeRunner(),
+            volumeFinder: FileSystemDVDVolumeFinder(),
+            logDirectoryOverride: logDirectory
+        )
+        viewModel.selectedDVD = DVDVolume(id: "/Volumes/MY_MOVIE", name: "MY_MOVIE", path: "/Volumes/MY_MOVIE")
+        viewModel.outputURL = URL(fileURLWithPath: "/tmp/My Movie.m4v")
+
+        await viewModel.startRip { _ in }
+
+        let logURL = try #require(viewModel.logFileURL)
+        let logText = try String(contentsOf: logURL, encoding: .utf8)
+
+        #expect(logURL.deletingLastPathComponent() == logDirectory)
+        #expect(logText.contains("SwiftRip Log"))
+        #expect(logText.contains("HandBrakeCLI was not found"))
+    }
+
+    @Test func successfulRipKeepsOutputFileAndRevealsIt() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+
+        let runner = RipTestSupport.StubHandBrakeRunner(
+            exitCode: 0,
+            outputURLToCreate: testEnvironment.outputURL
+        )
+        let viewModel = RipTestSupport.makeRunnableViewModel(environment: testEnvironment, runner: runner)
+        let outputURL = testEnvironment.outputURL
+        var revealedURL: URL?
+
+        try "complete output".write(to: outputURL, atomically: true, encoding: .utf8)
+
+        await viewModel.startRip { url in
+            revealedURL = url
+        }
+        await RipTestSupport.waitUntil { revealedURL != nil }
+
+        #expect(FileManager.default.fileExists(atPath: outputURL.path))
+        #expect(revealedURL == outputURL)
+        #expect(!viewModel.isEncoding)
+    }
+
+    @Test func failedRipKeepsOutputFileForInspection() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+
+        let runner = RipTestSupport.StubHandBrakeRunner(
+            exitCode: 4,
+            outputURLToCreate: testEnvironment.outputURL
+        )
+        let viewModel = RipTestSupport.makeRunnableViewModel(environment: testEnvironment, runner: runner)
+        try "failed output".write(to: testEnvironment.outputURL, atomically: true, encoding: .utf8)
+
+        await viewModel.startRip { _ in }
+        await RipTestSupport.waitUntil { viewModel.statusMessage.contains("HandBrakeCLI failed with exit code 4") }
+
+        #expect(FileManager.default.fileExists(atPath: testEnvironment.outputURL.path))
+        #expect(viewModel.statusMessage.contains("HandBrakeCLI failed with exit code 4"))
+        #expect(!viewModel.isEncoding)
+    }
+
+    @Test func cancelRipDeletesIncompleteOutputFile() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+
+        let runner = RipTestSupport.WaitingHandBrakeRunner()
+        let viewModel = RipTestSupport.makeRunnableViewModel(environment: testEnvironment, runner: runner)
+        let outputURL = testEnvironment.outputURL
+        try "incomplete output".write(to: outputURL, atomically: true, encoding: .utf8)
+
+        let ripTask = Task {
+            await viewModel.startRip { _ in }
+        }
+        await RipTestSupport.waitUntil { viewModel.progress > 0 }
+        viewModel.cancelRip()
+        await ripTask.value
+
+        #expect(!FileManager.default.fileExists(atPath: outputURL.path))
+        #expect(!viewModel.isEncoding)
+    }
+}
