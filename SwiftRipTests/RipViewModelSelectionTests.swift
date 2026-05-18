@@ -14,13 +14,14 @@ struct RipViewModelSelectionTests {
 
     @Test func suggestedOutputNameUsesSelectedDVDName() {
         let viewModel = RipViewModel()
-        viewModel.selectedDVD = DVDVolume(id: "/Volumes/MY_MOVIE", name: "MY_MOVIE", path: "/Volumes/MY_MOVIE")
+        viewModel.selectDVD(DVDVolume(id: "/Volumes/MY_MOVIE", name: "MY_MOVIE", path: "/Volumes/MY_MOVIE"))
 
         #expect(viewModel.suggestedOutputName == "My Movie.m4v")
     }
 
     @Test func setOutputURLNormalizesExtensionToM4V() {
         let viewModel = RipViewModel()
+        viewModel.selectDVD(DVDVolume(id: "/Volumes/MOVIE", name: "MOVIE", path: "/Volumes/MOVIE"))
         viewModel.setOutputURL(URL(fileURLWithPath: "/tmp/Movie.mp4"))
 
         #expect(viewModel.outputURL?.path == "/tmp/Movie.m4v")
@@ -73,6 +74,7 @@ struct RipViewModelSelectionTests {
         #expect(viewModel.selectedDVD == nil)
         #expect(viewModel.outputURL == nil)
         #expect(!viewModel.isPrimaryActionAvailable)
+        #expect(viewModel.primaryAction == .chooseDVD)
     }
 
     @Test func chooseDVDNormalizesVideoTSFolderToParentDVD() throws {
@@ -90,6 +92,7 @@ struct RipViewModelSelectionTests {
 
         #expect(viewModel.selectedDVD == DVDVolume(id: dvdURL.path, name: "MOVIE", path: dvdURL.path))
         #expect(viewModel.outputURL?.lastPathComponent == "Movie.m4v")
+        #expect(viewModel.primaryAction == .rip)
     }
 
     @Test func refreshDVDsPreservesSelectedDVDWhenStillMounted() throws {
@@ -100,8 +103,7 @@ struct RipViewModelSelectionTests {
             handBrakeRunner: RipTestSupport.StubHandBrakeRunner(exitCode: 0, outputURLToCreate: nil),
             volumeFinder: RipTestSupport.StubDVDVolumeFinder(volumes: [selectedDVD])
         )
-        viewModel.selectedDVD = selectedDVD
-        viewModel.outputURL = URL(fileURLWithPath: "/tmp/Custom.m4v")
+        viewModel.selectDVD(selectedDVD, outputURL: URL(fileURLWithPath: "/tmp/Custom.m4v"))
 
         viewModel.refreshDVDs()
 
@@ -118,7 +120,7 @@ struct RipViewModelSelectionTests {
             handBrakeRunner: RipTestSupport.StubHandBrakeRunner(exitCode: 0, outputURLToCreate: nil),
             volumeFinder: RipTestSupport.StubDVDVolumeFinder(volumes: [firstDVD])
         )
-        viewModel.selectedDVD = staleDVD
+        viewModel.selectDVD(staleDVD)
 
         viewModel.refreshDVDs()
 

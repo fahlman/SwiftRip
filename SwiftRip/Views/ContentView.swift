@@ -14,50 +14,10 @@ struct ContentView: View {
     @State private var isDVDPickerPresented = false
 
     private static let chooseDVDTitle = AppStrings.chooseDVDTitle
-    private static let ripTitle = AppStrings.ripTitle
-    private static let stopTitle = AppStrings.stopTitle
-    private static let ejectTitle = AppStrings.ejectTitle
     private static let noValidDVDTitle = AppStrings.noValidDVDTitle
 
     private var hasSelectedDVD: Bool {
         viewModel.selectedDVD != nil
-    }
-
-    private enum PrimaryButtonState {
-        case chooseDVD
-        case rip
-        case stop
-        case eject
-
-        var title: String {
-            switch self {
-            case .chooseDVD:
-                return ContentView.chooseDVDTitle
-            case .rip:
-                return ContentView.ripTitle
-            case .stop:
-                return ContentView.stopTitle
-            case .eject:
-                return ContentView.ejectTitle
-            }
-        }
-
-    }
-
-    private var primaryButtonState: PrimaryButtonState {
-        if viewModel.isEncoding {
-            return .stop
-        }
-
-        if viewModel.canEjectCompletedDVD {
-            return .eject
-        }
-
-        if !hasSelectedDVD {
-            return .chooseDVD
-        }
-
-        return .rip
     }
 
     var body: some View {
@@ -135,7 +95,7 @@ struct ContentView: View {
         Button {
             performPrimaryButtonAction()
         } label: {
-            Text(primaryButtonState.title)
+            Text(viewModel.primaryAction.title)
                 .frame(width: SwiftRipLayout.Button.mainWidth)
         }
         .keyboardShortcut(.defaultAction)
@@ -144,7 +104,7 @@ struct ContentView: View {
     }
 
     private func performPrimaryButtonAction() {
-        switch primaryButtonState {
+        switch viewModel.primaryAction {
         case .chooseDVD:
             isDVDPickerPresented = true
         case .rip:

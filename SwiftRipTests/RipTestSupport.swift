@@ -37,8 +37,7 @@ enum RipTestSupport {
             logDirectoryOverride: environment.logDirectory
         )
 
-        viewModel.selectedDVD = environment.dvd
-        viewModel.outputURL = environment.outputURL
+        viewModel.selectDVD(environment.dvd, outputURL: environment.outputURL)
         return viewModel
     }
 

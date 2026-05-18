@@ -30,8 +30,10 @@ struct RipViewModelRipLifecycleTests {
             volumeFinder: FileSystemDVDVolumeFinder(),
             logDirectoryOverride: logDirectory
         )
-        viewModel.selectedDVD = DVDVolume(id: "/Volumes/MY_MOVIE", name: "MY_MOVIE", path: "/Volumes/MY_MOVIE")
-        viewModel.outputURL = URL(fileURLWithPath: "/tmp/My Movie.m4v")
+        viewModel.selectDVD(
+            DVDVolume(id: "/Volumes/MY_MOVIE", name: "MY_MOVIE", path: "/Volumes/MY_MOVIE"),
+            outputURL: URL(fileURLWithPath: "/tmp/My Movie.m4v")
+        )
 
         await viewModel.startRip { _ in }
 
@@ -122,6 +124,7 @@ struct RipViewModelRipLifecycleTests {
         #expect(FileManager.default.fileExists(atPath: outputURL.path))
         #expect(revealedURL == outputURL)
         #expect(completionNotifier.completedOutputURLs == [outputURL])
+        #expect(viewModel.primaryAction == .eject)
         #expect(logText.contains("Outcome: Completed"))
         #expect(logText.contains("Completed output protected from cancellation cleanup"))
         #expect(!viewModel.isEncoding)
@@ -164,6 +167,7 @@ struct RipViewModelRipLifecycleTests {
             await viewModel.startRip { _ in }
         }
         await RipTestSupport.waitUntil { viewModel.progress > 0 }
+        #expect(viewModel.primaryAction == .stop)
         viewModel.cancelRip()
         await ripTask.value
 
