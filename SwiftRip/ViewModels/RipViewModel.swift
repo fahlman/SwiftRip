@@ -162,6 +162,10 @@ final class RipViewModel {
         state.shouldShowStatusMessage
     }
 
+    var commandAvailability: RipCommandAvailability {
+        state.commandAvailability
+    }
+
     var suggestedOutputName: String {
         guard let selectedDVD else { return "\(Self.fallbackMovieName).\(Self.movieFileExtension)" }
         return suggestedOutputName(for: selectedDVD)

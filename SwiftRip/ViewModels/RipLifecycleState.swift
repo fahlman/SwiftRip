@@ -7,6 +7,15 @@
 
 import Foundation
 
+struct RipCommandAvailability: Equatable, Sendable {
+    let canChooseDVD: Bool
+    let canRip: Bool
+    let canStop: Bool
+    let canEject: Bool
+    let canRevealOutput: Bool
+    let canRevealLog: Bool
+}
+
 struct RipLifecycleState: Sendable {
     enum Phase: Sendable {
         case idle(statusMessage: String)
@@ -98,6 +107,17 @@ struct RipLifecycleState: Sendable {
     var shouldShowStatusMessage: Bool {
         statusMessage != AppStrings.initialStatusMessage
             && !statusMessage.hasPrefix(AppStrings.readyStatusPrefix)
+    }
+
+    var commandAvailability: RipCommandAvailability {
+        RipCommandAvailability(
+            canChooseDVD: true,
+            canRip: primaryAction == .rip,
+            canStop: primaryAction == .stop,
+            canEject: primaryAction == .eject,
+            canRevealOutput: outputURL != nil,
+            canRevealLog: logFileURL != nil
+        )
     }
 
     mutating func replaceMountedDVDs(_ volumes: [DVDVolume]) {

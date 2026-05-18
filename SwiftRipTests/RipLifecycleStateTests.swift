@@ -28,4 +28,41 @@ struct RipLifecycleStateTests {
         state.completeRip(statusMessage: "Done")
         #expect(state.primaryAction == .eject)
     }
+
+    @Test func commandAvailabilityFollowsPhaseAndURLs() {
+        let dvd = DVDVolume(id: "/Volumes/MOVIE", name: "MOVIE", path: "/Volumes/MOVIE")
+        let outputURL = URL(fileURLWithPath: "/tmp/Movie.m4v")
+        let logURL = URL(fileURLWithPath: "/tmp/Movie.log")
+        var state = RipLifecycleState()
+
+        #expect(state.commandAvailability == RipCommandAvailability(
+            canChooseDVD: true,
+            canRip: false,
+            canStop: false,
+            canEject: false,
+            canRevealOutput: false,
+            canRevealLog: false
+        ))
+
+        state.selectDVD(dvd, outputURL: outputURL, statusMessage: "Ready")
+        state.setLogFileURL(logURL)
+        #expect(state.commandAvailability == RipCommandAvailability(
+            canChooseDVD: true,
+            canRip: true,
+            canStop: false,
+            canEject: false,
+            canRevealOutput: true,
+            canRevealLog: true
+        ))
+
+        state.beginEncoding(statusMessage: "Ripping")
+        #expect(state.commandAvailability.canRip == false)
+        #expect(state.commandAvailability.canStop == true)
+        #expect(state.commandAvailability.canEject == false)
+
+        state.completeRip(statusMessage: "Done")
+        #expect(state.commandAvailability.canRip == false)
+        #expect(state.commandAvailability.canStop == false)
+        #expect(state.commandAvailability.canEject == true)
+    }
 }

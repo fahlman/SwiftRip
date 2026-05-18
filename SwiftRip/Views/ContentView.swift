@@ -10,6 +10,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct RipCommandActions {
+    let availability: RipCommandAvailability
     let canRip: Bool
     let canStop: Bool
     let canEject: Bool
@@ -21,6 +22,29 @@ struct RipCommandActions {
     let eject: @MainActor () -> Void
     let revealOutput: @MainActor () -> Void
     let revealLog: @MainActor () -> Void
+
+    init(
+        availability: RipCommandAvailability,
+        chooseDVD: @escaping @MainActor () -> Void,
+        rip: @escaping @MainActor () -> Void,
+        stop: @escaping @MainActor () -> Void,
+        eject: @escaping @MainActor () -> Void,
+        revealOutput: @escaping @MainActor () -> Void,
+        revealLog: @escaping @MainActor () -> Void
+    ) {
+        self.availability = availability
+        self.canRip = availability.canRip
+        self.canStop = availability.canStop
+        self.canEject = availability.canEject
+        self.canRevealOutput = availability.canRevealOutput
+        self.canRevealLog = availability.canRevealLog
+        self.chooseDVD = chooseDVD
+        self.rip = rip
+        self.stop = stop
+        self.eject = eject
+        self.revealOutput = revealOutput
+        self.revealLog = revealLog
+    }
 }
 
 private struct RipCommandActionsKey: FocusedValueKey {
@@ -144,11 +168,7 @@ struct ContentView: View {
 
     private var ripCommandActions: RipCommandActions {
         RipCommandActions(
-            canRip: viewModel.primaryAction == .rip,
-            canStop: viewModel.primaryAction == .stop,
-            canEject: viewModel.primaryAction == .eject,
-            canRevealOutput: viewModel.outputURL != nil,
-            canRevealLog: viewModel.logFileURL != nil,
+            availability: viewModel.commandAvailability,
             chooseDVD: chooseDVD,
             rip: startRip,
             stop: stopRip,
