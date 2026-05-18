@@ -2,8 +2,6 @@
 //  AppStrings.swift
 //  SwiftRip
 //
-//  Created by Ryan Fahlsing on 5/17/26.
-//
 
 import Foundation
 

@@ -2,8 +2,6 @@
 //  AppSettings.swift
 //  SwiftRip
 //
-//  Created by Ryan Fahlsing on 5/18/26.
-//
 
 import Foundation
 import Observation

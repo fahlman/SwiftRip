@@ -2,8 +2,6 @@
 //  RipPreflightCheck.swift
 //  SwiftRip
 //
-//  Created by Ryan Fahlsing on 5/16/26.
-//
 
 import Foundation
 
