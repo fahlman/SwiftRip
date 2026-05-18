@@ -12,7 +12,6 @@ import Foundation
 final class RipViewModel: ObservableObject {
     static let initialStatusMessage = "Choose a DVD and output file to begin."
     private static let fallbackMovieName = "Movie"
-    private static let fallbackDVDName = "DVD"
     private static let readyStatusPrefix = "Ready to rip "
     private static let movieFileExtension = "m4v"
 
@@ -24,7 +23,6 @@ final class RipViewModel: ObservableObject {
     @Published var isEncoding = false
     @Published private(set) var progress: Double = 0
 
-    private var logText = ""
     private var ripTask: Task<Void, Never>?
     private var activeRip: RipSession?
     private let configuration: RipConfiguration
@@ -33,15 +31,6 @@ final class RipViewModel: ObservableObject {
     private let volumeFinder: DVDVolumeFinding
     private let logDirectoryOverride: URL?
 
-    private struct RipSession {
-        let outputURL: URL
-        let logURL: URL
-        private(set) var shouldDeleteOutputOnCancel = true
-
-        mutating func protectCompletedOutput() {
-            shouldDeleteOutputOnCancel = false
-        }
-    }
 
     convenience init() {
         self.init(
@@ -177,16 +166,20 @@ final class RipViewModel: ObservableObject {
         guard let selectedDVD, let outputURL else { return }
 
         let arguments = configuration.handBrakeArguments(input: selectedDVD, outputURL: outputURL)
-        let logURL = makeLogFileURL(for: selectedDVD)
-        activeRip = RipSession(outputURL: outputURL, logURL: logURL)
-        logFileURL = logURL
-        logText = makeLogHeader(input: selectedDVD, outputURL: outputURL, arguments: arguments)
+        activeRip = RipSession(
+            input: selectedDVD,
+            outputURL: outputURL,
+            arguments: arguments,
+            logDirectoryURL: defaultLogDirectory,
+            executablePath: configuration.handBrakeCLIPath
+        )
+        logFileURL = activeRip?.log.url
 
         if let preflightFailure = RipPreflightCheck(
             configuration: configuration,
             fileManager: fileManager
         ).failureMessage() {
-            savePreflightFailure(preflightFailure, logURL: logURL)
+            savePreflightFailure(preflightFailure)
             clearActiveRipFiles()
             return
         }
@@ -201,7 +194,7 @@ final class RipViewModel: ObservableObject {
             onOutput: { [weak self] line in
                 guard let self else { return }
 
-                self.logText += line
+                self.activeRip?.log.append(line)
 
                 if let parsedProgress = HandBrakeProgressParser.progressValue(from: line) {
                     self.progress = parsedProgress
@@ -210,7 +203,7 @@ final class RipViewModel: ObservableObject {
         )
 
         if Task.isCancelled {
-            logText += "\nExit code: \(result.exitCode)\n"
+            activeRip?.log.appendExitCode(result.exitCode)
             cleanupCancelledRip()
             isEncoding = false
             statusMessage = "Rip stopped."
@@ -224,13 +217,13 @@ final class RipViewModel: ObservableObject {
 
         isEncoding = false
 
-        let logWriteError = appendExitCodeAndSaveLog(result.exitCode, to: logURL)
+        let logWriteError = appendExitCodeAndSaveLog(result.exitCode)
 
         if result.exitCode == 0 {
-            statusMessage = "Done. Saved to \(outputURL.path). Log saved to \(logURL.path)."
+            statusMessage = "Done. Saved to \(outputURL.path). Log saved to \(activeLogPath)."
             revealOutput(outputURL)
         } else {
-            statusMessage = "HandBrakeCLI failed with exit code \(result.exitCode). Log saved to \(logURL.path)."
+            statusMessage = "HandBrakeCLI failed with exit code \(result.exitCode). Log saved to \(activeLogPath)."
         }
 
         appendLogWriteErrorIfNeeded(logWriteError)
@@ -242,9 +235,9 @@ final class RipViewModel: ObservableObject {
 
         do {
             try fileManager.removeItem(at: url)
-            logText += "\nDeleted incomplete output file: \(url.path)\n"
+            activeRip?.log.appendBlankLine("Deleted incomplete output file: \(url.path)")
         } catch {
-            logText += "\nCould not delete incomplete output file: \(error.localizedDescription)\n"
+            activeRip?.log.appendBlankLine("Could not delete incomplete output file: \(error.localizedDescription)")
         }
     }
 
@@ -255,8 +248,8 @@ final class RipViewModel: ObservableObject {
             deleteIncompleteOutputFile(at: activeRip.outputURL)
         }
 
-        logText += "\nRip stopped by user.\n"
-        _ = saveLog(to: activeRip.logURL)
+        self.activeRip?.log.appendBlankLine("Rip stopped by user.")
+        _ = saveActiveLog()
         clearActiveRipFiles()
     }
 
@@ -264,10 +257,13 @@ final class RipViewModel: ObservableObject {
         activeRip = nil
     }
 
+    private var activeLogPath: String {
+        activeRip?.log.url.path ?? ""
+    }
 
-    private func appendExitCodeAndSaveLog(_ exitCode: Int32, to logURL: URL) -> Error? {
-        logText += "\nExit code: \(exitCode)\n"
-        return saveLog(to: logURL)
+    private func appendExitCodeAndSaveLog(_ exitCode: Int32) -> Error? {
+        activeRip?.log.appendExitCode(exitCode)
+        return saveActiveLog()
     }
 
     private func appendLogWriteErrorIfNeeded(_ error: Error?) {
@@ -275,44 +271,14 @@ final class RipViewModel: ObservableObject {
         statusMessage += " Could not write log: \(error.localizedDescription)"
     }
 
-    private func savePreflightFailure(_ message: String, logURL: URL) {
-        logText += "\(message)\n"
-        let logWriteError = saveLog(to: logURL)
-        statusMessage = "\(message) Log saved to \(logURL.path)."
+    private func savePreflightFailure(_ message: String) {
+        activeRip?.log.appendLine(message)
+        let logWriteError = saveActiveLog()
+        statusMessage = "\(message) Log saved to \(activeLogPath)."
         appendLogWriteErrorIfNeeded(logWriteError)
     }
 
-    private func makeLogFileURL(for dvd: DVDVolume) -> URL {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd-HHmmss"
-
-        let safeName = dvd.name
-            .components(separatedBy: CharacterSet.alphanumerics.inverted)
-            .filter { !$0.isEmpty }
-            .joined(separator: "-")
-
-        let fileName = "\(safeName.isEmpty ? Self.fallbackDVDName : safeName)-\(formatter.string(from: Date())).log"
-        return defaultLogDirectory.appendingPathComponent(fileName)
-    }
-
-    private func makeLogHeader(input: DVDVolume, outputURL: URL, arguments: [String]) -> String {
-        """
-        \(RipConfiguration.appName) Log
-        DVD: \(input.name)
-        Input: \(input.path)
-        Output: \(outputURL.path)
-        Command: \(configuration.handBrakeCLIPath) \(arguments.joined(separator: " "))
-
-        """
-    }
-
-    private func saveLog(to url: URL) -> Error? {
-        do {
-            try fileManager.createDirectory(at: defaultLogDirectory, withIntermediateDirectories: true)
-            try logText.write(to: url, atomically: true, encoding: .utf8)
-            return nil
-        } catch {
-            return error
-        }
+    private func saveActiveLog() -> Error? {
+        activeRip?.log.save(using: fileManager)
     }
 }
