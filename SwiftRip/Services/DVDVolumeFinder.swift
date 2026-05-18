@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol DVDVolumeFinding {
+protocol DVDVolumeFinding: Sendable {
     func findMountedDVDs() -> [DVDVolume]
 }
 

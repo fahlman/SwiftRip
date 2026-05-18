@@ -143,3 +143,7 @@ struct AboutSwiftRipView: View {
             .sorted { $0.lastPathComponent < $1.lastPathComponent }
     }
 }
+
+#Preview {
+    AboutSwiftRipView()
+}

@@ -57,3 +57,18 @@ struct SwiftRipButtonStyle: ButtonStyle {
         }
     }
 }
+
+#Preview {
+    HStack(spacing: 12) {
+        Button("Primary") {}
+            .buttonStyle(SwiftRipButtonStyle(prominence: .primary))
+
+        Button("Secondary") {}
+            .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
+
+        Button("Disabled") {}
+            .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
+            .disabled(true)
+    }
+    .padding()
+}

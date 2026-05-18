@@ -9,7 +9,7 @@ import AppKit
 import Foundation
 import UserNotifications
 
-protocol RipCompletionNotifying {
+protocol RipCompletionNotifying: Sendable {
     @MainActor
     func notifyRipCompleted(
         outputURL: URL,

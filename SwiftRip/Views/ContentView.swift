@@ -99,7 +99,7 @@ struct ContentView: View {
                 .frame(width: SwiftRipLayout.Button.mainWidth)
         }
         .keyboardShortcut(.defaultAction)
-        .buttonStyle(SwiftRipButtonStyle(prominence: SwiftRipButtonStyle.Prominence.primary))
+        .buttonStyle(SwiftRipButtonStyle(prominence: .primary))
         .controlSize(.large)
     }
 
@@ -134,8 +134,6 @@ struct ContentView: View {
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-    }
+#Preview {
+    ContentView()
 }
