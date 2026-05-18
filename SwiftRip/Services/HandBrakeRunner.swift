@@ -24,19 +24,6 @@ struct ProcessHandBrakeRunner: HandBrakeRunning {
     private static let carriageReturn: UInt8 = 13
     private static let outputBufferLimit = 4_096
 
-    private final class ProcessOutput {
-        var task: Task<Void, Never> = Task {}
-
-        func startReading(
-            from outputHandle: FileHandle,
-            onOutput: @escaping @MainActor @Sendable (String) -> Void
-        ) {
-            task = Task {
-                await ProcessHandBrakeRunner.forwardOutput(from: outputHandle, onOutput: onOutput)
-            }
-        }
-    }
-
     func run(
         executablePath: String,
         arguments: [String],
@@ -104,15 +91,14 @@ struct ProcessHandBrakeRunner: HandBrakeRunning {
         onOutput: @escaping @MainActor @Sendable (String) -> Void
     ) async -> HandBrakeResult {
         return await withTaskCancellationHandler {
-            let output = ProcessOutput()
+            var outputTask: Task<Void, Never>?
             let result = await launchAndWaitForTermination(
                 process,
                 outputPipe: outputPipe,
-                output: output,
+                outputTask: &outputTask,
                 onOutput: onOutput
             )
-            let outputTask = output.task
-            await outputTask.value
+            await outputTask?.value
             return result
         } onCancel: {
             if process.isRunning {
@@ -124,7 +110,7 @@ struct ProcessHandBrakeRunner: HandBrakeRunning {
     private func launchAndWaitForTermination(
         _ process: Process,
         outputPipe: Pipe,
-        output: ProcessOutput,
+        outputTask: inout Task<Void, Never>?,
         onOutput: @escaping @MainActor @Sendable (String) -> Void
     ) async -> HandBrakeResult {
         await withCheckedContinuation { continuation in
@@ -134,7 +120,9 @@ struct ProcessHandBrakeRunner: HandBrakeRunning {
 
             do {
                 try process.run()
-                output.startReading(from: outputPipe.fileHandleForReading, onOutput: onOutput)
+                outputTask = Task {
+                    await Self.forwardOutput(from: outputPipe.fileHandleForReading, onOutput: onOutput)
+                }
             } catch {
                 process.terminationHandler = nil
                 onOutput("Failed to launch HandBrakeCLI: \(error.localizedDescription)\n")

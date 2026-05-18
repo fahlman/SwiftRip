@@ -47,6 +47,22 @@ struct ProcessHandBrakeRunnerTests {
         #expect(output.contains("partial-output"))
     }
 
+    @Test func launchFailureReturnsFailureAndReportsOutput() async {
+        let runner = ProcessHandBrakeRunner()
+        var output = ""
+
+        let result = await runner.run(
+            executablePath: "/missing/HandBrakeCLI",
+            arguments: [],
+            onOutput: { text in
+                output += text
+            }
+        )
+
+        #expect(result.exitCode == -1)
+        #expect(output.contains("Failed to launch HandBrakeCLI"))
+    }
+
     @Test func cancellationTerminatesRunningProcess() async {
         let runner = ProcessHandBrakeRunner()
         let task = Task {
