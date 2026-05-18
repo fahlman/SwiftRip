@@ -52,6 +52,9 @@ struct SettingsView: View {
 
                     Toggle(AppStrings.settingsRevealCompletedFileTitle, isOn: $settings.shouldRevealCompletedFile)
                         .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
+
+                    Toggle(AppStrings.settingsAutoEjectTitle, isOn: $settings.shouldAutoEjectAfterSuccessfulRip)
+                        .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
                 }
 
                 Spacer(minLength: 0)

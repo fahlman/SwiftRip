@@ -9,6 +9,16 @@ import AppKit
 import Foundation
 import Observation
 
+protocol DVDDeviceEjecting: Sendable {
+    @MainActor func ejectDVD(at url: URL) throws
+}
+
+struct WorkspaceDVDDeviceEjector: DVDDeviceEjecting {
+    func ejectDVD(at url: URL) throws {
+        try NSWorkspace.shared.unmountAndEjectDevice(at: url)
+    }
+}
+
 @MainActor
 @Observable
 final class RipViewModel {
@@ -36,6 +46,8 @@ final class RipViewModel {
     @ObservationIgnored
     private let completionNotifier: RipCompletionNotifying
     @ObservationIgnored
+    private let dvdDeviceEjector: DVDDeviceEjecting
+    @ObservationIgnored
     private let logDirectoryOverride: URL?
 
     convenience init() {
@@ -61,6 +73,7 @@ final class RipViewModel {
             volumeFinder: volumeFinder,
             appSettings: .shared,
             completionNotifier: SystemRipCompletionNotifier(),
+            dvdDeviceEjector: WorkspaceDVDDeviceEjector(),
             logDirectoryOverride: logDirectoryOverride
         )
     }
@@ -80,6 +93,7 @@ final class RipViewModel {
             volumeFinder: volumeFinder,
             appSettings: appSettings,
             completionNotifier: SystemRipCompletionNotifier(),
+            dvdDeviceEjector: WorkspaceDVDDeviceEjector(),
             logDirectoryOverride: logDirectoryOverride
         )
     }
@@ -91,6 +105,7 @@ final class RipViewModel {
         volumeFinder: DVDVolumeFinding,
         appSettings: AppSettings,
         completionNotifier: RipCompletionNotifying,
+        dvdDeviceEjector: DVDDeviceEjecting = WorkspaceDVDDeviceEjector(),
         logDirectoryOverride: URL? = nil
     ) {
         self.configuration = configuration
@@ -99,6 +114,7 @@ final class RipViewModel {
         self.volumeFinder = volumeFinder
         self.appSettings = appSettings
         self.completionNotifier = completionNotifier
+        self.dvdDeviceEjector = dvdDeviceEjector
         self.logDirectoryOverride = logDirectoryOverride
     }
 
@@ -232,7 +248,7 @@ final class RipViewModel {
 
         let dvdURL = URL(fileURLWithPath: selectedDVD.path, isDirectory: true)
         do {
-            try NSWorkspace.shared.unmountAndEjectDevice(at: dvdURL)
+            try dvdDeviceEjector.ejectDVD(at: dvdURL)
         } catch {
             updateState { $0.setStatusMessage(error.localizedDescription) }
             return
@@ -364,6 +380,9 @@ final class RipViewModel {
         if appSettings.shouldRevealCompletedFile {
             revealOutput(outputURL)
         }
+        if appSettings.shouldAutoEjectAfterSuccessfulRip {
+            ejectCompletedDVD()
+        }
         clearActiveRipFiles()
     }
 
@@ -374,6 +393,7 @@ final class RipViewModel {
             exitCode: exitCode,
             outcome: "Failed"
         )
+        notifyRipFailed(outputURL: outputURL, exitCode: exitCode)
         updateState { $0.finishEncoding(statusMessage: AppStrings.handBrakeFailed(exitCode: exitCode, logPath: activeLogPath)) }
         appendLogWriteErrorIfNeeded(logWriteError)
         clearActiveRipFiles()
@@ -388,6 +408,16 @@ final class RipViewModel {
         completionNotifier.notifyRipCompleted(
             outputURL: outputURL,
             sound: appSettings.completionSound,
+            isNotificationEnabled: appSettings.isCompletionNotificationEnabled
+        ) { [weak self] message in
+            self?.activeRip?.log.appendBlankLine(message)
+        }
+    }
+
+    private func notifyRipFailed(outputURL: URL, exitCode: Int32) {
+        completionNotifier.notifyRipFailed(
+            outputURL: outputURL,
+            exitCode: exitCode,
             isNotificationEnabled: appSettings.isCompletionNotificationEnabled
         ) { [weak self] message in
             self?.activeRip?.log.appendBlankLine(message)

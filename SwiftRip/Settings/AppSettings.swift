@@ -75,6 +75,7 @@ final class AppSettings {
     private static let completionSoundKey = "completionSound"
     private static let completionNotificationEnabledKey = "completionNotificationEnabled"
     private static let revealCompletedFileKey = "revealCompletedFile"
+    private static let autoEjectAfterSuccessfulRipKey = "autoEjectAfterSuccessfulRip"
     private static let outputFilenameFormatKey = "outputFilenameFormat"
 
     private(set) var outputDirectoryURL: URL
@@ -91,6 +92,11 @@ final class AppSettings {
     var shouldRevealCompletedFile: Bool {
         didSet {
             userDefaults.set(shouldRevealCompletedFile, forKey: Self.revealCompletedFileKey)
+        }
+    }
+    var shouldAutoEjectAfterSuccessfulRip: Bool {
+        didSet {
+            userDefaults.set(shouldAutoEjectAfterSuccessfulRip, forKey: Self.autoEjectAfterSuccessfulRipKey)
         }
     }
     var outputFilenameFormat: OutputFilenameFormat {
@@ -123,6 +129,11 @@ final class AppSettings {
         self.shouldRevealCompletedFile = Self.boolValue(
             forKey: Self.revealCompletedFileKey,
             defaultValue: true,
+            in: userDefaults
+        )
+        self.shouldAutoEjectAfterSuccessfulRip = Self.boolValue(
+            forKey: Self.autoEjectAfterSuccessfulRipKey,
+            defaultValue: false,
             in: userDefaults
         )
         self.outputFilenameFormat = Self.outputFilenameFormat(from: userDefaults)

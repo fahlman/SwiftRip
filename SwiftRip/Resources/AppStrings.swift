@@ -14,6 +14,7 @@ enum AppStrings {
     nonisolated static let ejectTitle = localized("Eject")
     nonisolated static let noValidDVDTitle = localized("No valid DVD")
     nonisolated static let ripCompleteNotificationTitle = localized("Rip Complete")
+    nonisolated static let ripFailedNotificationTitle = localized("Rip Failed")
     nonisolated static let initialStatusMessage = localized("Choose a DVD and output file to begin.")
     nonisolated static let fallbackMovieName = localized("Movie")
     nonisolated static let readyStatusPrefix = localized("Ready to rip ")
@@ -34,6 +35,7 @@ enum AppStrings {
     nonisolated static let settingsCompletionSoundTitle = localized("Sound:")
     nonisolated static let settingsNotificationTitle = localized("Show notification when finished")
     nonisolated static let settingsRevealCompletedFileTitle = localized("Reveal completed file in Finder")
+    nonisolated static let settingsAutoEjectTitle = localized("Eject DVD after successful rip")
     nonisolated static let settingsFilenameFormatTitle = localized("Filename Format:")
     nonisolated static let completionSoundGlassTitle = localized("Glass")
     nonisolated static let completionSoundPingTitle = localized("Ping")
@@ -80,6 +82,10 @@ enum AppStrings {
 
     nonisolated static func ripCompleteNotificationBody(fileName: String) -> String {
         String(format: localized("Saved %@"), fileName)
+    }
+
+    nonisolated static func ripFailedNotificationBody(fileName: String, exitCode: Int32) -> String {
+        String(format: localized("%@ failed with exit code %d."), fileName, exitCode)
     }
 
     nonisolated static let ripStopped = localized("Rip stopped.")

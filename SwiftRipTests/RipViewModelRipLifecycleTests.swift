@@ -168,6 +168,33 @@ struct RipViewModelRipLifecycleTests {
         #expect(viewModel.primaryAction == .eject)
     }
 
+    @Test func successfulRipCanAutoEjectDVD() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+
+        let appSettings = RipTestSupport.makeTestAppSettings()
+        appSettings.shouldAutoEjectAfterSuccessfulRip = true
+        let runner = RipTestSupport.StubHandBrakeRunner(
+            exitCode: 0,
+            outputURLToCreate: testEnvironment.outputURL
+        )
+        let dvdDeviceEjector = RipTestSupport.RecordingDVDDeviceEjector()
+        let viewModel = RipTestSupport.makeRunnableViewModel(
+            environment: testEnvironment,
+            runner: runner,
+            appSettings: appSettings,
+            dvdDeviceEjector: dvdDeviceEjector
+        )
+
+        try "complete output".write(to: testEnvironment.outputURL, atomically: true, encoding: .utf8)
+
+        await viewModel.startRip { _ in }
+
+        #expect(FileManager.default.fileExists(atPath: testEnvironment.outputURL.path))
+        #expect(dvdDeviceEjector.ejectedURLs == [URL(fileURLWithPath: testEnvironment.dvd.path, isDirectory: true)])
+        #expect(viewModel.primaryAction == .chooseDVD)
+    }
+
     @Test func failedRipKeepsOutputFileForInspection() async throws {
         let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
         defer { testEnvironment.cleanup() }
@@ -176,7 +203,12 @@ struct RipViewModelRipLifecycleTests {
             exitCode: 4,
             outputURLToCreate: testEnvironment.outputURL
         )
-        let viewModel = RipTestSupport.makeRunnableViewModel(environment: testEnvironment, runner: runner)
+        let completionNotifier = RipTestSupport.RecordingRipCompletionNotifier()
+        let viewModel = RipTestSupport.makeRunnableViewModel(
+            environment: testEnvironment,
+            runner: runner,
+            completionNotifier: completionNotifier
+        )
         try "failed output".write(to: testEnvironment.outputURL, atomically: true, encoding: .utf8)
 
         await viewModel.startRip { _ in }
@@ -186,6 +218,9 @@ struct RipViewModelRipLifecycleTests {
         let logText = try String(contentsOf: logURL, encoding: .utf8)
 
         #expect(FileManager.default.fileExists(atPath: testEnvironment.outputURL.path))
+        #expect(completionNotifier.failedOutputURLs == [testEnvironment.outputURL])
+        #expect(completionNotifier.failureExitCodes == [4])
+        #expect(completionNotifier.failureNotificationEnabledValues == [true])
         #expect(viewModel.statusMessage.contains("HandBrakeCLI failed with exit code 4"))
         #expect(logText.contains("Outcome: Failed"))
         #expect(logText.contains("SwiftRip: Rip failed; output preserved for inspection"))

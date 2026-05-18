@@ -17,6 +17,14 @@ protocol RipCompletionNotifying: Sendable {
         isNotificationEnabled: Bool,
         logError: @escaping @MainActor @Sendable (String) -> Void
     )
+
+    @MainActor
+    func notifyRipFailed(
+        outputURL: URL,
+        exitCode: Int32,
+        isNotificationEnabled: Bool,
+        logError: @escaping @MainActor @Sendable (String) -> Void
+    )
 }
 
 struct SystemRipCompletionNotifier: RipCompletionNotifying {
@@ -33,6 +41,38 @@ struct SystemRipCompletionNotifier: RipCompletionNotifying {
 
         guard isNotificationEnabled else { return }
 
+        showNotification(
+            title: AppStrings.ripCompleteNotificationTitle,
+            body: AppStrings.ripCompleteNotificationBody(fileName: outputURL.lastPathComponent),
+            errorPrefix: "Could not show completion notification",
+            logError: logError
+        )
+    }
+
+    @MainActor
+    func notifyRipFailed(
+        outputURL: URL,
+        exitCode: Int32,
+        isNotificationEnabled: Bool,
+        logError: @escaping @MainActor @Sendable (String) -> Void
+    ) {
+        guard isNotificationEnabled else { return }
+
+        showNotification(
+            title: AppStrings.ripFailedNotificationTitle,
+            body: AppStrings.ripFailedNotificationBody(fileName: outputURL.lastPathComponent, exitCode: exitCode),
+            errorPrefix: "Could not show failure notification",
+            logError: logError
+        )
+    }
+
+    @MainActor
+    private func showNotification(
+        title: String,
+        body: String,
+        errorPrefix: String,
+        logError: @escaping @MainActor @Sendable (String) -> Void
+    ) {
         Task {
             let center = UNUserNotificationCenter.current()
 
@@ -41,8 +81,8 @@ struct SystemRipCompletionNotifier: RipCompletionNotifying {
                 guard isAllowed else { return }
 
                 let content = UNMutableNotificationContent()
-                content.title = AppStrings.ripCompleteNotificationTitle
-                content.body = AppStrings.ripCompleteNotificationBody(fileName: outputURL.lastPathComponent)
+                content.title = title
+                content.body = body
                 content.sound = .default
 
                 let request = UNNotificationRequest(
@@ -53,7 +93,7 @@ struct SystemRipCompletionNotifier: RipCompletionNotifying {
 
                 try await center.add(request)
             } catch {
-                logError("Could not show completion notification: \(error.localizedDescription)")
+                logError("\(errorPrefix): \(error.localizedDescription)")
             }
         }
     }

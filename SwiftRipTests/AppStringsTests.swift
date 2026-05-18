@@ -18,6 +18,8 @@ struct AppStringsTests {
     }
 
     @Test func formatsCompletionAndFailureMessages() {
+        #expect(AppStrings.ripFailedNotificationTitle == "Rip Failed")
+        #expect(AppStrings.ripFailedNotificationBody(fileName: "Movie.m4v", exitCode: 4) == "Movie.m4v failed with exit code 4.")
         #expect(AppStrings.done(outputPath: "/tmp/Movie.m4v", logPath: "/tmp/Movie.log") == "Done. Saved to /tmp/Movie.m4v. Log saved to /tmp/Movie.log.")
         #expect(AppStrings.handBrakeFailed(exitCode: 4, logPath: "/tmp/Movie.log") == "HandBrakeCLI failed with exit code 4. Log saved to /tmp/Movie.log.")
     }
@@ -39,6 +41,7 @@ struct AppStringsTests {
         #expect(AppStrings.settingsCompletionSoundTitle == "Sound:")
         #expect(AppStrings.settingsNotificationTitle == "Show notification when finished")
         #expect(AppStrings.settingsRevealCompletedFileTitle == "Reveal completed file in Finder")
+        #expect(AppStrings.settingsAutoEjectTitle == "Eject DVD after successful rip")
         #expect(AppStrings.settingsFilenameFormatTitle == "Filename Format:")
         #expect(AppStrings.completionSoundNoneTitle == "None")
         #expect(AppStrings.filenameFormatDatedTitleCaseTitle == "Movie Name - YYYY-MM-DD.m4v")

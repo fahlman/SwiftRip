@@ -26,7 +26,8 @@ enum RipTestSupport {
         environment: RunnableTestEnvironment,
         runner: HandBrakeRunning,
         appSettings: AppSettings? = nil,
-        completionNotifier: RipCompletionNotifying = NoOpRipCompletionNotifier()
+        completionNotifier: RipCompletionNotifying = NoOpRipCompletionNotifier(),
+        dvdDeviceEjector: DVDDeviceEjecting = NoOpDVDDeviceEjector()
     ) -> RipViewModel {
         let resolvedAppSettings = appSettings ?? makeTestAppSettings()
         let viewModel = RipViewModel(
@@ -36,6 +37,7 @@ enum RipTestSupport {
             volumeFinder: FileSystemDVDVolumeFinder(),
             appSettings: resolvedAppSettings,
             completionNotifier: completionNotifier,
+            dvdDeviceEjector: dvdDeviceEjector,
             logDirectoryOverride: environment.logDirectory
         )
 
@@ -133,6 +135,13 @@ enum RipTestSupport {
             isNotificationEnabled: Bool,
             logError: @escaping @MainActor @Sendable (String) -> Void
         ) {}
+
+        func notifyRipFailed(
+            outputURL: URL,
+            exitCode: Int32,
+            isNotificationEnabled: Bool,
+            logError: @escaping @MainActor @Sendable (String) -> Void
+        ) {}
     }
 
     @MainActor
@@ -140,6 +149,9 @@ enum RipTestSupport {
         private(set) var completedOutputURLs: [URL] = []
         private(set) var completionSounds: [CompletionSound] = []
         private(set) var notificationEnabledValues: [Bool] = []
+        private(set) var failedOutputURLs: [URL] = []
+        private(set) var failureExitCodes: [Int32] = []
+        private(set) var failureNotificationEnabledValues: [Bool] = []
 
         func notifyRipCompleted(
             outputURL: URL,
@@ -150,6 +162,30 @@ enum RipTestSupport {
             completedOutputURLs.append(outputURL)
             completionSounds.append(sound)
             notificationEnabledValues.append(isNotificationEnabled)
+        }
+
+        func notifyRipFailed(
+            outputURL: URL,
+            exitCode: Int32,
+            isNotificationEnabled: Bool,
+            logError: @escaping @MainActor @Sendable (String) -> Void
+        ) {
+            failedOutputURLs.append(outputURL)
+            failureExitCodes.append(exitCode)
+            failureNotificationEnabledValues.append(isNotificationEnabled)
+        }
+    }
+
+    struct NoOpDVDDeviceEjector: DVDDeviceEjecting {
+        func ejectDVD(at url: URL) throws {}
+    }
+
+    @MainActor
+    final class RecordingDVDDeviceEjector: DVDDeviceEjecting {
+        private(set) var ejectedURLs: [URL] = []
+
+        func ejectDVD(at url: URL) throws {
+            ejectedURLs.append(url)
         }
     }
 
