@@ -5,6 +5,7 @@
 //  Created by Ryan Fahlsing on 5/16/26.
 //
 
+import AppKit
 import SwiftUI
 
 @main
@@ -38,10 +39,12 @@ struct SwiftRipApp: App {
 private struct AboutSwiftRipView: View {
     private static let appDescription = "A small macOS DVD ripping tool built around bundled ARM64 ripping tools."
     private static let appIconName = "opticaldisc.fill"
-    private static let terminalIconName = "terminal"
-    private static let packageIconName = "shippingbox"
+    private static let handBrakeCLIIconName = "wineglass.fill"
+    private static let libdvdcssIconName = "cone.fill"
     private static let licenseIconName = "doc.text"
-    private static let licensesDirectoryName = "Licenses"
+    private static let openLicensesFolderTitle = "Show Licenses"
+    private static let openLicensesFolderIconName = "folder"
+    private static let licenseFileSuffix = "COPYING"
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -69,8 +72,8 @@ private struct AboutSwiftRipView: View {
                 Text("Bundled Tools")
                     .font(.headline)
 
-                Label(RipConfiguration.handBrakeCLIExecutableName, systemImage: Self.terminalIconName)
-                Label(RipConfiguration.libdvdcssLibraryName, systemImage: Self.packageIconName)
+                Label(RipConfiguration.handBrakeCLIExecutableName, systemImage: Self.handBrakeCLIIconName)
+                Label(RipConfiguration.libdvdcssLibraryName, systemImage: Self.libdvdcssIconName)
             }
 
             Divider()
@@ -79,7 +82,7 @@ private struct AboutSwiftRipView: View {
                 Text("Licenses")
                     .font(.headline)
 
-                Text("\(RipConfiguration.appName) includes bundled third-party tools. Their license files are included in the app bundle under Resources/\(Self.licensesDirectoryName).")
+                Text("\(RipConfiguration.appName) includes bundled third-party tools. Their license files are included in the app bundle resources.")
                     .foregroundStyle(.secondary)
 
                 if licenseNames.isEmpty {
@@ -90,6 +93,14 @@ private struct AboutSwiftRipView: View {
                         Label(name, systemImage: Self.licenseIconName)
                     }
                 }
+
+                Button {
+                    openLicensesFolder()
+                } label: {
+                    Label(Self.openLicensesFolderTitle, systemImage: Self.openLicensesFolderIconName)
+                }
+                .disabled(licensesURL == nil)
+                .padding(.top, 4)
             }
 
             Spacer(minLength: 0)
@@ -115,10 +126,24 @@ private struct AboutSwiftRipView: View {
         }
     }
 
+    private func openLicensesFolder() {
+        guard let licensesURL else { return }
+
+        NSWorkspace.shared.selectFile(
+            licensesURL.path,
+            inFileViewerRootedAtPath: licensesURL.deletingLastPathComponent().path
+        )
+    }
+
+    private var licensesURL: URL? {
+        guard let resourceURL = Bundle.main.resourceURL else { return nil }
+        return licenseNames.isEmpty ? nil : resourceURL
+    }
+
     private var licenseNames: [String] {
-        guard let licensesURL = Bundle.main.resourceURL?.appendingPathComponent(Self.licensesDirectoryName, isDirectory: true),
+        guard let resourceURL = Bundle.main.resourceURL,
               let urls = try? FileManager.default.contentsOfDirectory(
-                at: licensesURL,
+                at: resourceURL,
                 includingPropertiesForKeys: nil,
                 options: [.skipsHiddenFiles]
               ) else {
@@ -128,6 +153,7 @@ private struct AboutSwiftRipView: View {
         return urls
             .filter { !$0.hasDirectoryPath }
             .map { $0.lastPathComponent }
+            .filter { $0.hasSuffix(Self.licenseFileSuffix) }
             .sorted()
     }
 }
