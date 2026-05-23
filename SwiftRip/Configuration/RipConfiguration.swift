@@ -21,7 +21,7 @@ struct RipConfiguration: Sendable {
         handBrakeCLIPath: bundledAuxiliaryExecutablePath(
             named: handBrakeCLIExecutableName
         ),
-        libdvdcssPath: bundledAuxiliaryExecutablePath(
+        libdvdcssPath: bundledFrameworkPath(
             named: libdvdcssLibraryName
         ),
         presetURL: bundledResourceURL(
@@ -32,6 +32,11 @@ struct RipConfiguration: Sendable {
 
     private nonisolated static func bundledAuxiliaryExecutablePath(named name: String) -> String {
         Bundle.main.url(forAuxiliaryExecutable: name)?.path
+            ?? missingBundledResourceURL(named: name).path
+    }
+
+    private nonisolated static func bundledFrameworkPath(named name: String) -> String {
+        Bundle.main.privateFrameworksURL?.appendingPathComponent(name).path
             ?? missingBundledResourceURL(named: name).path
     }
 

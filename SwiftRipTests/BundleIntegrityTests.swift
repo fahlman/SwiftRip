@@ -14,16 +14,30 @@ struct BundleIntegrityTests {
 
         #expect(configuration.handBrakeCLIPath.hasSuffix("/\(RipConfiguration.handBrakeCLIExecutableName)"))
         #expect(configuration.libdvdcssPath.hasSuffix("/\(RipConfiguration.libdvdcssLibraryName)"))
+        #expect(configuration.libdvdcssPath.contains("/Contents/Frameworks/"))
         #expect(configuration.presetURL.lastPathComponent == "\(RipConfiguration.presetResourceName).\(RipConfiguration.presetFileExtension)")
     }
 
     @Test func bundledToolsAndPresetExist() {
         let configuration = RipConfiguration.production
         let fileManager = FileManager.default
+        let legacyMacOSLibdvdcssPath = URL(fileURLWithPath: configuration.handBrakeCLIPath)
+            .deletingLastPathComponent()
+            .appendingPathComponent(RipConfiguration.libdvdcssLibraryName)
+            .path
 
         #expect(fileManager.isExecutableFile(atPath: configuration.handBrakeCLIPath))
         #expect(fileManager.fileExists(atPath: configuration.libdvdcssPath))
+        #expect(!fileManager.fileExists(atPath: legacyMacOSLibdvdcssPath))
         #expect(fileManager.fileExists(atPath: configuration.presetURL.path))
+    }
+
+    @Test func bundledHandBrakeLoadsLibdvdcssFromFrameworks() throws {
+        let handBrakeCLIData = try Data(contentsOf: URL(fileURLWithPath: RipConfiguration.production.handBrakeCLIPath))
+        let binaryText = String(decoding: handBrakeCLIData, as: UTF8.self)
+
+        #expect(binaryText.contains("@executable_path/../Frameworks/libdvdcss.2.dylib"))
+        #expect(!binaryText.contains("/usr/local/lib/libdvdcss.2.dylib"))
     }
 
     @Test func bundledPresetIsReadableJSON() throws {
