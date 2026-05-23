@@ -11,6 +11,7 @@ LIBDVDCSS_VERSION="1.5.0"
 LIBDVDCSS_ARCHIVE="libdvdcss-${LIBDVDCSS_VERSION}.tar.xz"
 LIBDVDCSS_SOURCE_DIR="$SOURCE_DIR/libdvdcss-${LIBDVDCSS_VERSION}"
 LIBDVDCSS_URL="https://get.videolan.org/libdvdcss/${LIBDVDCSS_VERSION}/${LIBDVDCSS_ARCHIVE}"
+LIBDVDCSS_SHA256="529463e4d1befef82e5c6e470db7661a2db0343e092a2fb0d6c037cab8a5c399"
 
 ARM64_PREFIX="$BUILD_DIR/arm64-prefix"
 
@@ -36,6 +37,15 @@ if [[ ! -f "$LIBDVDCSS_ARCHIVE" ]]; then
     curl -fL "$LIBDVDCSS_URL" -o "$LIBDVDCSS_ARCHIVE"
 else
     echo "Using existing archive: $SOURCE_DIR/$LIBDVDCSS_ARCHIVE"
+fi
+
+echo "Verifying $LIBDVDCSS_ARCHIVE checksum..."
+ACTUAL_LIBDVDCSS_SHA256="$(shasum -a 256 "$LIBDVDCSS_ARCHIVE" | awk '{print $1}')"
+if [[ "$ACTUAL_LIBDVDCSS_SHA256" != "$LIBDVDCSS_SHA256" ]]; then
+    echo "ERROR: $LIBDVDCSS_ARCHIVE checksum mismatch."
+    echo "Expected: $LIBDVDCSS_SHA256"
+    echo "Actual:   $ACTUAL_LIBDVDCSS_SHA256"
+    exit 1
 fi
 
 if [[ ! -d "$LIBDVDCSS_SOURCE_DIR" ]]; then

@@ -49,3 +49,7 @@ ls -lh "$ARTIFACTS_DIR"
 
 echo ""
 echo "SwiftRipTools build complete."
+
+echo ""
+echo "To create the distributable CI/local bootstrap package, run:"
+echo "$SCRIPTS_DIR/package-swiftrip-tools.zsh"

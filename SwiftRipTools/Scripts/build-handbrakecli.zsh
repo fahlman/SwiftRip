@@ -11,6 +11,7 @@ PATCHES_DIR="$TOOLS_DIR/Patches/HandBrake"
 HANDBRAKE_VERSION="1.11.1"
 HANDBRAKE_ARCHIVE="HandBrake-${HANDBRAKE_VERSION}-source.tar.bz2"
 HANDBRAKE_URL="https://github.com/HandBrake/HandBrake/releases/download/${HANDBRAKE_VERSION}/${HANDBRAKE_ARCHIVE}"
+HANDBRAKE_SHA256="4ff6a8a57c9b1cea51025306e313eee423b0fa1a8b7799aeaa8d4d7c457a7310"
 HANDBRAKE_SOURCE_DIR="$SOURCE_DIR/HandBrake-${HANDBRAKE_VERSION}"
 LIBDVDREAD_PATCH="$PATCHES_DIR/libdvdread/A03-macOS-hardened-runtime-dlopen.patch"
 
@@ -36,6 +37,15 @@ if [[ ! -f "$HANDBRAKE_ARCHIVE" ]]; then
     curl -L -o "$HANDBRAKE_ARCHIVE" "$HANDBRAKE_URL"
 else
     echo "Using existing archive: $SOURCE_DIR/$HANDBRAKE_ARCHIVE"
+fi
+
+echo "Verifying $HANDBRAKE_ARCHIVE checksum..."
+ACTUAL_HANDBRAKE_SHA256="$(shasum -a 256 "$HANDBRAKE_ARCHIVE" | awk '{print $1}')"
+if [[ "$ACTUAL_HANDBRAKE_SHA256" != "$HANDBRAKE_SHA256" ]]; then
+    echo "ERROR: $HANDBRAKE_ARCHIVE checksum mismatch."
+    echo "Expected: $HANDBRAKE_SHA256"
+    echo "Actual:   $ACTUAL_HANDBRAKE_SHA256"
+    exit 1
 fi
 
 if [[ ! -d "$HANDBRAKE_SOURCE_DIR" ]]; then

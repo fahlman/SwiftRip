@@ -30,6 +30,7 @@ SwiftRip.app/
 - SwiftRip.app should consume artifacts produced by SwiftRipTools.
 - Tool artifacts should be reproducible.
 - Large generated artifacts should not be committed directly to Git.
+- CI and clean checkouts should restore artifacts from the pinned package in `SwiftRipTools/Manifest/swiftrip-tools.json`.
 - The app and bundled tools must be signed together.
 - HandBrake source changes should live as tracked patches under `SwiftRipTools/Patches/HandBrake/`, not as edits inside ignored extracted source trees.
 - `HandBrakeCLI` must load `libdvdcss.2.dylib` from `@executable_path/../Frameworks/libdvdcss.2.dylib`.

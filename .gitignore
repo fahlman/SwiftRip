@@ -2,9 +2,9 @@
 # Local/vendor tool artifacts
 SwiftRip/Binaries/
 Binaries/
-SwiftRipTools/Artifacts/
 
 # SwiftRipTools generated files
 SwiftRipTools/Build/
 SwiftRipTools/Source/
 SwiftRipTools/Artifacts/
+SwiftRipTools/Packages/

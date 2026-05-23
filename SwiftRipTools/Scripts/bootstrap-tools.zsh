@@ -29,6 +29,17 @@ if [[ "$FORCE_BUILD" -eq 0 ]] && "$SCRIPTS_DIR/verify-swiftrip-tools.zsh"; then
 fi
 
 echo ""
+echo "Fetching SwiftRipTools artifacts..."
+if [[ "$FORCE_BUILD" -eq 0 ]] && "$SCRIPTS_DIR/fetch-swiftrip-tools.zsh"; then
+    echo ""
+    echo "Fetched SwiftRipTools artifacts are ready."
+    exit 0
+fi
+
+echo ""
+echo "Fetch unavailable; building SwiftRipTools artifacts locally."
+
+echo ""
 echo "Building SwiftRipTools artifacts..."
 "$SCRIPTS_DIR/build-swiftrip-tools.zsh"
 

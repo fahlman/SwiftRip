@@ -18,7 +18,7 @@ Generated tool artifacts are intentionally not committed to Git. On a clean chec
 SwiftRipTools/Scripts/bootstrap-tools.zsh
 ```
 
-The bootstrap script first verifies any existing local artifacts. If they are missing or invalid, it builds:
+The bootstrap script first verifies any existing local artifacts. If they are missing or invalid, it tries to download the pinned tool package from `SwiftRipTools/Manifest/swiftrip-tools.json`. If the package is unavailable, it falls back to building the tools locally:
 
 - `SwiftRipTools/Artifacts/macos-arm64/HandBrakeCLI`
 - `SwiftRipTools/Artifacts/macos-arm64/libdvdcss.2.dylib`
@@ -54,3 +54,13 @@ SwiftRipTools/Scripts/verify-swiftrip-tools.zsh
 ```
 
 Verification checks that the generated artifacts are ARM64, do not link against `/opt/local`, and that `HandBrakeCLI` contains the app-bundle `libdvdcss` loader path instead of the legacy `/usr/local/lib/libdvdcss.2.dylib` fallback.
+
+## Packaging
+
+After a successful local rebuild, create the downloadable tool package with:
+
+```sh
+SwiftRipTools/Scripts/package-swiftrip-tools.zsh
+```
+
+Publish the generated file from `SwiftRipTools/Packages/` to the GitHub release URL recorded in `SwiftRipTools/Manifest/swiftrip-tools.json`. CI verifies the manifest checksum before extracting the tools and running the full bundle integrity tests.
