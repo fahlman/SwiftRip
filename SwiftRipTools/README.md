@@ -64,3 +64,9 @@ SwiftRipTools/Scripts/package-swiftrip-tools.zsh
 ```
 
 Publish the generated file from `SwiftRipTools/Packages/` to the GitHub release URL recorded in `SwiftRipTools/Manifest/swiftrip-tools.json`. CI verifies the manifest checksum before extracting the tools and running the full bundle integrity tests.
+
+Use the publish helper to either upload with GitHub CLI or open the exact release page and reveal the package in Finder:
+
+```sh
+SwiftRipTools/Scripts/publish-swiftrip-tools.zsh
+```
