@@ -235,14 +235,14 @@ struct SettingsView: View {
     }
 
     private func chooseOutputDirectory() {
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = false
-        panel.canCreateDirectories = true
-        panel.prompt = AppStrings.settingsChangePrompt
-
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard
+            let url = OutputDirectoryPanel.chooseDirectory(
+                defaultDirectoryURL: settings.outputDirectoryURL,
+                prompt: AppStrings.settingsChangePrompt
+            )
+        else {
+            return
+        }
 
         do {
             try settings.setOutputDirectory(url)

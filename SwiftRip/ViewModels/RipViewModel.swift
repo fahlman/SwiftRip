@@ -128,6 +128,10 @@ final class RipViewModel {
         environment.appSettings.outputDirectoryURL
     }
 
+    var needsOutputDirectoryPermission: Bool {
+        environment.appSettings.needsOutputDirectoryPermission
+    }
+
     var defaultLogDirectory: URL {
         if let logDirectoryOverride = environment.logDirectoryOverride {
             return logDirectoryOverride
@@ -173,6 +177,14 @@ final class RipViewModel {
             ? url
             : url.deletingPathExtension().appendingPathExtension(Self.movieFileExtension)
         updateState { $0.setOutputURL(normalizedURL) }
+    }
+
+    func setOutputDirectory(_ url: URL) throws {
+        try environment.appSettings.setOutputDirectory(url)
+
+        if let selectedDVD {
+            selectDVD(selectedDVD)
+        }
     }
 
     func selectDVD(_ dvd: DVDVolume, outputURL: URL? = nil, statusMessage: String? = nil) {

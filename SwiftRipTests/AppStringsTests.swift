@@ -44,6 +44,8 @@ struct AppStringsTests {
         #expect(AppStrings.settingsResetTitle == "Reset")
         #expect(AppStrings.settingsCancelTitle == "Cancel")
         #expect(AppStrings.settingsOKTitle == "OK")
+        #expect(AppStrings.chooseOutputFolderPrompt == "Choose Output Folder")
+        #expect(AppStrings.outputFolderPermissionFailedTitle == "Could Not Use Output Folder")
         #expect(AppStrings.settingsCompletionTitle == "Completion")
         #expect(AppStrings.settingsCompletionSoundTitle == "Sound:")
         #expect(AppStrings.settingsNotificationTitle == "Show notification when finished")

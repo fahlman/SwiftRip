@@ -20,6 +20,7 @@ struct AppSettingsTests {
         #expect(settings.outputFilenameFormat == .titleCase)
         #expect(!settings.isDefaultDVDAppOnInsertEnabled)
         #expect(settings.isUsingDefaultOutputDirectory)
+        #expect(settings.needsOutputDirectoryPermission)
     }
 
     @Test func persistsCompletionAndFilenamePreferences() throws {
@@ -155,11 +156,11 @@ struct AppSettingsTests {
             fileManager: .default,
             defaultDVDAppPreferenceManager: RipTestSupport.StubDefaultDVDAppPreferenceManager()
         )
-        let moviesURL = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first
-            ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Movies", isDirectory: true)
+        let moviesURL = AppSettings.defaultMoviesDirectory(using: .default)
 
         #expect(settings.outputDirectoryURL == moviesURL)
         #expect(settings.isUsingDefaultOutputDirectory)
+        #expect(settings.needsOutputDirectoryPermission)
     }
 
     private final class RecordingDefaultDVDAppPreferenceManager: DefaultDVDAppPreferenceManaging, @unchecked Sendable {

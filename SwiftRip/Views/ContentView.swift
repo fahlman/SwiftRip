@@ -158,11 +158,43 @@ struct ContentView: View {
     }
 
     private func startRip() {
+        guard ensureOutputDirectoryPermission() else { return }
+
         Task {
             await viewModel.startRip { outputURL in
                 NSWorkspace.shared.activateFileViewerSelecting([outputURL])
             }
         }
+    }
+
+    private func ensureOutputDirectoryPermission() -> Bool {
+        guard viewModel.needsOutputDirectoryPermission else { return true }
+
+        guard
+            let url = OutputDirectoryPanel.chooseDirectory(
+                defaultDirectoryURL: viewModel.defaultOutputDirectory,
+                prompt: AppStrings.chooseOutputFolderPrompt,
+                message: AppStrings.outputFolderPermissionMessage
+            )
+        else {
+            return false
+        }
+
+        do {
+            try viewModel.setOutputDirectory(url)
+            return true
+        } catch {
+            showOutputDirectoryPermissionError(error)
+            return false
+        }
+    }
+
+    private func showOutputDirectoryPermissionError(_ error: Error) {
+        let alert = NSAlert()
+        alert.messageText = AppStrings.outputFolderPermissionFailedTitle
+        alert.informativeText = error.localizedDescription
+        alert.alertStyle = .warning
+        alert.runModal()
     }
 
     private func stopRip() {

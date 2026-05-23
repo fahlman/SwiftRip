@@ -73,12 +73,12 @@ struct RipViewModelSelectionTests {
         )
         viewModel.chooseDVD(at: dvdURL)
 
-        let moviesURL = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first
-            ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Movies", isDirectory: true)
+        let moviesURL = AppSettings.defaultMoviesDirectory(using: .default)
 
         #expect(viewModel.selectedDVD?.name == "MY_MOVIE")
         #expect(viewModel.outputURL == moviesURL.appendingPathComponent("My Movie.m4v"))
         #expect(viewModel.commandAvailability.canRip)
+        #expect(viewModel.needsOutputDirectoryPermission)
     }
 
     @Test func chooseDVDRejectsFolderWithoutVideoTS() throws {
