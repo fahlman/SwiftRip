@@ -211,7 +211,13 @@ enum RipTestSupport {
             isEnabled
         }
 
-        func setSwiftRipAsDefaultDVDApp(_ isEnabled: Bool) throws {}
+        func currentDVDAction() -> DigitalHubDVDAction? {
+            nil
+        }
+
+        func makeSwiftRipDefaultDVDApp() throws {}
+
+        func restoreDVDAction(_ action: DigitalHubDVDAction?) throws {}
     }
 
     struct ThrowingDVDDeviceEjector: DVDDeviceEjecting {

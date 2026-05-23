@@ -8,7 +8,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @State private var settings = AppSettings.shared
-    @State private var errorMessage: String?
+    @State private var outputDirectoryErrorMessage: String?
+    @State private var dvdPreferenceErrorMessage: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -50,12 +51,12 @@ struct SettingsView: View {
             outputLocationControls
             filenameFormatRow
 
-            if let errorMessage {
-                Text(errorMessage)
+            if let outputDirectoryErrorMessage {
+                Text(outputDirectoryErrorMessage)
                     .foregroundStyle(SwiftRipColors.errorText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
-                    .accessibilityIdentifier("settingsErrorMessage")
+                    .accessibilityIdentifier("outputDirectoryErrorMessage")
             }
         }
     }
@@ -92,6 +93,14 @@ struct SettingsView: View {
             )
             .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
             .accessibilityIdentifier("defaultDVDAppToggle")
+
+            if let dvdPreferenceErrorMessage {
+                Text(dvdPreferenceErrorMessage)
+                    .foregroundStyle(SwiftRipColors.errorText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
+                    .accessibilityIdentifier("dvdPreferenceErrorMessage")
+            }
         }
         .onAppear {
             settings.refreshDefaultDVDAppOnInsertEnabled()
@@ -104,10 +113,10 @@ struct SettingsView: View {
         } set: { isEnabled in
             do {
                 try settings.setDefaultDVDAppOnInsertEnabled(isEnabled)
-                errorMessage = nil
+                dvdPreferenceErrorMessage = nil
             } catch {
                 settings.refreshDefaultDVDAppOnInsertEnabled()
-                errorMessage = error.localizedDescription
+                dvdPreferenceErrorMessage = error.localizedDescription
             }
         }
     }
@@ -170,7 +179,7 @@ struct SettingsView: View {
 
             Button {
                 settings.resetOutputDirectoryToMovies()
-                errorMessage = nil
+                outputDirectoryErrorMessage = nil
             } label: {
                 Text(AppStrings.settingsResetTitle)
                     .frame(width: SwiftRipLayout.Button.settingsWidth)
@@ -237,9 +246,9 @@ struct SettingsView: View {
 
         do {
             try settings.setOutputDirectory(url)
-            errorMessage = nil
+            outputDirectoryErrorMessage = nil
         } catch {
-            errorMessage = error.localizedDescription
+            outputDirectoryErrorMessage = error.localizedDescription
         }
     }
 }

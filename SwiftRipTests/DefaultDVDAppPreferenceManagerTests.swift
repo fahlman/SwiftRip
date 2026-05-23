@@ -13,13 +13,7 @@ struct DefaultDVDAppPreferenceManagerTests {
     @Test func reportsEnabledWhenVideoDVDPreferencePointsAtSwiftRip() {
         let appURL = URL(fileURLWithPath: "/Applications/SwiftRip.app", isDirectory: true)
         let store = InMemoryDigitalHubPreferenceStore()
-        store.dictionaries["com.apple.digihub.dvd.video.appeared"] = [
-            "action": 5,
-            "otherapp": [
-                "_CFURLString": appURL.path,
-                "_CFURLStringType": 0
-            ]
-        ]
+        store.action = .openOtherApplication(at: appURL)
         let manager = DigitalHubDefaultDVDAppPreferenceManager(
             appBundleURLProvider: { appURL },
             preferenceStore: store
@@ -36,70 +30,61 @@ struct DefaultDVDAppPreferenceManagerTests {
             preferenceStore: store
         )
 
-        try manager.setSwiftRipAsDefaultDVDApp(true)
+        try manager.makeSwiftRipDefaultDVDApp()
 
-        let preference = try #require(store.dictionaries["com.apple.digihub.dvd.video.appeared"])
-        #expect(preference["action"] as? Int == 5)
-        let otherApp = try #require(preference["otherapp"] as? [String: Any])
+        #expect(store.action == .openOtherApplication(at: appURL))
+    }
+
+    @Test func restoringUsesProvidedAction() throws {
+        let store = InMemoryDigitalHubPreferenceStore()
+        let manager = DigitalHubDefaultDVDAppPreferenceManager(
+            preferenceStore: store
+        )
+        let previousAction = DigitalHubDVDAction(action: 105)
+
+        try manager.restoreDVDAction(previousAction)
+
+        #expect(store.action == previousAction)
+    }
+
+    @Test func restoringNilFallsBackToIgnore() throws {
+        let store = InMemoryDigitalHubPreferenceStore()
+        let manager = DigitalHubDefaultDVDAppPreferenceManager(
+            preferenceStore: store
+        )
+
+        try manager.restoreDVDAction(nil)
+
+        #expect(store.action == .ignore)
+    }
+
+    @Test func typedActionDecodesLegacyDictionaryAndPreservesOtherAppPath() throws {
+        let appURL = URL(fileURLWithPath: "/Applications/SwiftRip.app", isDirectory: true)
+        let action = try #require(DigitalHubDVDAction(dictionary: [
+            "action": NSNumber(value: 5),
+            "otherapp": [
+                "_CFURLString": appURL.path,
+                "_CFURLStringType": NSNumber(value: 0)
+            ]
+        ]))
+
+        #expect(action == .openOtherApplication(at: appURL))
+        let dictionary = action.dictionaryRepresentation
+        #expect(dictionary["action"] as? Int == 5)
+        let otherApp = try #require(dictionary["otherapp"] as? [String: Any])
         #expect(otherApp["_CFURLString"] as? String == appURL.path)
         #expect(otherApp["_CFURLStringType"] as? Int == 0)
     }
 
-    @Test func disablingOnlyClearsPreferenceWhenItPointsAtSwiftRip() throws {
-        let appURL = URL(fileURLWithPath: "/Applications/SwiftRip.app", isDirectory: true)
-        let store = InMemoryDigitalHubPreferenceStore()
-        store.dictionaries["com.apple.digihub.dvd.video.appeared"] = [
-            "action": 5,
-            "otherapp": [
-                "_CFURLString": appURL.path,
-                "_CFURLStringType": 0
-            ]
-        ]
-        let manager = DigitalHubDefaultDVDAppPreferenceManager(
-            appBundleURLProvider: { appURL },
-            preferenceStore: store
-        )
-
-        try manager.setSwiftRipAsDefaultDVDApp(false)
-
-        let preference = try #require(store.dictionaries["com.apple.digihub.dvd.video.appeared"])
-        #expect(preference["action"] as? Int == 1)
-        #expect(preference["otherapp"] == nil)
-    }
-
-    @Test func disablingDoesNotOverwriteAnotherDefaultApp() throws {
-        let appURL = URL(fileURLWithPath: "/Applications/SwiftRip.app", isDirectory: true)
-        let otherAppURL = URL(fileURLWithPath: "/Applications/Other.app", isDirectory: true)
-        let store = InMemoryDigitalHubPreferenceStore()
-        let originalPreference: [String: Any] = [
-            "action": 5,
-            "otherapp": [
-                "_CFURLString": otherAppURL.path,
-                "_CFURLStringType": 0
-            ]
-        ]
-        store.dictionaries["com.apple.digihub.dvd.video.appeared"] = originalPreference
-        let manager = DigitalHubDefaultDVDAppPreferenceManager(
-            appBundleURLProvider: { appURL },
-            preferenceStore: store
-        )
-
-        try manager.setSwiftRipAsDefaultDVDApp(false)
-
-        #expect(store.dictionaries["com.apple.digihub.dvd.video.appeared"]?["action"] as? Int == 5)
-        let otherApp = try #require(store.dictionaries["com.apple.digihub.dvd.video.appeared"]?["otherapp"] as? [String: Any])
-        #expect(otherApp["_CFURLString"] as? String == otherAppURL.path)
-    }
-
     private final class InMemoryDigitalHubPreferenceStore: DigitalHubPreferenceStoring, @unchecked Sendable {
-        var dictionaries: [String: [String: Any]] = [:]
+        var action: DigitalHubDVDAction?
 
-        func dictionary(forKey key: String) -> [String: Any]? {
-            dictionaries[key]
+        func dvdAction() -> DigitalHubDVDAction? {
+            action
         }
 
-        func setDictionary(_ dictionary: [String: Any], forKey key: String) throws {
-            dictionaries[key] = dictionary
+        func setDVDAction(_ action: DigitalHubDVDAction) throws {
+            self.action = action
         }
     }
 }
