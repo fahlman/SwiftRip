@@ -24,17 +24,22 @@ struct RipLifecycleStateTests {
         #expect(state.hasSelectedDVD)
         #expect(state.selectedDVDName == "MOVIE")
 
+        state.prepareRipSession(
+            makeSession(dvd: dvd, outputURL: outputURL),
+            statusMessage: "Preparing"
+        )
+        #expect(state.primaryAction == .stop)
+
         state.beginEncoding(statusMessage: "Ripping")
         #expect(state.primaryAction == .stop)
 
-        state.completeRip(statusMessage: "Done")
+        state.markCompleted(statusMessage: "Done")
         #expect(state.primaryAction == .eject)
     }
 
     @Test func commandAvailabilityFollowsPhaseAndURLs() {
         let dvd = DVDVolume(id: "/Volumes/MOVIE", name: "MOVIE", path: "/Volumes/MOVIE")
         let outputURL = URL(fileURLWithPath: "/tmp/Movie.m4v")
-        let logURL = URL(fileURLWithPath: "/tmp/Movie.log")
         var state = RipLifecycleState()
 
         #expect(state.commandAvailability == RipCommandAvailability(
@@ -47,11 +52,23 @@ struct RipLifecycleStateTests {
         ))
 
         state.selectDVD(dvd, outputURL: outputURL, statusMessage: "Ready")
-        state.setLogFileURL(logURL)
         #expect(state.commandAvailability == RipCommandAvailability(
             canChooseDVD: true,
             canRip: true,
             canStop: false,
+            canEject: false,
+            canRevealOutput: true,
+            canRevealLog: false
+        ))
+
+        state.prepareRipSession(
+            makeSession(dvd: dvd, outputURL: outputURL),
+            statusMessage: "Preparing"
+        )
+        #expect(state.commandAvailability == RipCommandAvailability(
+            canChooseDVD: true,
+            canRip: false,
+            canStop: true,
             canEject: false,
             canRevealOutput: true,
             canRevealLog: true
@@ -62,9 +79,21 @@ struct RipLifecycleStateTests {
         #expect(state.commandAvailability.canStop == true)
         #expect(state.commandAvailability.canEject == false)
 
-        state.completeRip(statusMessage: "Done")
+        state.markCompleted(statusMessage: "Done")
         #expect(state.commandAvailability.canRip == false)
         #expect(state.commandAvailability.canStop == false)
         #expect(state.commandAvailability.canEject == true)
+    }
+
+    private func makeSession(dvd: DVDVolume, outputURL: URL) -> RipSession {
+        RipSession(
+            input: dvd,
+            outputURL: outputURL,
+            arguments: [],
+            logDirectoryURL: FileManager.default.temporaryDirectory,
+            executablePath: "/tmp/HandBrakeCLI",
+            libdvdcssPath: "/tmp/libdvdcss.2.dylib",
+            presetURL: URL(fileURLWithPath: "/tmp/SwiftRip.json")
+        )
     }
 }
