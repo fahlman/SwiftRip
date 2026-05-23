@@ -53,6 +53,7 @@ final class SwiftRipUITests: XCTestCase {
     @MainActor
     private func launchApp() -> XCUIApplication {
         let app = XCUIApplication()
+        app.launchEnvironment["SWIFTRIP_SUPPRESS_FIRST_RUN_OUTPUT_PROMPT"] = "1"
         app.launch()
         return app
     }

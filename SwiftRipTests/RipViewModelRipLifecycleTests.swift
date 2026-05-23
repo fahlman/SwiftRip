@@ -11,11 +11,14 @@ import Testing
 struct RipViewModelRipLifecycleTests {
 
     @Test func missingHandBrakeWritesLogFile() async throws {
-        let logDirectory = FileManager.default.temporaryDirectory
+        let testDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let logDirectory = testDirectory.appendingPathComponent("Logs", isDirectory: true)
+        let outputDirectory = testDirectory.appendingPathComponent("Output", isDirectory: true)
         defer {
-            try? FileManager.default.removeItem(at: logDirectory)
+            try? FileManager.default.removeItem(at: testDirectory)
         }
+        try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
 
         let viewModel = RipTestSupport.makeViewModel(
             configuration: RipConfiguration(
@@ -30,7 +33,7 @@ struct RipViewModelRipLifecycleTests {
         )
         viewModel.selectDVD(
             DVDVolume(id: "/Volumes/MY_MOVIE", name: "MY_MOVIE", path: "/Volumes/MY_MOVIE"),
-            outputURL: URL(fileURLWithPath: "/tmp/My Movie.m4v")
+            outputURL: outputDirectory.appendingPathComponent("My Movie.m4v")
         )
 
         await viewModel.startRip { _ in }
@@ -130,6 +133,55 @@ struct RipViewModelRipLifecycleTests {
         #expect(logText.contains("SwiftRip: Rip completed successfully"))
         #expect(logText.contains("Completed output protected from cancellation cleanup"))
         #expect(!viewModel.isEncoding)
+    }
+
+    @Test func liveLogIsWrittenDuringActiveRip() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+
+        let runner = RipTestSupport.WaitingHandBrakeRunner()
+        let viewModel = RipTestSupport.makeRunnableViewModel(environment: testEnvironment, runner: runner)
+
+        let ripTask = Task {
+            await viewModel.startRip { _ in }
+        }
+
+        await RipTestSupport.waitUntil {
+            guard let logFileURL = viewModel.logFileURL else { return false }
+            return FileManager.default.fileExists(atPath: logFileURL.path)
+        }
+
+        let logURL = try #require(viewModel.logFileURL)
+        let logText = try String(contentsOf: logURL, encoding: .utf8)
+
+        #expect(logText.contains("SwiftRip: Started ripping Movie"))
+        #expect(logText.contains("Encoding: task 1 of 1, 1.00 %"))
+        #expect(viewModel.commandAvailability.canRevealLog)
+
+        viewModel.cancelRip()
+        await ripTask.value
+    }
+
+    @Test func outputDirectoryPreflightFailsBeforeHandBrakeRuns() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+
+        let missingOutputURL = testEnvironment.rootURL
+            .appendingPathComponent("Missing", isDirectory: true)
+            .appendingPathComponent("Movie.m4v")
+        let runner = RecordingHandBrakeRunner()
+        let viewModel = RipTestSupport.makeRunnableViewModel(environment: testEnvironment, runner: runner)
+        viewModel.setOutputURL(missingOutputURL)
+
+        await viewModel.startRip { _ in }
+
+        let logURL = try #require(viewModel.logFileURL)
+        let logText = try String(contentsOf: logURL, encoding: .utf8)
+
+        #expect(runner.runCount == 0)
+        #expect(viewModel.statusMessage.contains(AppStrings.outputDirectoryMissing))
+        #expect(logText.contains(AppStrings.outputDirectoryMissing))
+        #expect(logText.contains("Outcome: Preflight failed"))
     }
 
     @Test func successfulRipUsesCompletionPreferencesAndCanSkipReveal() async throws {
@@ -431,5 +483,19 @@ struct RipViewModelRipLifecycleTests {
         #expect(!FileManager.default.fileExists(atPath: testEnvironment.outputURL.path))
         #expect(logText.contains("Outcome: Canceled"))
         #expect(!viewModel.isEncoding)
+    }
+
+    @MainActor
+    private final class RecordingHandBrakeRunner: HandBrakeRunning {
+        private(set) var runCount = 0
+
+        func run(
+            executablePath: String,
+            arguments: [String],
+            onOutput: @escaping @MainActor @Sendable (String) -> Void
+        ) async -> HandBrakeResult {
+            runCount += 1
+            return HandBrakeResult(exitCode: 0)
+        }
     }
 }

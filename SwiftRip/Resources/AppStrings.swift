@@ -40,6 +40,9 @@ enum AppStrings {
     nonisolated static let chooseOutputFolderPrompt = localized("Choose Output Folder")
     nonisolated static let outputFolderPermissionMessage = localized("SwiftRip needs permission to save ripped movies outside its app container. Choose Movies or another output folder.")
     nonisolated static let outputFolderPermissionFailedTitle = localized("Could Not Use Output Folder")
+    nonisolated static let outputDirectoryMissing = localized("The output folder does not exist.")
+    nonisolated static let outputDirectoryNotFolder = localized("The output location is not a folder.")
+    nonisolated static let firstRunOutputFolderMessage = localized("Choose where SwiftRip should save ripped movies. You can change this later in Settings.")
     nonisolated static let settingsCompletionTitle = localized("Completion")
     nonisolated static let settingsCompletionSoundTitle = localized("Sound:")
     nonisolated static let settingsNotificationTitle = localized("Show notification when finished")
@@ -97,6 +100,10 @@ enum AppStrings {
         String(format: localized("%d percent"), percent)
     }
 
+    nonisolated static func savingTo(_ fileName: String) -> String {
+        String(format: localized("Saving to %@"), fileName)
+    }
+
     nonisolated static func ripCompleteNotificationBody(fileName: String) -> String {
         String(format: localized("Saved %@"), fileName)
     }
@@ -133,6 +140,10 @@ enum AppStrings {
 
     nonisolated static func couldNotWriteLog(_ errorDescription: String) -> String {
         String(format: localized("Could not write log: %@"), errorDescription)
+    }
+
+    nonisolated static func outputDirectoryNotWritable(_ path: String, errorDescription: String) -> String {
+        String(format: localized("SwiftRip cannot write to %@. %@"), path, errorDescription)
     }
 
     private nonisolated static func localized(_ key: String) -> String {

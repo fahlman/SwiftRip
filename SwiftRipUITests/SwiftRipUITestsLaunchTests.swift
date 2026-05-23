@@ -17,6 +17,7 @@ final class SwiftRipUITestsLaunchTests: XCTestCase {
 
     @MainActor func testLaunch() throws {
         let app = XCUIApplication()
+        app.launchEnvironment["SWIFTRIP_SUPPRESS_FIRST_RUN_OUTPUT_PROMPT"] = "1"
         app.launch()
 
         // Insert steps here to perform after app launch but before taking a screenshot,

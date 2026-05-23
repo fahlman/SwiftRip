@@ -13,6 +13,7 @@ struct ContentView: View {
     @State private var viewModel = RipViewModel()
     @State private var interruptionCoordinator = RipInterruptionCoordinator.shared
     @State private var isDVDPickerPresented = false
+    @State private var hasPresentedInitialOutputDirectoryPrompt = false
 
     private static let chooseDVDTitle = AppStrings.chooseDVDTitle
     private static let noValidDVDTitle = AppStrings.noValidDVDTitle
@@ -44,6 +45,7 @@ struct ContentView: View {
         .onAppear {
             viewModel.refreshDVDs()
             interruptionCoordinator.isRipActive = viewModel.isEncoding
+            presentInitialOutputDirectoryPromptIfNeeded()
         }
         .onChange(of: viewModel.isEncoding) { _, isEncoding in
             interruptionCoordinator.updateRipActivity(isEncoding)
@@ -158,7 +160,7 @@ struct ContentView: View {
     }
 
     private func startRip() {
-        guard ensureOutputDirectoryPermission() else { return }
+        guard ensureOutputDirectoryPermission(message: AppStrings.outputFolderPermissionMessage) else { return }
 
         Task {
             await viewModel.startRip { outputURL in
@@ -167,14 +169,31 @@ struct ContentView: View {
         }
     }
 
-    private func ensureOutputDirectoryPermission() -> Bool {
+    private func presentInitialOutputDirectoryPromptIfNeeded() {
+        guard !hasPresentedInitialOutputDirectoryPrompt else { return }
+        guard !isFirstRunOutputDirectoryPromptSuppressed else { return }
+        guard viewModel.needsOutputDirectoryPermission else { return }
+
+        hasPresentedInitialOutputDirectoryPrompt = true
+        _ = ensureOutputDirectoryPermission(message: AppStrings.firstRunOutputFolderMessage)
+    }
+
+    private var isFirstRunOutputDirectoryPromptSuppressed: Bool {
+        let environment = ProcessInfo.processInfo.environment
+
+        return environment["SWIFTRIP_SUPPRESS_FIRST_RUN_OUTPUT_PROMPT"] == "1"
+            || environment["XCTestConfigurationFilePath"] != nil
+            || NSClassFromString("XCTest.XCTestCase") != nil
+    }
+
+    private func ensureOutputDirectoryPermission(message: String) -> Bool {
         guard viewModel.needsOutputDirectoryPermission else { return true }
 
         guard
             let url = OutputDirectoryPanel.chooseDirectory(
                 defaultDirectoryURL: viewModel.defaultOutputDirectory,
                 prompt: AppStrings.chooseOutputFolderPrompt,
-                message: AppStrings.outputFolderPermissionMessage
+                message: message
             )
         else {
             return false
@@ -264,6 +283,15 @@ struct ContentView: View {
             Text("\(progressPercent)%")
                 .swiftRipProgressCaption()
                 .accessibilityHidden(true)
+
+            if let outputFileName = viewModel.outputFileName {
+                Text(AppStrings.savingTo(outputFileName))
+                    .swiftRipProgressCaption()
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .frame(width: SwiftRipLayout.MainWindow.progressWidth)
+                    .accessibilityIdentifier("ripOutputFileName")
+            }
         }
     }
 

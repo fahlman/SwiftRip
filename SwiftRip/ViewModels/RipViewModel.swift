@@ -128,6 +128,10 @@ final class RipViewModel {
         environment.appSettings.outputDirectoryURL
     }
 
+    var outputFileName: String? {
+        outputURL?.lastPathComponent
+    }
+
     var needsOutputDirectoryPermission: Bool {
         environment.appSettings.needsOutputDirectoryPermission
     }
@@ -259,7 +263,7 @@ final class RipViewModel {
         if let preflightFailure = RipPreflightCheck(
             configuration: environment.configuration,
             fileManager: environment.fileManager
-        ).failureMessage() {
+        ).failureMessage(outputURL: outputURL) {
             savePreflightFailure(preflightFailure)
             clearActiveRipFiles()
             return
@@ -301,16 +305,19 @@ final class RipViewModel {
         updateState { $0.setLogFileURL(activeRip?.log.url) }
         activeRip?.log.appendBlankLine("SwiftRip: Selected DVD: \(input.name)")
         activeRip?.log.appendLine("SwiftRip: Output file: \(outputURL.path)")
+        _ = saveActiveLog()
         return arguments
     }
 
     private func beginEncoding(_ selectedDVD: DVDVolume) {
         activeRip?.log.appendBlankLine("SwiftRip: Started ripping \(selectedDVD.name)")
+        _ = saveActiveLog()
         updateState { $0.beginEncoding(statusMessage: AppStrings.ripping(selectedDVD.name)) }
     }
 
     private func handleHandBrakeOutputLine(_ line: String) {
         activeRip?.log.append(line)
+        _ = saveActiveLog()
 
         if let parsedProgress = HandBrakeProgressParser.progressValue(from: line) {
             updateState { $0.updateProgress(parsedProgress) }
@@ -319,6 +326,7 @@ final class RipViewModel {
 
     private func finishCancelledRip(exitCode: Int32) {
         activeRip?.log.appendExitCode(exitCode)
+        _ = saveActiveLog()
         cleanupCancelledRip()
         updateState { $0.finishEncoding(statusMessage: AppStrings.ripStopped) }
     }
@@ -331,6 +339,7 @@ final class RipViewModel {
         activeRip?.protectCompletedOutput()
         activeRip?.log.appendBlankLine("SwiftRip: Rip completed successfully")
         activeRip?.log.appendLine("Completed output protected from cancellation cleanup: \(outputURL.path)")
+        _ = saveActiveLog()
         notifyRipCompleted(outputURL: outputURL)
         let logWriteError = finishRipWithOutputPreserved(
             exitCode: exitCode,
@@ -350,6 +359,7 @@ final class RipViewModel {
     private func finishFailedRip(outputURL: URL, exitCode: Int32) {
         activeRip?.log.appendBlankLine("SwiftRip: Rip failed; output preserved for inspection")
         activeRip?.log.appendLine("Output preserved for inspection: \(outputURL.path)")
+        _ = saveActiveLog()
         let logWriteError = finishRipWithOutputPreserved(
             exitCode: exitCode,
             outcome: "Failed"
@@ -411,6 +421,7 @@ final class RipViewModel {
         guard let activeRip else { return }
 
         self.activeRip?.log.appendBlankLine("SwiftRip: User requested stop")
+        _ = saveActiveLog()
 
         if activeRip.shouldDeleteOutputOnCancel {
             deleteIncompleteOutputFile(at: activeRip.outputURL)
