@@ -70,7 +70,11 @@ enum RipTestSupport {
         let suiteName = "SwiftRipTests-\(UUID().uuidString)"
         let userDefaults = UserDefaults(suiteName: suiteName) ?? .standard
         userDefaults.removePersistentDomain(forName: suiteName)
-        return AppSettings(userDefaults: userDefaults, fileManager: .default)
+        return AppSettings(
+            userDefaults: userDefaults,
+            fileManager: .default,
+            defaultDVDAppPreferenceManager: StubDefaultDVDAppPreferenceManager()
+        )
     }
 
     static func makeRunnableTestEnvironment() throws -> RunnableTestEnvironment {
@@ -198,6 +202,16 @@ enum RipTestSupport {
 
     struct NoOpDVDDeviceEjector: DVDDeviceEjecting {
         func ejectDVD(at url: URL) throws {}
+    }
+
+    struct StubDefaultDVDAppPreferenceManager: DefaultDVDAppPreferenceManaging {
+        var isEnabled = false
+
+        func isSwiftRipDefaultDVDApp() -> Bool {
+            isEnabled
+        }
+
+        func setSwiftRipAsDefaultDVDApp(_ isEnabled: Bool) throws {}
     }
 
     struct ThrowingDVDDeviceEjector: DVDDeviceEjecting {

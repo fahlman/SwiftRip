@@ -33,7 +33,7 @@ enum SwiftRipLayout {
 
     enum SettingsWindow {
         static let width: CGFloat = 640
-        static let height: CGFloat = 470
+        static let height: CGFloat = 540
         static let contentPadding: CGFloat = 22
         static let contentSpacing: CGFloat = 14
         static let rowSpacing: CGFloat = 12

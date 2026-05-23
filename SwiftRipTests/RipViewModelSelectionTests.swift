@@ -63,7 +63,11 @@ struct RipViewModelSelectionTests {
         defer {
             userDefaults.removePersistentDomain(forName: userDefaultsSuiteName)
         }
-        let appSettings = AppSettings(userDefaults: userDefaults, fileManager: .default)
+        let appSettings = AppSettings(
+            userDefaults: userDefaults,
+            fileManager: .default,
+            defaultDVDAppPreferenceManager: RipTestSupport.StubDefaultDVDAppPreferenceManager()
+        )
         let viewModel = RipTestSupport.makeViewModel(
             appSettings: appSettings
         )

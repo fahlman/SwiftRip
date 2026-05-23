@@ -139,11 +139,14 @@ final class AppSettings {
             userDefaults.set(outputFilenameFormat.rawValue, forKey: Self.outputFilenameFormatKey)
         }
     }
+    private(set) var isDefaultDVDAppOnInsertEnabled: Bool
 
     @ObservationIgnored
     private let userDefaults: UserDefaults
     @ObservationIgnored
     private let fileManager: FileManager
+    @ObservationIgnored
+    private let defaultDVDAppPreferenceManager: any DefaultDVDAppPreferenceManaging
     @ObservationIgnored
     private var securityScopedOutputDirectoryURL: URL?
 
@@ -151,9 +154,14 @@ final class AppSettings {
         self.init(userDefaults: .standard, fileManager: .default)
     }
 
-    init(userDefaults: UserDefaults, fileManager: FileManager) {
+    init(
+        userDefaults: UserDefaults,
+        fileManager: FileManager,
+        defaultDVDAppPreferenceManager: any DefaultDVDAppPreferenceManaging = DigitalHubDefaultDVDAppPreferenceManager()
+    ) {
         self.userDefaults = userDefaults
         self.fileManager = fileManager
+        self.defaultDVDAppPreferenceManager = defaultDVDAppPreferenceManager
         self.outputDirectoryURL = Self.moviesDirectory(using: fileManager)
         self.completionSound = Self.completionSound(from: userDefaults)
         self.isCompletionNotificationEnabled = Self.boolValue(
@@ -172,6 +180,7 @@ final class AppSettings {
             in: userDefaults
         )
         self.outputFilenameFormat = Self.outputFilenameFormat(from: userDefaults)
+        self.isDefaultDVDAppOnInsertEnabled = defaultDVDAppPreferenceManager.isSwiftRipDefaultDVDApp()
         self.outputDirectoryURL = resolvedOutputDirectoryURL()
     }
 
@@ -195,6 +204,15 @@ final class AppSettings {
         stopAccessingSecurityScopedOutputDirectory()
         userDefaults.removeObject(forKey: Self.outputDirectoryBookmarkKey)
         outputDirectoryURL = Self.moviesDirectory(using: fileManager)
+    }
+
+    func setDefaultDVDAppOnInsertEnabled(_ isEnabled: Bool) throws {
+        try defaultDVDAppPreferenceManager.setSwiftRipAsDefaultDVDApp(isEnabled)
+        isDefaultDVDAppOnInsertEnabled = defaultDVDAppPreferenceManager.isSwiftRipDefaultDVDApp()
+    }
+
+    func refreshDefaultDVDAppOnInsertEnabled() {
+        isDefaultDVDAppOnInsertEnabled = defaultDVDAppPreferenceManager.isSwiftRipDefaultDVDApp()
     }
 
     private func resolvedOutputDirectoryURL() -> URL {

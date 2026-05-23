@@ -50,6 +50,10 @@ struct AppStringsTests {
         #expect(AppStrings.settingsRevealCompletedFileTitle == "Reveal completed file in Finder")
         #expect(AppStrings.settingsAutoEjectTitle == "Eject DVD after successful rip")
         #expect(AppStrings.settingsFilenameFormatTitle == "Filename Format:")
+        #expect(AppStrings.settingsDVDTitle == "DVDs")
+        #expect(AppStrings.settingsDefaultDVDAppTitle == "Open SwiftRip when a video DVD is inserted")
+        #expect(AppStrings.defaultDVDAppSaveFailed == "Could not update the macOS CDs & DVDs setting.")
+        #expect(AppStrings.defaultDVDAppMissingBundle == "SwiftRip could not find its application bundle.")
         #expect(AppStrings.completionSoundNoneTitle == "None")
         #expect(AppStrings.filenameFormatDatedTitleCaseTitle == "Movie Name - YYYY-MM-DD.m4v")
     }

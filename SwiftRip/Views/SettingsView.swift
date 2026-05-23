@@ -17,6 +17,8 @@ struct SettingsView: View {
                 Divider()
                 filesSection
                 Divider()
+                dvdSection
+                Divider()
                 completionSection
                 Spacer(minLength: 0)
             }
@@ -76,6 +78,37 @@ struct SettingsView: View {
             Toggle(AppStrings.settingsAutoEjectTitle, isOn: $settings.shouldAutoEjectAfterSuccessfulRip)
                 .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
                 .accessibilityIdentifier("autoEjectToggle")
+        }
+    }
+
+    private var dvdSection: some View {
+        VStack(alignment: .leading, spacing: SwiftRipLayout.SettingsWindow.rowSpacing) {
+            Text(AppStrings.settingsDVDTitle)
+                .swiftRipSectionTitle()
+
+            Toggle(
+                AppStrings.settingsDefaultDVDAppTitle,
+                isOn: defaultDVDAppOnInsertBinding
+            )
+            .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
+            .accessibilityIdentifier("defaultDVDAppToggle")
+        }
+        .onAppear {
+            settings.refreshDefaultDVDAppOnInsertEnabled()
+        }
+    }
+
+    private var defaultDVDAppOnInsertBinding: Binding<Bool> {
+        Binding {
+            settings.isDefaultDVDAppOnInsertEnabled
+        } set: { isEnabled in
+            do {
+                try settings.setDefaultDVDAppOnInsertEnabled(isEnabled)
+                errorMessage = nil
+            } catch {
+                settings.refreshDefaultDVDAppOnInsertEnabled()
+                errorMessage = error.localizedDescription
+            }
         }
     }
 

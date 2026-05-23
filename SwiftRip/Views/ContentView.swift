@@ -42,6 +42,7 @@ struct ContentView: View {
             viewModel.cancelRipForWindowCloseOrAppQuit()
         }
         .onAppear {
+            viewModel.refreshDVDs()
             interruptionCoordinator.isRipActive = viewModel.isEncoding
         }
         .onChange(of: viewModel.isEncoding) { _, isEncoding in
