@@ -22,7 +22,15 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
+      - name: Fetch bundled tools
+        id: bundled-tools
+        continue-on-error: true
+        run: SwiftRipTools/Scripts/fetch-swiftrip-tools.zsh
+
       - name: Run tests
-        env:
-          SWIFTRIP_SKIP_BUNDLED_TOOLS: "1"
-        run: xcodebuild test -project SwiftRip.xcodeproj -scheme SwiftRip -destination 'platform=macOS' -skip-testing:SwiftRipTests/BundleIntegrityTests
+        run: |
+          if [[ "${{ steps.bundled-tools.outcome }}" == "success" ]]; then
+            xcodebuild test -project SwiftRip.xcodeproj -scheme SwiftRip -destination 'platform=macOS'
+          else
+            SWIFTRIP_SKIP_BUNDLED_TOOLS=1 xcodebuild test -project SwiftRip.xcodeproj -scheme SwiftRip -destination 'platform=macOS' -skip-testing:SwiftRipTests/BundleIntegrityTests
+          fi
