@@ -10,6 +10,7 @@ enum AppStrings {
     nonisolated static let ripTitle = localized("Rip")
     nonisolated static let stopTitle = localized("Stop")
     nonisolated static let ejectTitle = localized("Eject")
+    nonisolated static let checkForUpdatesTitle = localized("Check for Updates…")
     nonisolated static let ripMenuTitle = localized("Rip")
     nonisolated static let revealOutputTitle = localized("Reveal Output in Finder")
     nonisolated static let revealLogTitle = localized("Reveal Log in Finder")

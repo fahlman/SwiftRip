@@ -82,6 +82,15 @@ struct BundleIntegrityTests {
         }
     }
 
+    @Test func sparkleConfigurationIsPresentButDisabledUntilReleaseSettingsExist() {
+        #expect(Bundle.main.object(forInfoDictionaryKey: "SUEnableAutomaticChecks") as? Bool == false)
+        #expect(Bundle.main.object(forInfoDictionaryKey: "SUAutomaticallyUpdate") as? Bool == false)
+        #expect(Bundle.main.object(forInfoDictionaryKey: "SUEnableInstallerLauncherService") as? Bool == true)
+        #expect(Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") as? String == "")
+        #expect(Bundle.main.object(forInfoDictionaryKey: "SUPublicEDKey") as? String == "")
+        #expect(!AppUpdateController.isSparkleConfigured(in: .main))
+    }
+
     private func bundledPreset() throws -> [String: Any] {
         let data = try Data(contentsOf: RipConfiguration.production.presetURL)
         let jsonObject = try JSONSerialization.jsonObject(with: data)

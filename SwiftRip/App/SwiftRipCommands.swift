@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct SwiftRipCommands: Commands {
+    let updateController: AppUpdateController
     let showAbout: @MainActor () -> Void
 
     @FocusedValue(\.ripCommandActions) private var ripCommandActions
@@ -15,6 +16,11 @@ struct SwiftRipCommands: Commands {
             Button(AppStrings.aboutTitle(appName: RipConfiguration.appName)) {
                 showAbout()
             }
+
+            Button(AppStrings.checkForUpdatesTitle) {
+                updateController.checkForUpdates()
+            }
+            .disabled(!updateController.canCheckForUpdates)
         }
 
         CommandGroup(replacing: .newItem) {
