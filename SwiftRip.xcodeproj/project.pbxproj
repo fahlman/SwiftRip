@@ -6,10 +6,6 @@
 	objectVersion = 100;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		941A804C2FC13E6300DA6426 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 941A804B2FC13E6300DA6426 /* Sparkle */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
 		9412AF122FB95040004E17B6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -90,7 +86,6 @@
 		9412AF012FB9503F004E17B6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				941A804C2FC13E6300DA6426 /* Sparkle in Frameworks */,
 			);
 		};
 		9412AF0E2FB95040004E17B6 /* Frameworks */ = {
@@ -206,7 +201,6 @@
 			);
 			name = SwiftRip;
 			packageProductDependencies = (
-				941A804B2FC13E6300DA6426 /* Sparkle */,
 			);
 			productName = SwiftRip;
 			productReference = 9412AF042FB9503F004E17B6 /* SwiftRip.app */;
@@ -287,7 +281,6 @@
 			mainGroup = 9412AEFB2FB9503F004E17B6;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				941A804A2FC13E6300DA6426 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 100;
 			productRefGroup = 9412AF052FB9503F004E17B6 /* Products */;
@@ -614,8 +607,6 @@
 				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
 				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFTRIP_SPARKLE_PUBLIC_ED_KEY = "";
-				SWIFTRIP_UPDATE_FEED_URL = "";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -668,8 +659,6 @@
 				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
 				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFTRIP_SPARKLE_PUBLIC_ED_KEY = "";
-				SWIFTRIP_UPDATE_FEED_URL = "";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -794,25 +783,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		941A804A2FC13E6300DA6426 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sparkle-project/Sparkle";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.9.2;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		941A804B2FC13E6300DA6426 /* Sparkle */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 941A804A2FC13E6300DA6426 /* XCRemoteSwiftPackageReference "Sparkle" */;
-			productName = Sparkle;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 9412AEFC2FB9503F004E17B6 /* Project object */;
 }

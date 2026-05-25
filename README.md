@@ -22,7 +22,7 @@ The test suite covers DVD selection, HandBrake arguments, progress parsing, pref
 
 ## Release and maintenance
 
-See [Docs/ReleaseAndMaintenance.md](Docs/ReleaseAndMaintenance.md) for the smoke test checklist, Sparkle/signing release track, and bundled HandBrakeCLI/libdvdcss update policy.
+See [Docs/ReleaseAndMaintenance.md](Docs/ReleaseAndMaintenance.md) for the smoke test checklist, signing release track, and bundled HandBrakeCLI/libdvdcss update policy.
 
 ## License notes
 

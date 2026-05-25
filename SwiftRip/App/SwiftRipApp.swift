@@ -12,8 +12,6 @@ struct SwiftRipApp: App {
     @NSApplicationDelegateAdaptor(SwiftRipAppDelegate.self) private var appDelegate
     @Environment(\.openWindow) private var openWindow
 
-    private let updateController = AppUpdateController.shared
-
     private static let aboutWindowID = "about-swiftrip"
     private static let aboutTitle = AppStrings.aboutTitle(appName: RipConfiguration.appName)
 
@@ -22,7 +20,7 @@ struct SwiftRipApp: App {
             ContentView()
         }
         .commands {
-            SwiftRipCommands(updateController: updateController) {
+            SwiftRipCommands {
                 openWindow(id: Self.aboutWindowID)
             }
         }

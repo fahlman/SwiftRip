@@ -2,7 +2,7 @@
 
 ## Smoke Test
 
-Run this checklist after changes that touch ripping, bundled tools, sandbox access, signing, Sparkle, or app lifecycle behavior.
+Run this checklist after changes that touch ripping, bundled tools, sandbox access, signing, or app lifecycle behavior.
 
 - Launch SwiftRip from a clean install with no saved output folder bookmark.
 - Choose `~/Movies` when prompted and confirm Settings shows the same output folder.
@@ -21,19 +21,7 @@ SwiftRip is not intended to stay local-only. Release builds should use:
 
 - Developer ID signing once an Apple Developer account is available.
 - Notarization before distributing outside local development machines.
-- Sparkle for app updates.
 - A documented release artifact, separate from local Debug builds.
-
-Sparkle is linked into the app and SwiftRip exposes `Check for Updates...` in the app menu. The updater is intentionally disabled until both release build settings below are populated:
-
-```text
-SWIFTRIP_UPDATE_FEED_URL
-SWIFTRIP_SPARKLE_PUBLIC_ED_KEY
-```
-
-Keep `SUEnableAutomaticChecks` and `SUAutomaticallyUpdate` disabled until the first public signed and notarized release is ready. The first public Sparkle feed should only contain Developer ID signed, notarized, Sparkle-signed artifacts. Before enabling public Sparkle updates, define the appcast location, signing keys, and rollback process. Keep Debug builds and release artifacts clearly separated so local tool experiments do not ship by accident.
-
-The Sparkle private signing key must not be committed. Store it in a local keychain or release secret store, then use Sparkle's signing tools to sign the release archive and generate the appcast enclosure signature.
 
 ## Bundled Tool Update Policy
 

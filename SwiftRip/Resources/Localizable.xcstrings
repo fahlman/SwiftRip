@@ -106,16 +106,6 @@
         }
       }
     },
-    "Check for Updates…" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Check for Updates…"
-          }
-        }
-      }
-    },
     "Cancel" : {
       "extractionState" : "stale",
       "localizations" : {
