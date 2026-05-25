@@ -32,15 +32,15 @@ jobs:
       - name: Analyze
         run: |
           if [[ "${{ steps.bundled-tools.outcome }}" == "success" ]]; then
-            xcodebuild analyze -project SwiftRip.xcodeproj -scheme SwiftRip -destination 'platform=macOS'
+            xcodebuild analyze -project SwiftRip.xcodeproj -scheme SwiftRip -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO MACOSX_DEPLOYMENT_TARGET=26.4
           else
-            SWIFTRIP_SKIP_BUNDLED_TOOLS=1 xcodebuild analyze -project SwiftRip.xcodeproj -scheme SwiftRip -destination 'platform=macOS'
+            SWIFTRIP_SKIP_BUNDLED_TOOLS=1 xcodebuild analyze -project SwiftRip.xcodeproj -scheme SwiftRip -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO MACOSX_DEPLOYMENT_TARGET=26.4
           fi
 
       - name: Run tests
         run: |
           if [[ "${{ steps.bundled-tools.outcome }}" == "success" ]]; then
-            xcodebuild test -project SwiftRip.xcodeproj -scheme SwiftRip -destination 'platform=macOS'
+            xcodebuild test -project SwiftRip.xcodeproj -scheme SwiftRip -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO MACOSX_DEPLOYMENT_TARGET=26.4
           else
-            SWIFTRIP_SKIP_BUNDLED_TOOLS=1 xcodebuild test -project SwiftRip.xcodeproj -scheme SwiftRip -destination 'platform=macOS' -skip-testing:SwiftRipTests/BundleIntegrityTests
+            SWIFTRIP_SKIP_BUNDLED_TOOLS=1 xcodebuild test -project SwiftRip.xcodeproj -scheme SwiftRip -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO MACOSX_DEPLOYMENT_TARGET=26.4 -skip-testing:SwiftRipTests/BundleIntegrityTests
           fi
