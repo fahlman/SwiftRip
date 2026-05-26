@@ -25,14 +25,15 @@ SwiftRip is not intended to stay local-only. Release builds should use:
 
 ## DMG Release Packaging
 
-SwiftRip ships as a Developer ID signed and notarized DMG for distribution outside the Mac App Store.
-Current release artifacts are arm64-only because the bundled SwiftRipTools artifacts are arm64-only.
+SwiftRip ships as Developer ID signed and notarized DMGs for distribution outside the Mac App Store.
+Release artifacts are architecture-specific because the bundled SwiftRipTools artifacts are architecture-specific.
 
 Prerequisites:
 
 - An Apple Developer Program membership.
 - A valid `Developer ID Application` certificate installed in the login keychain.
 - Bundled SwiftRipTools artifacts available under `SwiftRipTools/Artifacts/macos-arm64`.
+- For Intel releases, bundled SwiftRipTools artifacts available under `SwiftRipTools/Artifacts/macos-x86_64`.
 - A notarytool credential stored in the keychain, preferably:
 
 ```sh
@@ -41,24 +42,31 @@ xcrun notarytool store-credentials "SwiftRip Notary" --apple-id "APPLE_ID_EMAIL"
 
 Enter the app-specific password at the secure prompt rather than passing it on the command line.
 
-Build, sign, package, notarize, staple, and verify the DMG:
+Build, sign, package, notarize, staple, and verify an Apple Silicon DMG:
 
 ```sh
-Scripts/release-dmg.zsh --notary-profile "SwiftRip Notary"
+Scripts/release-dmg.zsh --arch arm64 --notary-profile "SwiftRip Notary"
+```
+
+Build, sign, package, notarize, staple, and verify an Intel DMG:
+
+```sh
+SwiftRipTools/Scripts/bootstrap-tools.zsh --arch x86_64
+Scripts/release-dmg.zsh --arch x86_64 --notary-profile "SwiftRip Notary"
 ```
 
 For a local packaging check that does not contact Apple's notarization service, but still requires Developer ID signing:
 
 ```sh
-Scripts/release-dmg.zsh --skip-notarization
+Scripts/release-dmg.zsh --arch arm64 --skip-notarization
 ```
 
 The release script performs these checks:
 
-- Builds an arm64 `Release` app in a temporary work directory.
+- Builds a single-architecture `Release` app in a temporary work directory.
 - Signs bundled executable code and the app bundle with Developer ID, hardened runtime, and secure timestamps.
 - Verifies the app signature with `codesign --verify --deep --strict`.
-- Confirms the app executable is arm64-only to match the bundled SwiftRipTools artifacts.
+- Confirms the app executable architecture matches the bundled SwiftRipTools artifacts.
 - Verifies `HandBrakeCLI` and `libdvdcss.2.dylib` nested signatures.
 - Confirms the release app does not contain `com.apple.security.get-task-allow`.
 - Confirms the release app keeps sandbox, user-selected file access, and app-scope bookmark entitlements.
@@ -74,11 +82,17 @@ To update HandBrakeCLI or libdvdcss:
 
 1. Update the version inputs in the SwiftRipTools build scripts.
 2. Run `SwiftRipTools/Scripts/bootstrap-tools.zsh --force`.
-3. Confirm the HandBrake patch still applies cleanly.
-4. Run `SwiftRipTools/Scripts/verify-swiftrip-tools.zsh`.
-5. Run the app test suite.
-6. Run the smoke test above with a real DVD.
-7. Update bundled license notices if upstream license text or included components changed.
+3. Run `SwiftRipTools/Scripts/bootstrap-tools.zsh --arch x86_64 --force` if updating the Intel artifacts.
+4. Confirm the HandBrake patch still applies cleanly.
+5. Run `SwiftRipTools/Scripts/verify-swiftrip-tools.zsh`.
+6. Run the app test suite.
+7. Run the smoke test above with a real DVD.
+8. Update bundled license notices if upstream license text or included components changed.
+
+SwiftRipTools packages are pinned by architecture:
+
+- `SwiftRipTools/Manifest/swiftrip-tools.json` for Apple Silicon.
+- `SwiftRipTools/Manifest/swiftrip-tools-x86_64.json` for Intel.
 
 The expected HandBrake behavior is that bundled `HandBrakeCLI` loads `libdvdcss.2.dylib` from:
 

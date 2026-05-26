@@ -7,9 +7,8 @@ SCHEME="SwiftRip"
 CONFIGURATION="Release"
 APP_NAME="SwiftRip"
 VOLUME_NAME="SwiftRip"
-RELEASE_ARCH="arm64"
+RELEASE_ARCH="${SWIFTRIP_RELEASE_ARCH:-arm64}"
 RELEASE_TMP_ROOT="${TMPDIR:-/private/tmp}"
-WORK_DIR="${SWIFTRIP_RELEASE_WORK_DIR:-${RELEASE_TMP_ROOT%/}/swiftrip-release-${USER:-user}}"
 OUTPUT_DIR="$ROOT_DIR/dist"
 TEAM_ID="${SWIFTRIP_TEAM_ID:-PUT2KYMV2W}"
 SIGNING_IDENTITY="${SWIFTRIP_SIGNING_IDENTITY:-Developer ID Application}"
@@ -34,6 +33,7 @@ Options:
   --password PASSWORD        App-specific password or keychain password reference.
   --team-id TEAMID           Apple Developer Team ID.
   --signing-identity NAME    Code signing identity. Defaults to Developer ID Application.
+  --arch ARCH                Release architecture: arm64 or x86_64. Defaults to arm64.
   --output-dir PATH          Directory for the final DMG. Defaults to ./dist.
   -h, --help                 Show this help.
 
@@ -44,6 +44,7 @@ Environment variables:
   SWIFTRIP_NOTARY_APPLE_ID
   SWIFTRIP_NOTARY_PASSWORD
   SWIFTRIP_NOTARY_TEAM_ID
+  SWIFTRIP_RELEASE_ARCH
   SWIFTRIP_RELEASE_WORK_DIR
 
 Notarization uses either --notary-profile, or --apple-id plus --password.
@@ -75,6 +76,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --signing-identity)
             SIGNING_IDENTITY="${2:-}"
+            shift 2
+            ;;
+        --arch)
+            RELEASE_ARCH="${2:-}"
             shift 2
             ;;
         --output-dir)
@@ -150,6 +155,26 @@ signing_identity_available() {
     /usr/bin/security find-identity -v -p codesigning | /usr/bin/grep -Fq "$SIGNING_IDENTITY"
 }
 
+case "$RELEASE_ARCH" in
+    arm64|x86_64)
+        ;;
+    *)
+        echo "ERROR: Unsupported release architecture: $RELEASE_ARCH"
+        echo "Supported architectures: arm64, x86_64"
+        exit 64
+        ;;
+esac
+
+WORK_DIR="${SWIFTRIP_RELEASE_WORK_DIR:-${RELEASE_TMP_ROOT%/}/swiftrip-release-${USER:-user}-${RELEASE_ARCH}}"
+case "$RELEASE_ARCH" in
+    arm64)
+        OTHER_ARCH="x86_64"
+        ;;
+    x86_64)
+        OTHER_ARCH="arm64"
+        ;;
+esac
+
 require_value "TEAM_ID" "$TEAM_ID"
 require_value "SIGNING_IDENTITY" "$SIGNING_IDENTITY"
 require_command /usr/bin/xcodebuild
@@ -190,7 +215,7 @@ echo "Architecture:     $RELEASE_ARCH"
 echo "Work dir:         $WORK_DIR"
 echo "Output:           $OUTPUT_DIR"
 
-"$ROOT_DIR/SwiftRipTools/Scripts/verify-swiftrip-tools.zsh"
+SWIFTRIP_TOOLS_ARCH="$RELEASE_ARCH" "$ROOT_DIR/SwiftRipTools/Scripts/verify-swiftrip-tools.zsh"
 
 case "$WORK_DIR" in
     "/"|"$HOME"|"$ROOT_DIR")
@@ -216,6 +241,8 @@ echo "Building release app..."
     -destination "generic/platform=macOS" \
     -derivedDataPath "$DERIVED_DATA_PATH" \
     ARCHS="$RELEASE_ARCH" \
+    SWIFTRIP_TOOLS_ARCH="$RELEASE_ARCH" \
+    ENABLE_USER_SCRIPT_SANDBOXING=NO \
     CODE_SIGNING_ALLOWED=NO \
     CODE_SIGNING_REQUIRED=NO \
     CODE_SIGN_IDENTITY="" \
@@ -232,8 +259,7 @@ echo "Removing extended attributes from app bundle..."
 /usr/bin/xattr -cr "$APP_PATH"
 
 VERSION="$(/usr/bin/plutil -extract CFBundleShortVersionString raw -o - "$APP_PATH/Contents/Info.plist")"
-BUILD="$(/usr/bin/plutil -extract CFBundleVersion raw -o - "$APP_PATH/Contents/Info.plist")"
-DMG_NAME="$APP_NAME-$VERSION-$BUILD.dmg"
+DMG_NAME="$APP_NAME-$VERSION-$RELEASE_ARCH.dmg"
 DMG_PATH="$OUTPUT_DIR/$DMG_NAME"
 APP_ENTITLEMENTS="$WORK_DIR/$APP_NAME.entitlements"
 APP_EXECUTABLE="$APP_PATH/Contents/MacOS/$APP_NAME"
@@ -258,8 +284,8 @@ if ! /usr/bin/file "$APP_EXECUTABLE" | /usr/bin/grep -q "$RELEASE_ARCH"; then
     echo "ERROR: App executable is not $RELEASE_ARCH."
     exit 1
 fi
-if /usr/bin/file "$APP_EXECUTABLE" | /usr/bin/grep -q "x86_64"; then
-    echo "ERROR: App executable is universal, but bundled SwiftRipTools are $RELEASE_ARCH-only."
+if /usr/bin/file "$APP_EXECUTABLE" | /usr/bin/grep -q "$OTHER_ARCH"; then
+    echo "ERROR: App executable contains $OTHER_ARCH, but bundled SwiftRipTools are $RELEASE_ARCH-only."
     exit 1
 fi
 
