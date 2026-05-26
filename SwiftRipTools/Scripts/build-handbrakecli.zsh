@@ -100,6 +100,12 @@ env -u CPATH \
     ./configure \
       --force \
       --disable-xcode \
+      --optimize size-aggressive \
+      --disable-x265 \
+      --disable-fdk-aac \
+      --disable-ffmpeg-aac \
+      --disable-ffmpeg-prores \
+      --disable-libdovi \
       --arch "$TOOLS_ARCH" \
       --build "$ARCH_BUILD_DIR" \
       --prefix "$ARCH_PREFIX_DIR" \
