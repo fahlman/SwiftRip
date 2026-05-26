@@ -26,6 +26,7 @@ SwiftRip is not intended to stay local-only. Release builds should use:
 ## DMG Release Packaging
 
 SwiftRip ships as a Developer ID signed and notarized DMG for distribution outside the Mac App Store.
+Current release artifacts are arm64-only because the bundled SwiftRipTools artifacts are arm64-only.
 
 Prerequisites:
 
@@ -35,8 +36,10 @@ Prerequisites:
 - A notarytool credential stored in the keychain, preferably:
 
 ```sh
-xcrun notarytool store-credentials "SwiftRip Notary" --apple-id "APPLE_ID_EMAIL" --team-id "TEAM_ID" --password "APP_SPECIFIC_PASSWORD"
+xcrun notarytool store-credentials "SwiftRip Notary" --apple-id "APPLE_ID_EMAIL" --team-id "TEAM_ID"
 ```
+
+Enter the app-specific password at the secure prompt rather than passing it on the command line.
 
 Build, sign, package, notarize, staple, and verify the DMG:
 
@@ -52,8 +55,10 @@ Scripts/release-dmg.zsh --skip-notarization
 
 The release script performs these checks:
 
-- Builds a `Release` app with Developer ID signing and hardened runtime.
+- Builds an arm64 `Release` app in a temporary work directory.
+- Signs bundled executable code and the app bundle with Developer ID, hardened runtime, and secure timestamps.
 - Verifies the app signature with `codesign --verify --deep --strict`.
+- Confirms the app executable is arm64-only to match the bundled SwiftRipTools artifacts.
 - Verifies `HandBrakeCLI` and `libdvdcss.2.dylib` nested signatures.
 - Confirms the release app does not contain `com.apple.security.get-task-allow`.
 - Confirms the release app keeps sandbox, user-selected file access, and app-scope bookmark entitlements.

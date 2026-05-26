@@ -7,7 +7,9 @@ SCHEME="SwiftRip"
 CONFIGURATION="Release"
 APP_NAME="SwiftRip"
 VOLUME_NAME="SwiftRip"
-WORK_DIR="$ROOT_DIR/.release"
+RELEASE_ARCH="arm64"
+RELEASE_TMP_ROOT="${TMPDIR:-/private/tmp}"
+WORK_DIR="${SWIFTRIP_RELEASE_WORK_DIR:-${RELEASE_TMP_ROOT%/}/swiftrip-release-${USER:-user}}"
 OUTPUT_DIR="$ROOT_DIR/dist"
 TEAM_ID="${SWIFTRIP_TEAM_ID:-PUT2KYMV2W}"
 SIGNING_IDENTITY="${SWIFTRIP_SIGNING_IDENTITY:-Developer ID Application}"
@@ -42,6 +44,7 @@ Environment variables:
   SWIFTRIP_NOTARY_APPLE_ID
   SWIFTRIP_NOTARY_PASSWORD
   SWIFTRIP_NOTARY_TEAM_ID
+  SWIFTRIP_RELEASE_WORK_DIR
 
 Notarization uses either --notary-profile, or --apple-id plus --password.
 USAGE
@@ -151,7 +154,9 @@ require_value "TEAM_ID" "$TEAM_ID"
 require_value "SIGNING_IDENTITY" "$SIGNING_IDENTITY"
 require_command /usr/bin/xcodebuild
 require_command /usr/bin/codesign
+require_command /usr/bin/file
 require_command /usr/bin/hdiutil
+require_command /usr/bin/xattr
 require_command /usr/sbin/spctl
 require_command /usr/bin/xcrun
 
@@ -181,29 +186,40 @@ echo "Root:             $ROOT_DIR"
 echo "Configuration:    $CONFIGURATION"
 echo "Team ID:          $TEAM_ID"
 echo "Signing identity: $SIGNING_IDENTITY"
+echo "Architecture:     $RELEASE_ARCH"
+echo "Work dir:         $WORK_DIR"
 echo "Output:           $OUTPUT_DIR"
 
 "$ROOT_DIR/SwiftRipTools/Scripts/verify-swiftrip-tools.zsh"
+
+case "$WORK_DIR" in
+    "/"|"$HOME"|"$ROOT_DIR")
+        echo "ERROR: Refusing to use unsafe release work directory: $WORK_DIR"
+        exit 1
+        ;;
+esac
 
 /bin/rm -rf "$WORK_DIR"
 /bin/mkdir -p "$WORK_DIR" "$OUTPUT_DIR"
 
 DERIVED_DATA_PATH="$WORK_DIR/DerivedData"
 APP_PATH="$DERIVED_DATA_PATH/Build/Products/$CONFIGURATION/$APP_NAME.app"
+APP_ENTITLEMENTS_SOURCE="$ROOT_DIR/SwiftRip/SwiftRip.entitlements"
 
 echo ""
-echo "Building signed release app..."
+echo "Building release app..."
 /usr/bin/xcodebuild build \
+    -quiet \
     -project "$PROJECT_PATH" \
     -scheme "$SCHEME" \
     -configuration "$CONFIGURATION" \
     -destination "generic/platform=macOS" \
     -derivedDataPath "$DERIVED_DATA_PATH" \
-    CODE_SIGN_STYLE=Manual \
-    DEVELOPMENT_TEAM="$TEAM_ID" \
-    CODE_SIGN_IDENTITY="$SIGNING_IDENTITY" \
-    OTHER_CODE_SIGN_FLAGS="--timestamp" \
-    ENABLE_HARDENED_RUNTIME=YES
+    ARCHS="$RELEASE_ARCH" \
+    CODE_SIGNING_ALLOWED=NO \
+    CODE_SIGNING_REQUIRED=NO \
+    CODE_SIGN_IDENTITY="" \
+    CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO
 
 if [[ ! -d "$APP_PATH" ]]; then
     echo "ERROR: Built app was not found:"
@@ -211,15 +227,42 @@ if [[ ! -d "$APP_PATH" ]]; then
     exit 1
 fi
 
+echo ""
+echo "Removing extended attributes from app bundle..."
+/usr/bin/xattr -cr "$APP_PATH"
+
 VERSION="$(/usr/bin/plutil -extract CFBundleShortVersionString raw -o - "$APP_PATH/Contents/Info.plist")"
 BUILD="$(/usr/bin/plutil -extract CFBundleVersion raw -o - "$APP_PATH/Contents/Info.plist")"
 DMG_NAME="$APP_NAME-$VERSION-$BUILD.dmg"
 DMG_PATH="$OUTPUT_DIR/$DMG_NAME"
 APP_ENTITLEMENTS="$WORK_DIR/$APP_NAME.entitlements"
+APP_EXECUTABLE="$APP_PATH/Contents/MacOS/$APP_NAME"
+
+echo ""
+echo "Signing bundled executable code..."
+/usr/bin/codesign --force --sign "$SIGNING_IDENTITY" --options runtime --timestamp "$APP_PATH/Contents/Frameworks/libdvdcss.2.dylib"
+/usr/bin/codesign --force --sign "$SIGNING_IDENTITY" --options runtime --timestamp "$APP_PATH/Contents/MacOS/HandBrakeCLI"
+
+echo ""
+echo "Signing app bundle..."
+/usr/bin/codesign --force --sign "$SIGNING_IDENTITY" --options runtime --timestamp --entitlements "$APP_ENTITLEMENTS_SOURCE" "$APP_PATH"
 
 echo ""
 echo "Verifying app signature and entitlements..."
 /usr/bin/codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+
+echo ""
+echo "Verifying app architecture..."
+/usr/bin/file "$APP_EXECUTABLE"
+if ! /usr/bin/file "$APP_EXECUTABLE" | /usr/bin/grep -q "$RELEASE_ARCH"; then
+    echo "ERROR: App executable is not $RELEASE_ARCH."
+    exit 1
+fi
+if /usr/bin/file "$APP_EXECUTABLE" | /usr/bin/grep -q "x86_64"; then
+    echo "ERROR: App executable is universal, but bundled SwiftRipTools are $RELEASE_ARCH-only."
+    exit 1
+fi
+
 codesign_entitlements "$APP_PATH" "$APP_ENTITLEMENTS"
 assert_no_debug_entitlement "$APP_ENTITLEMENTS"
 assert_entitlement_present "$APP_ENTITLEMENTS" "com.apple.security.app-sandbox"
