@@ -65,14 +65,15 @@ struct RipViewModelSelectionTests {
         }
         let appSettings = AppSettings(
             userDefaults: userDefaults,
-            fileManager: .default,
-            defaultDVDAppPreferenceManager: RipTestSupport.StubDefaultDVDAppPreferenceManager()
+            fileManager: .default
         )
         let viewModel = RipTestSupport.makeViewModel(
+            dvdInputAccessProvider: RipTestSupport.RecordingDVDInputAccessProvider(),
             appSettings: appSettings
         )
-        viewModel.chooseDVD(at: dvdURL)
+        let didChooseDVD = viewModel.chooseDVD(at: dvdURL)
 
+        #expect(didChooseDVD)
         let moviesURL = AppSettings.defaultMoviesDirectory(using: .default)
 
         #expect(viewModel.selectedDVD?.name == "MY_MOVIE")
@@ -89,16 +90,23 @@ struct RipViewModelSelectionTests {
             try? FileManager.default.removeItem(at: folderURL)
         }
 
-        let viewModel = RipTestSupport.makeViewModel()
-        viewModel.chooseDVD(at: folderURL)
+        let inputAccessProvider = RipTestSupport.RecordingDVDInputAccessProvider()
+        let viewModel = RipTestSupport.makeViewModel(
+            dvdInputAccessProvider: inputAccessProvider
+        )
+        let didChooseDVD = viewModel.chooseDVD(at: folderURL)
 
+        #expect(!didChooseDVD)
+        #expect(inputAccessProvider.startedURLs == [folderURL])
+        #expect(inputAccessProvider.accesses.first?.stopCount == 1)
         #expect(viewModel.selectedDVD == nil)
         #expect(viewModel.outputURL == nil)
         #expect(!viewModel.commandAvailability.canRip)
         #expect(viewModel.primaryAction == .chooseDVD)
+        #expect(viewModel.statusMessage == AppStrings.chooseVideoTSFolder(directoryName: DVDVolume.videoTSDirectoryName))
     }
 
-    @Test func chooseDVDNormalizesVideoTSFolderToParentDVD() throws {
+    @Test func chooseDVDRejectsVideoTSFolderSelection() throws {
         let dvdURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
             .appendingPathComponent("MOVIE", isDirectory: true)
@@ -109,11 +117,49 @@ struct RipViewModelSelectionTests {
         }
 
         let viewModel = RipTestSupport.makeViewModel()
-        viewModel.chooseDVD(at: videoTSURL)
+        let didChooseDVD = viewModel.chooseDVD(at: videoTSURL)
 
-        #expect(viewModel.selectedDVD == DVDVolume(id: dvdURL.path, name: "MOVIE", path: dvdURL.path))
-        #expect(viewModel.outputURL?.lastPathComponent == "Movie.m4v")
-        #expect(viewModel.primaryAction == .rip)
+        #expect(!didChooseDVD)
+        #expect(viewModel.selectedDVD == nil)
+        #expect(viewModel.primaryAction == .chooseDVD)
+        #expect(viewModel.statusMessage == AppStrings.chooseVideoTSFolder(directoryName: DVDVolume.videoTSDirectoryName))
+    }
+
+    @Test func chooseDVDReplacingSelectionStopsPreviousAccess() throws {
+        let firstDVDURL = try makeDVDDirectory(named: "FIRST")
+        let secondDVDURL = try makeDVDDirectory(named: "SECOND")
+        defer {
+            try? FileManager.default.removeItem(at: firstDVDURL.deletingLastPathComponent())
+            try? FileManager.default.removeItem(at: secondDVDURL.deletingLastPathComponent())
+        }
+
+        let inputAccessProvider = RipTestSupport.RecordingDVDInputAccessProvider()
+        let viewModel = RipTestSupport.makeViewModel(
+            dvdInputAccessProvider: inputAccessProvider
+        )
+
+        #expect(viewModel.chooseDVD(at: firstDVDURL))
+        #expect(viewModel.chooseDVD(at: secondDVDURL))
+
+        #expect(inputAccessProvider.startedURLs == [firstDVDURL, secondDVDURL])
+        #expect(inputAccessProvider.accesses[0].stopCount == 1)
+        #expect(inputAccessProvider.accesses[1].stopCount == 0)
+        #expect(viewModel.selectedDVD?.name == "SECOND")
+    }
+
+    @Test func refreshDVDsFindsMountedDVDsWithoutSelectingThem() {
+        let firstDVD = DVDVolume(id: "/Volumes/FIRST", name: "FIRST", path: "/Volumes/FIRST")
+        let viewModel = RipTestSupport.makeViewModel(
+            volumeFinder: RipTestSupport.StubDVDVolumeFinder(volumes: [firstDVD])
+        )
+
+        viewModel.refreshDVDs()
+
+        #expect(viewModel.dvdVolumes == [firstDVD])
+        #expect(viewModel.selectedDVD == nil)
+        #expect(viewModel.dvdDisplayName == AppStrings.noValidDVDTitle)
+        #expect(!viewModel.commandAvailability.canRip)
+        #expect(viewModel.primaryAction == .chooseDVD)
     }
 
     @Test func refreshDVDsPreservesSelectedDVDWhenStillMounted() throws {
@@ -129,7 +175,7 @@ struct RipViewModelSelectionTests {
         #expect(viewModel.outputURL?.path == "/tmp/Custom.m4v")
     }
 
-    @Test func refreshDVDsSelectsFirstDVDWhenSelectionIsGone() {
+    @Test func refreshDVDsClearsStaleSelectionWithoutAuthorizingDetectedDVD() {
         let firstDVD = DVDVolume(id: "/Volumes/FIRST", name: "FIRST", path: "/Volumes/FIRST")
         let staleDVD = DVDVolume(id: "/Volumes/STALE", name: "STALE", path: "/Volumes/STALE")
         let viewModel = RipTestSupport.makeViewModel(
@@ -139,8 +185,11 @@ struct RipViewModelSelectionTests {
 
         viewModel.refreshDVDs()
 
-        #expect(viewModel.selectedDVD == firstDVD)
-        #expect(viewModel.outputURL?.lastPathComponent == "First.m4v")
+        #expect(viewModel.dvdVolumes == [firstDVD])
+        #expect(viewModel.selectedDVD == nil)
+        #expect(viewModel.outputURL == nil)
+        #expect(viewModel.dvdDisplayName == AppStrings.noValidDVDTitle)
+        #expect(!viewModel.commandAvailability.canRip)
     }
 
     @Test func defaultLogDirectoryUsesUserLibraryLogs() {
@@ -150,5 +199,14 @@ struct RipViewModelSelectionTests {
             .appendingPathComponent("SwiftRip", isDirectory: true)
 
         #expect(viewModel.defaultLogDirectory == expectedURL)
+    }
+
+    private func makeDVDDirectory(named name: String) throws -> URL {
+        let dvdURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+            .appendingPathComponent(name, isDirectory: true)
+        let videoTSURL = dvdURL.appendingPathComponent(DVDVolume.videoTSDirectoryName, isDirectory: true)
+        try FileManager.default.createDirectory(at: videoTSURL, withIntermediateDirectories: true)
+        return dvdURL
     }
 }

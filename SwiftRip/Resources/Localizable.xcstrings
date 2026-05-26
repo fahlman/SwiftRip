@@ -403,6 +403,17 @@
         }
       }
     },
+    "Not a Video DVD" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not a Video DVD"
+          }
+        }
+      }
+    },
     "None" : {
       "extractionState" : "stale",
       "localizations" : {

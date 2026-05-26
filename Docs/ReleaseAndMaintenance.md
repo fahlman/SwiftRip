@@ -23,6 +23,44 @@ SwiftRip is not intended to stay local-only. Release builds should use:
 - Notarization before distributing outside local development machines.
 - A documented release artifact, separate from local Debug builds.
 
+## DMG Release Packaging
+
+SwiftRip ships as a Developer ID signed and notarized DMG for distribution outside the Mac App Store.
+
+Prerequisites:
+
+- An Apple Developer Program membership.
+- A valid `Developer ID Application` certificate installed in the login keychain.
+- Bundled SwiftRipTools artifacts available under `SwiftRipTools/Artifacts/macos-arm64`.
+- A notarytool credential stored in the keychain, preferably:
+
+```sh
+xcrun notarytool store-credentials "SwiftRip Notary" --apple-id "APPLE_ID_EMAIL" --team-id "TEAM_ID" --password "APP_SPECIFIC_PASSWORD"
+```
+
+Build, sign, package, notarize, staple, and verify the DMG:
+
+```sh
+Scripts/release-dmg.zsh --notary-profile "SwiftRip Notary"
+```
+
+For a local packaging check that does not contact Apple's notarization service, but still requires Developer ID signing:
+
+```sh
+Scripts/release-dmg.zsh --skip-notarization
+```
+
+The release script performs these checks:
+
+- Builds a `Release` app with Developer ID signing and hardened runtime.
+- Verifies the app signature with `codesign --verify --deep --strict`.
+- Verifies `HandBrakeCLI` and `libdvdcss.2.dylib` nested signatures.
+- Confirms the release app does not contain `com.apple.security.get-task-allow`.
+- Confirms the release app keeps sandbox, user-selected file access, and app-scope bookmark entitlements.
+- Confirms broad Movies access and the old `com.apple.digihub` temporary exception are absent.
+- Creates and signs a DMG containing `SwiftRip.app` and an `/Applications` shortcut.
+- Submits the DMG with `notarytool`, staples it, and assesses it with Gatekeeper.
+
 ## Bundled Tool Update Policy
 
 SwiftRip should consume reproducible local artifacts from `SwiftRipTools`, not tools installed through Homebrew, MacPorts, `/usr/local`, or another developer's machine state.

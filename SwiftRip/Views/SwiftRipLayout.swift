@@ -17,15 +17,16 @@ enum SwiftRipLayout {
 
     enum MainWindow {
         static let width: CGFloat = 272
-        static let height: CGFloat = 326
+        static let height: CGFloat = 262
+        static let encodingHeight: CGFloat = height + contentSpacing + statusHeight
         static let contentSpacing: CGFloat = 16
         static let contentPadding: CGFloat = 18
-        static let discIconSize: CGFloat = 104
+        static let discIconSize: CGFloat = 124
         static let badgeIconSize: CGFloat = 34
         static let badgeOffsetX: CGFloat = 6
         static let badgeOffsetY: CGFloat = 4
-        static let discIconFrameWidth: CGFloat = 122
-        static let discIconFrameHeight: CGFloat = 114
+        static let discIconFrameWidth: CGFloat = 142
+        static let discIconFrameHeight: CGFloat = 134
         static let progressWidth: CGFloat = 180
         static let statusSpacing: CGFloat = 10
         static let statusHeight: CGFloat = 64
@@ -33,7 +34,7 @@ enum SwiftRipLayout {
 
     enum SettingsWindow {
         static let width: CGFloat = 640
-        static let height: CGFloat = 540
+        static let height: CGFloat = 462
         static let contentPadding: CGFloat = 22
         static let contentSpacing: CGFloat = 14
         static let rowSpacing: CGFloat = 12

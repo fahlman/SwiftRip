@@ -8,9 +8,10 @@ import SwiftUI
 private struct SwiftRipWindowFrameModifier: ViewModifier {
     let width: CGFloat
     let height: CGFloat
+    let alignment: Alignment
 
     func body(content: Content) -> some View {
-        content.frame(width: width, height: height)
+        content.frame(width: width, height: height, alignment: alignment)
     }
 }
 
@@ -23,8 +24,8 @@ private struct SwiftRipDialogFooterPaddingModifier: ViewModifier {
 }
 
 extension View {
-    func swiftRipWindowFrame(width: CGFloat, height: CGFloat) -> some View {
-        modifier(SwiftRipWindowFrameModifier(width: width, height: height))
+    func swiftRipWindowFrame(width: CGFloat, height: CGFloat, alignment: Alignment = .center) -> some View {
+        modifier(SwiftRipWindowFrameModifier(width: width, height: height, alignment: alignment))
     }
 
     func swiftRipDialogFooterPadding() -> some View {

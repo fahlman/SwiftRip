@@ -105,7 +105,7 @@
           "PresetDisabled": false,
           "PresetName": "SwiftRip",
           "SubtitleAddCC": false,
-          "SubtitleAddForeignAudioSearch": true,
+          "SubtitleAddForeignAudioSearch": false,
           "SubtitleAddForeignAudioSubtitle": false,
           "SubtitleBurnBDSub": true,
           "SubtitleBurnBehavior": "foreign",

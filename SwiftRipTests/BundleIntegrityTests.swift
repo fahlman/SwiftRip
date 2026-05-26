@@ -56,7 +56,7 @@ struct BundleIntegrityTests {
         #expect(preset["VideoEncoder"] as? String == "vt_h265")
         #expect(preset["VideoQualitySlider"] as? Int == 60)
         #expect(preset["VideoColorRange"] as? String == "limited")
-        #expect(preset["SubtitleAddForeignAudioSearch"] as? Bool == true)
+        #expect(preset["SubtitleAddForeignAudioSearch"] as? Bool == false)
         #expect(preset["SubtitleBurnBehavior"] as? String == "foreign")
 
         let audioList = try #require(preset["AudioList"] as? [[String: Any]])

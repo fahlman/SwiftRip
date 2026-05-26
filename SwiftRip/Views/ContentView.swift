@@ -16,26 +16,31 @@ struct ContentView: View {
     @State private var hasPresentedInitialOutputDirectoryPrompt = false
 
     private static let chooseDVDTitle = AppStrings.chooseDVDTitle
-    private static let noValidDVDTitle = AppStrings.noValidDVDTitle
 
     var body: some View {
         VStack(spacing: SwiftRipLayout.MainWindow.contentSpacing) {
             dvdIcon
             dvdLabel
             primaryButton
-            statusSection
+
+            if viewModel.isEncoding {
+                progressSection
+                    .transition(.opacity)
+            }
         }
         .padding(SwiftRipLayout.MainWindow.contentPadding)
-        .swiftRipWindowFrame(width: SwiftRipLayout.MainWindow.width, height: SwiftRipLayout.MainWindow.height)
+        .swiftRipWindowFrame(
+            width: SwiftRipLayout.MainWindow.width,
+            height: mainWindowHeight,
+            alignment: .top
+        )
         .fixedSize()
         .fileImporter(
             isPresented: $isDVDPickerPresented,
             allowedContentTypes: [.folder],
             allowsMultipleSelection: false
         ) { result in
-            if case .success(let urls) = result, let url = urls.first {
-                viewModel.chooseDVD(at: url)
-            }
+            handleDVDPickerResult(result)
         }
         .fileDialogDefaultDirectory(URL(fileURLWithPath: "/Volumes", isDirectory: true))
         .fileDialogConfirmationLabel(Self.chooseDVDTitle)
@@ -105,7 +110,7 @@ struct ContentView: View {
 
     private var dvdLabel: some View {
         VStack(spacing: 4) {
-            Text(viewModel.selectedDVDName ?? Self.noValidDVDTitle)
+            Text(viewModel.dvdDisplayName)
                 .font(.headline)
                 .lineLimit(1)
                 .truncationMode(.middle)
@@ -147,6 +152,22 @@ struct ContentView: View {
         isDVDPickerPresented = true
     }
 
+    private func handleDVDPickerResult(_ result: Result<[URL], Error>) {
+        guard case .success(let urls) = result, let url = urls.first else { return }
+
+        if !viewModel.chooseDVD(at: url) {
+            showInvalidDVDSelectionError()
+        }
+    }
+
+    private func showInvalidDVDSelectionError() {
+        let alert = NSAlert()
+        alert.messageText = AppStrings.invalidDVDSelectionTitle
+        alert.informativeText = AppStrings.chooseVideoTSFolder(directoryName: DVDVolume.videoTSDirectoryName)
+        alert.alertStyle = .warning
+        alert.runModal()
+    }
+
     private var hasSelectedDVD: Bool {
         viewModel.hasSelectedDVD
     }
@@ -156,7 +177,7 @@ struct ContentView: View {
             return AppStrings.ripping(selectedDVDName)
         }
 
-        return viewModel.selectedDVDName ?? Self.noValidDVDTitle
+        return viewModel.dvdDisplayName
     }
 
     private func startRip() {
@@ -259,17 +280,8 @@ struct ContentView: View {
         NSWorkspace.shared.activateFileViewerSelecting([logFileURL])
     }
 
-    private var statusSection: some View {
-        Group {
-            if viewModel.isEncoding {
-                progressSection
-            } else {
-                Color.clear
-                    .accessibilityHidden(true)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: SwiftRipLayout.MainWindow.statusHeight)
+    private var mainWindowHeight: CGFloat {
+        viewModel.isEncoding ? SwiftRipLayout.MainWindow.encodingHeight : SwiftRipLayout.MainWindow.height
     }
 
     private var progressSection: some View {
@@ -283,16 +295,9 @@ struct ContentView: View {
             Text("\(progressPercent)%")
                 .swiftRipProgressCaption()
                 .accessibilityHidden(true)
-
-            if let outputFileName = viewModel.outputFileName {
-                Text(AppStrings.savingTo(outputFileName))
-                    .swiftRipProgressCaption()
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                    .frame(width: SwiftRipLayout.MainWindow.progressWidth)
-                    .accessibilityIdentifier("ripOutputFileName")
-            }
         }
+        .frame(maxWidth: .infinity)
+        .frame(height: SwiftRipLayout.MainWindow.statusHeight)
     }
 
     private var progressPercent: Int {

@@ -12,6 +12,7 @@ struct RipEnvironment {
     let fileManager: FileManager
     let handBrakeRunner: HandBrakeRunning
     let volumeFinder: DVDVolumeFinding
+    let dvdInputAccessProvider: any DVDInputAccessProviding
     let appSettings: AppSettings
     let ripNotifier: RipNotifying
     let dvdDeviceEjector: DVDDeviceEjecting
@@ -23,6 +24,7 @@ struct RipEnvironment {
             fileManager: .default,
             handBrakeRunner: ProcessHandBrakeRunner(),
             volumeFinder: FileSystemDVDVolumeFinder(),
+            dvdInputAccessProvider: SecurityScopedDVDInputAccessProvider(),
             appSettings: .shared,
             ripNotifier: SystemRipNotifier(),
             dvdDeviceEjector: WorkspaceDVDDeviceEjector()
@@ -34,6 +36,7 @@ struct RipEnvironment {
         fileManager: FileManager,
         handBrakeRunner: HandBrakeRunning,
         volumeFinder: DVDVolumeFinding,
+        dvdInputAccessProvider: any DVDInputAccessProviding = SecurityScopedDVDInputAccessProvider(),
         appSettings: AppSettings,
         ripNotifier: RipNotifying = SystemRipNotifier(),
         dvdDeviceEjector: DVDDeviceEjecting = WorkspaceDVDDeviceEjector(),
@@ -43,6 +46,7 @@ struct RipEnvironment {
         self.fileManager = fileManager
         self.handBrakeRunner = handBrakeRunner
         self.volumeFinder = volumeFinder
+        self.dvdInputAccessProvider = dvdInputAccessProvider
         self.appSettings = appSettings
         self.ripNotifier = ripNotifier
         self.dvdDeviceEjector = dvdDeviceEjector
@@ -62,6 +66,8 @@ final class RipViewModel {
 
     @ObservationIgnored
     private var ripTask: Task<Void, Never>?
+    @ObservationIgnored
+    private var selectedDVDInputAccess: (any DVDInputAccess)?
     @ObservationIgnored
     private let environment: RipEnvironment
 
@@ -83,6 +89,14 @@ final class RipViewModel {
 
     var selectedDVDName: String? {
         state.selectedDVDName
+    }
+
+    var dvdDisplayName: String {
+        if let selectedDVDName {
+            return selectedDVDName
+        }
+
+        return AppStrings.noValidDVDTitle
     }
 
     var outputURL: URL? {
@@ -126,10 +140,6 @@ final class RipViewModel {
         environment.appSettings.outputDirectoryURL
     }
 
-    var outputFileName: String? {
-        outputURL?.lastPathComponent
-    }
-
     var needsOutputDirectoryPermission: Bool {
         environment.appSettings.needsOutputDirectoryPermission
     }
@@ -148,30 +158,34 @@ final class RipViewModel {
     }
 
     func refreshDVDs() {
-        updateState { $0.replaceMountedDVDs(environment.volumeFinder.findMountedDVDs()) }
+        let mountedDVDs = environment.volumeFinder.findMountedDVDs()
+        updateState { $0.replaceMountedDVDs(mountedDVDs) }
 
-        if let selectedDVD, dvdVolumes.contains(selectedDVD) {
+        guard let selectedDVD else {
             return
         }
 
-        guard let firstDVD = dvdVolumes.first else {
-            clearDVDSelection()
+        if mountedDVDs.contains(selectedDVD) {
             return
         }
 
-        selectDVD(firstDVD, statusMessage: AppStrings.readyToRip(firstDVD.name))
+        clearDVDSelection()
     }
 
-    func chooseDVD(at url: URL) {
-        let dvdURL = normalizedDVDURL(from: url)
+    @discardableResult
+    func chooseDVD(at url: URL) -> Bool {
+        let access = environment.dvdInputAccessProvider.startAccessingDVD(at: url)
 
-        guard isValidDVD(at: dvdURL) else {
+        guard isValidDVD(at: url) else {
+            access.stopAccessing()
             clearDVDSelection(statusMessage: AppStrings.chooseVideoTSFolder(directoryName: DVDVolume.videoTSDirectoryName))
-            return
+            return false
         }
 
-        let dvd = DVDVolume(id: dvdURL.path, name: dvdURL.lastPathComponent, path: dvdURL.path)
-        selectDVD(dvd, statusMessage: AppStrings.readyToRip(dvdURL.lastPathComponent))
+        replaceDVDInputAccess(with: access)
+        let dvd = DVDVolume(id: url.path, name: url.lastPathComponent, path: url.path)
+        selectDVD(dvd, statusMessage: AppStrings.readyToRip(url.lastPathComponent))
+        return true
     }
 
     func setOutputURL(_ url: URL) {
@@ -215,6 +229,7 @@ final class RipViewModel {
 
     func cancelRipForWindowCloseOrAppQuit() {
         cancelRip()
+        clearDVDInputAccess()
     }
 
     func ejectCompletedDVD() {
@@ -228,6 +243,7 @@ final class RipViewModel {
             return
         }
 
+        clearDVDInputAccess()
         updateState { $0.resetAfterEject() }
     }
 
@@ -249,7 +265,18 @@ final class RipViewModel {
     }
 
     private func clearDVDSelection(statusMessage: String) {
+        clearDVDInputAccess()
         updateState { $0.clearDVDSelection(statusMessage: statusMessage) }
+    }
+
+    private func replaceDVDInputAccess(with access: any DVDInputAccess) {
+        clearDVDInputAccess()
+        selectedDVDInputAccess = access
+    }
+
+    private func clearDVDInputAccess() {
+        selectedDVDInputAccess?.stopAccessing()
+        selectedDVDInputAccess = nil
     }
 
     private func performRip(revealOutput: @escaping @MainActor @Sendable (URL) -> Void) async {
@@ -342,6 +369,7 @@ final class RipViewModel {
         )
         let statusMessage = AppStrings.done(outputPath: outputURL.path, logPath: activeLogPath)
         updateState { $0.markCompleted(statusMessage: statusMessage) }
+        clearDVDInputAccess()
         appendLogWriteErrorIfNeeded(logWriteError)
         if environment.appSettings.shouldRevealCompletedFile {
             revealOutput(outputURL)
@@ -390,10 +418,6 @@ final class RipViewModel {
             self?.appendActiveLogBlankLine(message)
             _ = self?.saveActiveLog()
         }
-    }
-
-    private func normalizedDVDURL(from url: URL) -> URL {
-        url.lastPathComponent == DVDVolume.videoTSDirectoryName ? url.deletingLastPathComponent() : url
     }
 
     private func isValidDVD(at url: URL) -> Bool {

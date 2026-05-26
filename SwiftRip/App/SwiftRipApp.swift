@@ -19,6 +19,12 @@ struct SwiftRipApp: App {
         WindowGroup {
             ContentView()
         }
+        .defaultSize(
+            width: SwiftRipLayout.MainWindow.width,
+            height: SwiftRipLayout.MainWindow.height
+        )
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
         .commands {
             SwiftRipCommands {
                 openWindow(id: Self.aboutWindowID)

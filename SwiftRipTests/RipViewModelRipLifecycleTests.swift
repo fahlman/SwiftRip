@@ -135,6 +135,31 @@ struct RipViewModelRipLifecycleTests {
         #expect(!viewModel.isEncoding)
     }
 
+    @Test func successfulRipStopsDVDInputAccess() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+
+        let inputAccessProvider = RipTestSupport.RecordingDVDInputAccessProvider()
+        let viewModel = RipTestSupport.makeViewModel(
+            configuration: testEnvironment.configuration,
+            handBrakeRunner: RipTestSupport.StubHandBrakeRunner(
+                exitCode: 0,
+                outputURLToCreate: testEnvironment.outputURL
+            ),
+            dvdInputAccessProvider: inputAccessProvider,
+            logDirectoryOverride: testEnvironment.logDirectory
+        )
+
+        #expect(viewModel.chooseDVD(at: URL(fileURLWithPath: testEnvironment.dvd.path, isDirectory: true)))
+        viewModel.setOutputURL(testEnvironment.outputURL)
+        try "complete output".write(to: testEnvironment.outputURL, atomically: true, encoding: .utf8)
+
+        await viewModel.startRip { _ in }
+
+        #expect(inputAccessProvider.accesses.first?.stopCount == 1)
+        #expect(viewModel.primaryAction == .eject)
+    }
+
     @Test func liveLogIsWrittenDuringActiveRip() async throws {
         let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
         defer { testEnvironment.cleanup() }

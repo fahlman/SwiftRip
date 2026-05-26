@@ -25,6 +25,7 @@ enum RipTestSupport {
         fileManager: FileManager = .default,
         handBrakeRunner: HandBrakeRunning = StubHandBrakeRunner(exitCode: 0, outputURLToCreate: nil),
         volumeFinder: DVDVolumeFinding = FileSystemDVDVolumeFinder(),
+        dvdInputAccessProvider: any DVDInputAccessProviding = NoOpDVDInputAccessProvider(),
         appSettings: AppSettings? = nil,
         ripNotifier: RipNotifying = NoOpRipNotifier(),
         dvdDeviceEjector: DVDDeviceEjecting = NoOpDVDDeviceEjector(),
@@ -35,6 +36,7 @@ enum RipTestSupport {
             fileManager: fileManager,
             handBrakeRunner: handBrakeRunner,
             volumeFinder: volumeFinder,
+            dvdInputAccessProvider: dvdInputAccessProvider,
             appSettings: appSettings ?? makeTestAppSettings(),
             ripNotifier: ripNotifier,
             dvdDeviceEjector: dvdDeviceEjector,
@@ -55,6 +57,7 @@ enum RipTestSupport {
             fileManager: .default,
             handBrakeRunner: runner,
             volumeFinder: FileSystemDVDVolumeFinder(),
+            dvdInputAccessProvider: NoOpDVDInputAccessProvider(),
             appSettings: appSettings ?? makeTestAppSettings(),
             ripNotifier: ripNotifier,
             dvdDeviceEjector: dvdDeviceEjector,
@@ -72,8 +75,7 @@ enum RipTestSupport {
         userDefaults.removePersistentDomain(forName: suiteName)
         return AppSettings(
             userDefaults: userDefaults,
-            fileManager: .default,
-            defaultDVDAppPreferenceManager: StubDefaultDVDAppPreferenceManager()
+            fileManager: .default
         )
     }
 
@@ -152,6 +154,51 @@ enum RipTestSupport {
         }
     }
 
+    @MainActor
+    final class RecordingDVDInputAccessProvider: DVDInputAccessProviding {
+        private(set) var startedURLs: [URL] = []
+        private(set) var accesses: [RecordingDVDInputAccess] = []
+
+        func startAccessingDVD(at url: URL) -> any DVDInputAccess {
+            let access = RecordingDVDInputAccess(url: url)
+            startedURLs.append(url)
+            accesses.append(access)
+            return access
+        }
+    }
+
+    @MainActor
+    final class RecordingDVDInputAccess: DVDInputAccess {
+        let url: URL
+        private(set) var stopCount = 0
+
+        init(url: URL) {
+            self.url = url
+        }
+
+        func stopAccessing() {
+            stopCount += 1
+        }
+    }
+
+    @MainActor
+    final class NoOpDVDInputAccessProvider: DVDInputAccessProviding {
+        func startAccessingDVD(at url: URL) -> any DVDInputAccess {
+            NoOpDVDInputAccess(url: url)
+        }
+    }
+
+    @MainActor
+    final class NoOpDVDInputAccess: DVDInputAccess {
+        let url: URL
+
+        init(url: URL) {
+            self.url = url
+        }
+
+        func stopAccessing() {}
+    }
+
     struct NoOpRipNotifier: RipNotifying {
         func notifyRipCompleted(
             outputURL: URL,
@@ -202,22 +249,6 @@ enum RipTestSupport {
 
     struct NoOpDVDDeviceEjector: DVDDeviceEjecting {
         func ejectDVD(at url: URL) throws {}
-    }
-
-    struct StubDefaultDVDAppPreferenceManager: DefaultDVDAppPreferenceManaging {
-        var isEnabled = false
-
-        func isSwiftRipDefaultDVDApp() -> Bool {
-            isEnabled
-        }
-
-        func currentDVDAction() -> DigitalHubDVDAction? {
-            nil
-        }
-
-        func makeSwiftRipDefaultDVDApp() throws {}
-
-        func restoreDVDAction(_ action: DigitalHubDVDAction?) throws {}
     }
 
     struct ThrowingDVDDeviceEjector: DVDDeviceEjecting {

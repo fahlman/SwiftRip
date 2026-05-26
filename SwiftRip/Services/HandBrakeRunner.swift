@@ -29,51 +29,25 @@ struct ProcessHandBrakeRunner: HandBrakeRunning {
     ) async -> HandBrakeResult {
         let executableURL = URL(fileURLWithPath: executablePath)
         let macOSDirectoryURL = executableURL.deletingLastPathComponent()
-        let frameworksDirectoryURL = frameworksDirectoryURL(for: macOSDirectoryURL)
         let process = makeProcess(
             executableURL: executableURL,
             arguments: arguments,
-            currentDirectoryURL: macOSDirectoryURL,
-            frameworksDirectoryURL: frameworksDirectoryURL
+            currentDirectoryURL: macOSDirectoryURL
         )
         let pipe = makeOutputPipe(for: process)
         return await run(process, outputPipe: pipe, onOutput: onOutput)
     }
 
-    private func frameworksDirectoryURL(for macOSDirectoryURL: URL) -> URL {
-        macOSDirectoryURL
-            .deletingLastPathComponent()
-            .appendingPathComponent("Frameworks", isDirectory: true)
-    }
-
     private func makeProcess(
         executableURL: URL,
         arguments: [String],
-        currentDirectoryURL: URL,
-        frameworksDirectoryURL: URL
+        currentDirectoryURL: URL
     ) -> Process {
         let process = Process()
         process.executableURL = executableURL
         process.arguments = arguments
         process.currentDirectoryURL = currentDirectoryURL
-        process.environment = makeEnvironment(
-            macOSDirectoryURL: currentDirectoryURL,
-            frameworksDirectoryURL: frameworksDirectoryURL
-        )
         return process
-    }
-
-    private func makeEnvironment(macOSDirectoryURL: URL, frameworksDirectoryURL: URL) -> [String: String] {
-        var environment = ProcessInfo.processInfo.environment
-        let bundledLibraryPaths = [
-            macOSDirectoryURL.path,
-            frameworksDirectoryURL.path
-        ].joined(separator: ":")
-
-        environment["DYLD_LIBRARY_PATH"] = bundledLibraryPaths
-        environment["DYLD_FALLBACK_LIBRARY_PATH"] = bundledLibraryPaths
-        environment["LD_LIBRARY_PATH"] = bundledLibraryPaths
-        return environment
     }
 
     private func makeOutputPipe(for process: Process) -> Pipe {

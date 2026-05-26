@@ -20,6 +20,43 @@ protocol DVDVolumeFinding: Sendable {
     func findMountedDVDs() -> [DVDVolume]
 }
 
+@MainActor
+protocol DVDInputAccess: AnyObject {
+    var url: URL { get }
+    func stopAccessing()
+}
+
+@MainActor
+protocol DVDInputAccessProviding {
+    func startAccessingDVD(at url: URL) -> any DVDInputAccess
+}
+
+@MainActor
+final class SecurityScopedDVDInputAccessProvider: DVDInputAccessProviding {
+    func startAccessingDVD(at url: URL) -> any DVDInputAccess {
+        SecurityScopedDVDInputAccess(url: url)
+    }
+}
+
+@MainActor
+private final class SecurityScopedDVDInputAccess: DVDInputAccess {
+    let url: URL
+
+    private var isAccessingSecurityScopedResource: Bool
+
+    init(url: URL) {
+        self.url = url
+        self.isAccessingSecurityScopedResource = url.startAccessingSecurityScopedResource()
+    }
+
+    func stopAccessing() {
+        guard isAccessingSecurityScopedResource else { return }
+
+        url.stopAccessingSecurityScopedResource()
+        isAccessingSecurityScopedResource = false
+    }
+}
+
 struct FileSystemDVDVolumeFinder: DVDVolumeFinding {
     private let fileManager: FileManager
     private let volumesURL: URL

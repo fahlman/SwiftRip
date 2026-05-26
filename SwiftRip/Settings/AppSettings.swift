@@ -113,7 +113,6 @@ final class AppSettings {
     private static let revealCompletedFileKey = "revealCompletedFile"
     private static let autoEjectAfterSuccessfulRipKey = "autoEjectAfterSuccessfulRip"
     private static let outputFilenameFormatKey = "outputFilenameFormat"
-    private static let previousDefaultDVDActionKey = "previousDefaultDVDAction"
 
     private(set) var outputDirectoryURL: URL
     var completionSound: CompletionSound {
@@ -141,14 +140,11 @@ final class AppSettings {
             userDefaults.set(outputFilenameFormat.rawValue, forKey: Self.outputFilenameFormatKey)
         }
     }
-    private(set) var isDefaultDVDAppOnInsertEnabled: Bool
 
     @ObservationIgnored
     private let userDefaults: UserDefaults
     @ObservationIgnored
     private let fileManager: FileManager
-    @ObservationIgnored
-    private let defaultDVDAppPreferenceManager: any DefaultDVDAppPreferenceManaging
     @ObservationIgnored
     private var securityScopedOutputDirectoryURL: URL?
 
@@ -158,12 +154,10 @@ final class AppSettings {
 
     init(
         userDefaults: UserDefaults,
-        fileManager: FileManager,
-        defaultDVDAppPreferenceManager: any DefaultDVDAppPreferenceManaging = DigitalHubDefaultDVDAppPreferenceManager()
+        fileManager: FileManager
     ) {
         self.userDefaults = userDefaults
         self.fileManager = fileManager
-        self.defaultDVDAppPreferenceManager = defaultDVDAppPreferenceManager
         self.outputDirectoryURL = Self.defaultMoviesDirectory(using: fileManager)
         self.completionSound = Self.completionSound(from: userDefaults)
         self.isCompletionNotificationEnabled = Self.boolValue(
@@ -182,7 +176,6 @@ final class AppSettings {
             in: userDefaults
         )
         self.outputFilenameFormat = Self.outputFilenameFormat(from: userDefaults)
-        self.isDefaultDVDAppOnInsertEnabled = defaultDVDAppPreferenceManager.isSwiftRipDefaultDVDApp()
         self.outputDirectoryURL = resolvedOutputDirectoryURL()
     }
 
@@ -210,26 +203,6 @@ final class AppSettings {
         stopAccessingSecurityScopedOutputDirectory()
         userDefaults.removeObject(forKey: Self.outputDirectoryBookmarkKey)
         outputDirectoryURL = Self.defaultMoviesDirectory(using: fileManager)
-    }
-
-    func setDefaultDVDAppOnInsertEnabled(_ isEnabled: Bool) throws {
-        if isEnabled {
-            if !defaultDVDAppPreferenceManager.isSwiftRipDefaultDVDApp() {
-                setPreviousDefaultDVDAction(defaultDVDAppPreferenceManager.currentDVDAction())
-            }
-            try defaultDVDAppPreferenceManager.makeSwiftRipDefaultDVDApp()
-        } else {
-            if defaultDVDAppPreferenceManager.isSwiftRipDefaultDVDApp() {
-                try defaultDVDAppPreferenceManager.restoreDVDAction(previousDefaultDVDAction())
-            }
-            clearPreviousDefaultDVDAction()
-        }
-
-        isDefaultDVDAppOnInsertEnabled = defaultDVDAppPreferenceManager.isSwiftRipDefaultDVDApp()
-    }
-
-    func refreshDefaultDVDAppOnInsertEnabled() {
-        isDefaultDVDAppOnInsertEnabled = defaultDVDAppPreferenceManager.isSwiftRipDefaultDVDApp()
     }
 
     private func resolvedOutputDirectoryURL() -> URL {
@@ -296,29 +269,5 @@ final class AppSettings {
 
     private static func boolValue(forKey key: String, defaultValue: Bool, in userDefaults: UserDefaults) -> Bool {
         userDefaults.object(forKey: key) as? Bool ?? defaultValue
-    }
-
-    private func previousDefaultDVDAction() -> DigitalHubDVDAction? {
-        guard let data = userDefaults.data(forKey: Self.previousDefaultDVDActionKey) else {
-            return nil
-        }
-
-        return try? JSONDecoder().decode(DigitalHubDVDAction.self, from: data)
-    }
-
-    private func setPreviousDefaultDVDAction(_ action: DigitalHubDVDAction?) {
-        guard
-            let action,
-            let data = try? JSONEncoder().encode(action)
-        else {
-            clearPreviousDefaultDVDAction()
-            return
-        }
-
-        userDefaults.set(data, forKey: Self.previousDefaultDVDActionKey)
-    }
-
-    private func clearPreviousDefaultDVDAction() {
-        userDefaults.removeObject(forKey: Self.previousDefaultDVDActionKey)
     }
 }

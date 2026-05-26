@@ -18,7 +18,6 @@ struct AppSettingsTests {
         #expect(settings.shouldRevealCompletedFile)
         #expect(!settings.shouldAutoEjectAfterSuccessfulRip)
         #expect(settings.outputFilenameFormat == .titleCase)
-        #expect(!settings.isDefaultDVDAppOnInsertEnabled)
         #expect(settings.isUsingDefaultOutputDirectory)
         #expect(settings.needsOutputDirectoryPermission)
     }
@@ -32,8 +31,7 @@ struct AppSettingsTests {
 
         let settings = AppSettings(
             userDefaults: userDefaults,
-            fileManager: .default,
-            defaultDVDAppPreferenceManager: RipTestSupport.StubDefaultDVDAppPreferenceManager()
+            fileManager: .default
         )
         settings.completionSound = .hero
         settings.isCompletionNotificationEnabled = false
@@ -43,8 +41,7 @@ struct AppSettingsTests {
 
         let reloadedSettings = AppSettings(
             userDefaults: userDefaults,
-            fileManager: .default,
-            defaultDVDAppPreferenceManager: RipTestSupport.StubDefaultDVDAppPreferenceManager()
+            fileManager: .default
         )
         #expect(reloadedSettings.completionSound == .hero)
         #expect(!reloadedSettings.isCompletionNotificationEnabled)
@@ -65,81 +62,10 @@ struct AppSettingsTests {
 
         let settings = AppSettings(
             userDefaults: userDefaults,
-            fileManager: .default,
-            defaultDVDAppPreferenceManager: RipTestSupport.StubDefaultDVDAppPreferenceManager()
+            fileManager: .default
         )
         #expect(settings.completionSound == .glass)
         #expect(settings.outputFilenameFormat == .titleCase)
-    }
-
-    @Test func defaultDVDAppPreferenceReflectsSystemPreferenceManager() throws {
-        let suiteName = "AppSettingsTests-\(UUID().uuidString)"
-        let userDefaults = try #require(UserDefaults(suiteName: suiteName))
-        defer {
-            userDefaults.removePersistentDomain(forName: suiteName)
-        }
-        let preferenceManager = RecordingDefaultDVDAppPreferenceManager(isEnabled: true)
-
-        let settings = AppSettings(
-            userDefaults: userDefaults,
-            fileManager: .default,
-            defaultDVDAppPreferenceManager: preferenceManager
-        )
-
-        #expect(settings.isDefaultDVDAppOnInsertEnabled)
-
-        try settings.setDefaultDVDAppOnInsertEnabled(false)
-
-        #expect(!settings.isDefaultDVDAppOnInsertEnabled)
-        #expect(preferenceManager.restoredActions == [nil])
-    }
-
-    @Test func defaultDVDAppPreferenceRestoresPreviousActionWhenDisabled() throws {
-        let suiteName = "AppSettingsTests-\(UUID().uuidString)"
-        let userDefaults = try #require(UserDefaults(suiteName: suiteName))
-        defer {
-            userDefaults.removePersistentDomain(forName: suiteName)
-        }
-        let previousAction = DigitalHubDVDAction(action: 105)
-        let preferenceManager = RecordingDefaultDVDAppPreferenceManager(
-            isEnabled: false,
-            currentAction: previousAction
-        )
-        let settings = AppSettings(
-            userDefaults: userDefaults,
-            fileManager: .default,
-            defaultDVDAppPreferenceManager: preferenceManager
-        )
-
-        try settings.setDefaultDVDAppOnInsertEnabled(true)
-        #expect(settings.isDefaultDVDAppOnInsertEnabled)
-
-        try settings.setDefaultDVDAppOnInsertEnabled(false)
-
-        #expect(!settings.isDefaultDVDAppOnInsertEnabled)
-        #expect(preferenceManager.makeDefaultCallCount == 1)
-        #expect(preferenceManager.restoredActions == [previousAction])
-    }
-
-    @Test func disablingDefaultDVDAppDoesNotOverwriteIfSwiftRipNoLongerOwnsTheHandler() throws {
-        let suiteName = "AppSettingsTests-\(UUID().uuidString)"
-        let userDefaults = try #require(UserDefaults(suiteName: suiteName))
-        defer {
-            userDefaults.removePersistentDomain(forName: suiteName)
-        }
-        let preferenceManager = RecordingDefaultDVDAppPreferenceManager(
-            isEnabled: false,
-            currentAction: DigitalHubDVDAction(action: 105)
-        )
-        let settings = AppSettings(
-            userDefaults: userDefaults,
-            fileManager: .default,
-            defaultDVDAppPreferenceManager: preferenceManager
-        )
-
-        try settings.setDefaultDVDAppOnInsertEnabled(false)
-
-        #expect(preferenceManager.restoredActions.isEmpty)
     }
 
     @Test func invalidOutputDirectoryBookmarkFallsBackToMovies() throws {
@@ -153,8 +79,7 @@ struct AppSettingsTests {
 
         let settings = AppSettings(
             userDefaults: userDefaults,
-            fileManager: .default,
-            defaultDVDAppPreferenceManager: RipTestSupport.StubDefaultDVDAppPreferenceManager()
+            fileManager: .default
         )
         let moviesURL = AppSettings.defaultMoviesDirectory(using: .default)
 
@@ -163,34 +88,4 @@ struct AppSettingsTests {
         #expect(settings.needsOutputDirectoryPermission)
     }
 
-    private final class RecordingDefaultDVDAppPreferenceManager: DefaultDVDAppPreferenceManaging, @unchecked Sendable {
-        var isEnabled: Bool
-        var currentAction: DigitalHubDVDAction?
-        private(set) var makeDefaultCallCount = 0
-        private(set) var restoredActions: [DigitalHubDVDAction?] = []
-
-        init(isEnabled: Bool, currentAction: DigitalHubDVDAction? = nil) {
-            self.isEnabled = isEnabled
-            self.currentAction = currentAction
-        }
-
-        func isSwiftRipDefaultDVDApp() -> Bool {
-            isEnabled
-        }
-
-        func currentDVDAction() -> DigitalHubDVDAction? {
-            currentAction
-        }
-
-        func makeSwiftRipDefaultDVDApp() throws {
-            makeDefaultCallCount += 1
-            isEnabled = true
-        }
-
-        func restoreDVDAction(_ action: DigitalHubDVDAction?) throws {
-            restoredActions.append(action)
-            currentAction = action
-            isEnabled = false
-        }
-    }
 }

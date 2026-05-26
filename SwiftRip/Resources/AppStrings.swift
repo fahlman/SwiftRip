@@ -14,6 +14,7 @@ enum AppStrings {
     nonisolated static let revealOutputTitle = localized("Reveal Output in Finder")
     nonisolated static let revealLogTitle = localized("Reveal Log in Finder")
     nonisolated static let noValidDVDTitle = localized("No valid DVD")
+    nonisolated static let invalidDVDSelectionTitle = localized("Not a Video DVD")
     nonisolated static let ripCompleteNotificationTitle = localized("Rip Complete")
     nonisolated static let ripFailedNotificationTitle = localized("Rip Failed")
     nonisolated static let stopRipConfirmationTitle = localized("Stop Rip?")
@@ -49,10 +50,6 @@ enum AppStrings {
     nonisolated static let settingsRevealCompletedFileTitle = localized("Reveal completed file in Finder")
     nonisolated static let settingsAutoEjectTitle = localized("Eject DVD after successful rip")
     nonisolated static let settingsFilenameFormatTitle = localized("Filename Format:")
-    nonisolated static let settingsDVDTitle = localized("DVDs")
-    nonisolated static let settingsDefaultDVDAppTitle = localized("Open SwiftRip when a video DVD is inserted")
-    nonisolated static let defaultDVDAppSaveFailed = localized("Could not update the macOS CDs & DVDs setting.")
-    nonisolated static let defaultDVDAppMissingBundle = localized("SwiftRip could not find its application bundle.")
     nonisolated static let completionSoundGlassTitle = localized("Glass")
     nonisolated static let completionSoundPingTitle = localized("Ping")
     nonisolated static let completionSoundHeroTitle = localized("Hero")
@@ -98,10 +95,6 @@ enum AppStrings {
 
     nonisolated static func percentComplete(_ percent: Int) -> String {
         String(format: localized("%d percent"), percent)
-    }
-
-    nonisolated static func savingTo(_ fileName: String) -> String {
-        String(format: localized("Saving to %@"), fileName)
     }
 
     nonisolated static func ripCompleteNotificationBody(fileName: String) -> String {

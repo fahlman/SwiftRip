@@ -9,7 +9,6 @@ import SwiftUI
 struct SettingsView: View {
     @State private var settings = AppSettings.shared
     @State private var outputDirectoryErrorMessage: String?
-    @State private var dvdPreferenceErrorMessage: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -17,8 +16,6 @@ struct SettingsView: View {
                 settingsHeader
                 Divider()
                 filesSection
-                Divider()
-                dvdSection
                 Divider()
                 completionSection
                 Spacer(minLength: 0)
@@ -79,45 +76,6 @@ struct SettingsView: View {
             Toggle(AppStrings.settingsAutoEjectTitle, isOn: $settings.shouldAutoEjectAfterSuccessfulRip)
                 .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
                 .accessibilityIdentifier("autoEjectToggle")
-        }
-    }
-
-    private var dvdSection: some View {
-        VStack(alignment: .leading, spacing: SwiftRipLayout.SettingsWindow.rowSpacing) {
-            Text(AppStrings.settingsDVDTitle)
-                .swiftRipSectionTitle()
-
-            Toggle(
-                AppStrings.settingsDefaultDVDAppTitle,
-                isOn: defaultDVDAppOnInsertBinding
-            )
-            .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
-            .accessibilityIdentifier("defaultDVDAppToggle")
-
-            if let dvdPreferenceErrorMessage {
-                Text(dvdPreferenceErrorMessage)
-                    .foregroundStyle(SwiftRipColors.errorText)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
-                    .accessibilityIdentifier("dvdPreferenceErrorMessage")
-            }
-        }
-        .onAppear {
-            settings.refreshDefaultDVDAppOnInsertEnabled()
-        }
-    }
-
-    private var defaultDVDAppOnInsertBinding: Binding<Bool> {
-        Binding {
-            settings.isDefaultDVDAppOnInsertEnabled
-        } set: { isEnabled in
-            do {
-                try settings.setDefaultDVDAppOnInsertEnabled(isEnabled)
-                dvdPreferenceErrorMessage = nil
-            } catch {
-                settings.refreshDefaultDVDAppOnInsertEnabled()
-                dvdPreferenceErrorMessage = error.localizedDescription
-            }
         }
     }
 

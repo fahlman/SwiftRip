@@ -8,3 +8,7 @@ SwiftRipTools/Build/
 SwiftRipTools/Source/
 SwiftRipTools/Artifacts/
 SwiftRipTools/Packages/
+
+# App release packaging output
+.release/
+dist/
