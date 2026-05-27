@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+RELEASE_COMMON_SCRIPT="$ROOT_DIR/Scripts/lib/release-common.zsh"
 PROJECT_PATH="$ROOT_DIR/SwiftRip.xcodeproj"
 SCHEME="SwiftRip"
 CONFIGURATION="Release"
@@ -18,6 +19,9 @@ NOTARY_PASSWORD="${SWIFTRIP_NOTARY_PASSWORD:-}"
 NOTARY_TEAM_ID="${SWIFTRIP_NOTARY_TEAM_ID:-$TEAM_ID}"
 SKIP_NOTARIZATION=false
 typeset -a NOTARY_ARGS
+
+# shellcheck source=/dev/null
+source "$RELEASE_COMMON_SCRIPT"
 
 usage() {
     cat <<'USAGE'
@@ -100,23 +104,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-require_command() {
-    local command_path="$1"
-    if [[ ! -x "$command_path" ]]; then
-        echo "ERROR: Missing required command: $command_path"
-        exit 1
-    fi
-}
-
-require_value() {
-    local name="$1"
-    local value="$2"
-    if [[ -z "$value" ]]; then
-        echo "ERROR: Missing required value: $name"
-        exit 1
-    fi
-}
-
 codesign_entitlements() {
     local target_path="$1"
     local output_path="$2"
@@ -154,23 +141,6 @@ assert_entitlement_absent() {
 
 signing_identity_available() {
     /usr/bin/security find-identity -v -p codesigning | /usr/bin/grep -Fq "$SIGNING_IDENTITY"
-}
-
-verify_dmg() {
-    local dmg_path="$1"
-
-    for attempt in {1..5}; do
-        if /usr/bin/hdiutil verify "$dmg_path"; then
-            return 0
-        fi
-
-        if [[ "$attempt" -lt 5 ]]; then
-            echo "DMG verification failed; retrying in 2 seconds..."
-            /bin/sleep 2
-        fi
-    done
-
-    return 1
 }
 
 case "$RELEASE_ARCH" in
@@ -237,12 +207,7 @@ echo "Output:           $OUTPUT_DIR"
 
 SWIFTRIP_TOOLS_ARCH="$RELEASE_ARCH" "$ROOT_DIR/SwiftRipTools/Scripts/verify-swiftrip-tools.zsh"
 
-case "$WORK_DIR" in
-    "/"|"$HOME"|"$ROOT_DIR")
-        echo "ERROR: Refusing to use unsafe release work directory: $WORK_DIR"
-        exit 1
-        ;;
-esac
+refuse_unsafe_path "$WORK_DIR" "release work directory" "$ROOT_DIR"
 
 /bin/rm -rf "$WORK_DIR"
 /bin/mkdir -p "$WORK_DIR" "$OUTPUT_DIR"

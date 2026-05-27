@@ -3,7 +3,6 @@
 //  SwiftRip
 //
 
-import Darwin
 import Foundation
 import Observation
 
@@ -107,7 +106,6 @@ struct OutputFilenameFormatter: Sendable {
 final class AppSettings {
     static let shared = AppSettings()
 
-    private static let outputDirectoryBookmarkKey = "outputDirectoryBookmark"
     private static let completionSoundKey = "completionSound"
     private static let completionNotificationEnabledKey = "completionNotificationEnabled"
     private static let revealCompletedFileKey = "revealCompletedFile"
@@ -144,9 +142,7 @@ final class AppSettings {
     @ObservationIgnored
     private let userDefaults: UserDefaults
     @ObservationIgnored
-    private let fileManager: FileManager
-    @ObservationIgnored
-    private var securityScopedOutputDirectoryURL: URL?
+    private let outputDirectoryBookmarkStore: OutputDirectoryBookmarkStore
 
     convenience init() {
         self.init(userDefaults: .standard, fileManager: .default)
@@ -157,7 +153,10 @@ final class AppSettings {
         fileManager: FileManager
     ) {
         self.userDefaults = userDefaults
-        self.fileManager = fileManager
+        self.outputDirectoryBookmarkStore = OutputDirectoryBookmarkStore(
+            userDefaults: userDefaults,
+            fileManager: fileManager
+        )
         self.outputDirectoryURL = Self.defaultMoviesDirectory(using: fileManager)
         self.completionSound = Self.completionSound(from: userDefaults)
         self.isCompletionNotificationEnabled = Self.boolValue(
@@ -176,11 +175,11 @@ final class AppSettings {
             in: userDefaults
         )
         self.outputFilenameFormat = Self.outputFilenameFormat(from: userDefaults)
-        self.outputDirectoryURL = resolvedOutputDirectoryURL()
+        self.outputDirectoryURL = outputDirectoryBookmarkStore.resolvedOutputDirectoryURL()
     }
 
     var isUsingDefaultOutputDirectory: Bool {
-        userDefaults.data(forKey: Self.outputDirectoryBookmarkKey) == nil
+        outputDirectoryBookmarkStore.isUsingDefaultOutputDirectory
     }
 
     var needsOutputDirectoryPermission: Bool {
@@ -188,73 +187,15 @@ final class AppSettings {
     }
 
     func setOutputDirectory(_ url: URL) throws {
-        let bookmarkData = try url.bookmarkData(
-            options: [.withSecurityScope],
-            includingResourceValuesForKeys: nil,
-            relativeTo: nil
-        )
-
-        stopAccessingSecurityScopedOutputDirectory()
-        userDefaults.set(bookmarkData, forKey: Self.outputDirectoryBookmarkKey)
-        outputDirectoryURL = resolvedOutputDirectoryURL()
+        outputDirectoryURL = try outputDirectoryBookmarkStore.setOutputDirectory(url)
     }
 
     func resetOutputDirectoryToMovies() {
-        stopAccessingSecurityScopedOutputDirectory()
-        userDefaults.removeObject(forKey: Self.outputDirectoryBookmarkKey)
-        outputDirectoryURL = Self.defaultMoviesDirectory(using: fileManager)
-    }
-
-    private func resolvedOutputDirectoryURL() -> URL {
-        guard let bookmarkData = userDefaults.data(forKey: Self.outputDirectoryBookmarkKey) else {
-            return Self.defaultMoviesDirectory(using: fileManager)
-        }
-
-        do {
-            var isStale = false
-            let url = try URL(
-                resolvingBookmarkData: bookmarkData,
-                options: [.withSecurityScope],
-                relativeTo: nil,
-                bookmarkDataIsStale: &isStale
-            )
-
-            guard url.startAccessingSecurityScopedResource() else {
-                resetOutputDirectoryToMovies()
-                return Self.defaultMoviesDirectory(using: fileManager)
-            }
-
-            securityScopedOutputDirectoryURL = url
-
-            if isStale {
-                try setOutputDirectory(url)
-            }
-
-            return url
-        } catch {
-            resetOutputDirectoryToMovies()
-            return Self.defaultMoviesDirectory(using: fileManager)
-        }
-    }
-
-    private func stopAccessingSecurityScopedOutputDirectory() {
-        securityScopedOutputDirectoryURL?.stopAccessingSecurityScopedResource()
-        securityScopedOutputDirectoryURL = nil
+        outputDirectoryURL = outputDirectoryBookmarkStore.resetOutputDirectoryToDefault()
     }
 
     static func defaultMoviesDirectory(using fileManager: FileManager) -> URL {
-        accountHomeDirectory(using: fileManager).appendingPathComponent("Movies", isDirectory: true)
-    }
-
-    private static func accountHomeDirectory(using fileManager: FileManager) -> URL {
-        guard
-            let passwordEntry = getpwuid(getuid()),
-            let homeDirectory = passwordEntry.pointee.pw_dir
-        else {
-            return fileManager.homeDirectoryForCurrentUser
-        }
-
-        return URL(fileURLWithPath: String(cString: homeDirectory), isDirectory: true)
+        OutputDirectoryBookmarkStore.defaultMoviesDirectory(using: fileManager)
     }
 
     private static func completionSound(from userDefaults: UserDefaults) -> CompletionSound {

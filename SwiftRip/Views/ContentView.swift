@@ -159,16 +159,11 @@ struct ContentView: View {
         guard viewModel.commandAvailability.canChooseDVD else { return }
 
         if !viewModel.chooseDVD(at: url) {
-            showInvalidDVDSelectionError()
+            AppAlertPresenter.showWarning(
+                messageText: AppStrings.invalidDVDSelectionTitle,
+                informativeText: AppStrings.chooseVideoTSFolder(directoryName: DVDVolume.videoTSDirectoryName)
+            )
         }
-    }
-
-    private func showInvalidDVDSelectionError() {
-        let alert = NSAlert()
-        alert.messageText = AppStrings.invalidDVDSelectionTitle
-        alert.informativeText = AppStrings.chooseVideoTSFolder(directoryName: DVDVolume.videoTSDirectoryName)
-        alert.alertStyle = .warning
-        alert.runModal()
     }
 
     private var hasSelectedDVD: Bool {
@@ -227,17 +222,12 @@ struct ContentView: View {
             try viewModel.setOutputDirectory(url)
             return true
         } catch {
-            showOutputDirectoryPermissionError(error)
+            AppAlertPresenter.showWarning(
+                messageText: AppStrings.outputFolderPermissionFailedTitle,
+                informativeText: error.localizedDescription
+            )
             return false
         }
-    }
-
-    private func showOutputDirectoryPermissionError(_ error: Error) {
-        let alert = NSAlert()
-        alert.messageText = AppStrings.outputFolderPermissionFailedTitle
-        alert.informativeText = error.localizedDescription
-        alert.alertStyle = .warning
-        alert.runModal()
     }
 
     private func stopRip() {
@@ -310,105 +300,4 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-}
-
-enum RipInterruptionRequest {
-    case windowClose
-    case appQuit
-}
-
-@MainActor
-@Observable
-final class RipInterruptionCoordinator {
-    static let shared = RipInterruptionCoordinator()
-
-    var isRipActive = false
-    private(set) var pendingRequest: RipInterruptionRequest?
-    private(set) var shouldAllowConfirmedAppQuit = false
-    private(set) var shouldAllowConfirmedWindowClose = false
-
-    @ObservationIgnored
-    weak var pendingWindow: NSWindow?
-
-    var hasPendingRequest: Bool {
-        pendingRequest != nil
-    }
-
-    var shouldConfirmAppQuit: Bool {
-        isRipActive && !shouldAllowConfirmedAppQuit
-    }
-
-    func updateRipActivity(_ isRipActive: Bool) {
-        self.isRipActive = isRipActive
-
-        if !isRipActive {
-            clearPendingRequest()
-        }
-    }
-
-    func shouldConfirmWindowClose(_ window: NSWindow) -> Bool {
-        guard isRipActive, !shouldAllowConfirmedWindowClose else { return false }
-
-        pendingWindow = window
-        pendingRequest = .windowClose
-        return true
-    }
-
-    func requestAppQuitConfirmation() {
-        pendingRequest = .appQuit
-    }
-
-    func clearPendingRequest() {
-        pendingRequest = nil
-        pendingWindow = nil
-        shouldAllowConfirmedAppQuit = false
-        shouldAllowConfirmedWindowClose = false
-    }
-
-    func closePendingWindowAfterConfirmation() {
-        shouldAllowConfirmedWindowClose = true
-        let window = pendingWindow
-        pendingRequest = nil
-        pendingWindow = nil
-        window?.performClose(nil)
-        shouldAllowConfirmedWindowClose = false
-    }
-
-    func quitAppAfterConfirmation() {
-        pendingRequest = nil
-        pendingWindow = nil
-        shouldAllowConfirmedAppQuit = true
-        NSApp.terminate(nil)
-    }
-}
-
-private struct WindowCloseConfirmationGate: NSViewRepresentable {
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator()
-    }
-
-    func makeNSView(context: Context) -> NSView {
-        NSView()
-    }
-
-    func updateNSView(_ nsView: NSView, context: Context) {
-        DispatchQueue.main.async {
-            guard let window = nsView.window, window.delegate !== context.coordinator else { return }
-            context.coordinator.previousDelegate = window.delegate
-            window.delegate = context.coordinator
-        }
-    }
-
-    final class Coordinator: NSObject, NSWindowDelegate {
-        weak var previousDelegate: NSWindowDelegate?
-
-        func windowShouldClose(_ sender: NSWindow) -> Bool {
-            if RipInterruptionCoordinator.shared.shouldConfirmWindowClose(sender) {
-                return false
-            }
-
-            return previousDelegate?.windowShouldClose?(sender) ?? true
-        }
-    }
 }

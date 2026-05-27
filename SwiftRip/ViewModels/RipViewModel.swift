@@ -61,8 +61,24 @@ final class RipViewModel {
     private static let fallbackMovieName = AppStrings.fallbackMovieName
     private static let movieFileExtension = "m4v"
 
+    private enum RipFinishOutcome {
+        case completed(revealOutput: @MainActor @Sendable (URL) -> Void)
+        case failed
+        case outputValidationFailed(message: String)
+
+        var logOutcome: String {
+            switch self {
+            case .completed:
+                return "Completed"
+            case .failed, .outputValidationFailed:
+                return "Failed"
+            }
+        }
+    }
+
     private var state = RipLifecycleState()
     private let outputFilenameFormatter = OutputFilenameFormatter()
+    private let outputURLResolver: OutputURLResolver
 
     @ObservationIgnored
     private var ripTask: Task<Void, Never>?
@@ -73,6 +89,7 @@ final class RipViewModel {
 
     init(environment: RipEnvironment = .production) {
         self.environment = environment
+        self.outputURLResolver = OutputURLResolver(fileManager: environment.fileManager)
     }
 
     var dvdVolumes: [DVDVolume] {
@@ -191,10 +208,7 @@ final class RipViewModel {
     }
 
     func setOutputURL(_ url: URL) {
-        let normalizedURL = url.pathExtension.lowercased() == Self.movieFileExtension
-            ? url
-            : url.deletingPathExtension().appendingPathExtension(Self.movieFileExtension)
-        updateState { $0.setOutputURL(normalizedURL) }
+        updateState { $0.setOutputURL(outputURLResolver.normalizedMovieURL(for: url)) }
     }
 
     func setOutputDirectory(_ url: URL) throws {
@@ -206,7 +220,7 @@ final class RipViewModel {
     }
 
     func selectDVD(_ dvd: DVDVolume, outputURL: URL? = nil, statusMessage: String? = nil) {
-        let resolvedOutputURL = uniqueOutputURL(
+        let resolvedOutputURL = outputURLResolver.availableURL(
             for: outputURL ?? defaultOutputDirectory.appendingPathComponent(suggestedOutputName(for: dvd))
         )
         let resolvedStatusMessage = statusMessage ?? AppStrings.readyToRip(dvd.name)
@@ -266,30 +280,6 @@ final class RipViewModel {
         )
     }
 
-    private func uniqueOutputURL(for outputURL: URL) -> URL {
-        guard environment.fileManager.fileExists(atPath: outputURL.path) else {
-            return outputURL
-        }
-
-        let directoryURL = outputURL.deletingLastPathComponent()
-        let fileExtension = outputURL.pathExtension
-        let baseName = outputURL.deletingPathExtension().lastPathComponent
-
-        for index in 2...10_000 {
-            let candidateURL = directoryURL
-                .appendingPathComponent("\(baseName) \(index)")
-                .appendingPathExtension(fileExtension)
-
-            if !environment.fileManager.fileExists(atPath: candidateURL.path) {
-                return candidateURL
-            }
-        }
-
-        return directoryURL
-            .appendingPathComponent("\(baseName) \(UUID().uuidString)")
-            .appendingPathExtension(fileExtension)
-    }
-
     private func clearDVDSelection() {
         clearDVDSelection(statusMessage: AppStrings.initialStatusMessage)
     }
@@ -312,7 +302,7 @@ final class RipViewModel {
     private func performRip(revealOutput: @escaping @MainActor @Sendable (URL) -> Void) async {
         guard let selectedDVD, let outputURL else { return }
 
-        let resolvedOutputURL = uniqueOutputURL(for: outputURL)
+        let resolvedOutputURL = outputURLResolver.availableURL(for: outputURL)
         if resolvedOutputURL != outputURL {
             updateState { $0.setOutputURL(resolvedOutputURL) }
         }
@@ -345,16 +335,20 @@ final class RipViewModel {
         if result.exitCode == 0 {
             if let postflightFailure = RipPostflightCheck(fileManager: environment.fileManager)
                 .failureMessage(outputURL: resolvedOutputURL) {
-                finishOutputValidationFailedRip(
+                finishRipWithOutputPreserved(
                     outputURL: resolvedOutputURL,
                     exitCode: result.exitCode,
-                    message: postflightFailure
+                    outcome: .outputValidationFailed(message: postflightFailure)
                 )
             } else {
-                finishSuccessfulRip(outputURL: resolvedOutputURL, exitCode: result.exitCode, revealOutput: revealOutput)
+                finishRipWithOutputPreserved(
+                    outputURL: resolvedOutputURL,
+                    exitCode: result.exitCode,
+                    outcome: .completed(revealOutput: revealOutput)
+                )
             }
         } else {
-            finishFailedRip(outputURL: resolvedOutputURL, exitCode: result.exitCode)
+            finishRipWithOutputPreserved(outputURL: resolvedOutputURL, exitCode: result.exitCode, outcome: .failed)
         }
     }
 
@@ -397,62 +391,79 @@ final class RipViewModel {
         cleanupCancelledRip()
     }
 
-    private func finishSuccessfulRip(
+    private func finishRipWithOutputPreserved(
         outputURL: URL,
         exitCode: Int32,
-        revealOutput: @escaping @MainActor @Sendable (URL) -> Void
+        outcome: RipFinishOutcome
     ) {
-        updateState { $0.mutateActiveRip { $0.protectCompletedOutput() } }
-        appendActiveLogBlankLine("SwiftRip: Rip completed successfully")
-        appendActiveLogLine("Completed output protected from cancellation cleanup: \(outputURL.path)")
+        appendOutputPreservationLog(outputURL: outputURL, outcome: outcome)
         _ = saveActiveLog()
-        notifyRipCompleted(outputURL: outputURL)
-        let logWriteError = finishRipWithOutputPreserved(
-            exitCode: exitCode,
-            outcome: "Completed"
-        )
-        let statusMessage = AppStrings.done(outputPath: outputURL.path, logPath: activeLogPath)
-        updateState { $0.markCompleted(statusMessage: statusMessage) }
-        clearDVDInputAccess()
-        appendLogWriteErrorIfNeeded(logWriteError)
-        if environment.appSettings.shouldRevealCompletedFile {
-            revealOutput(outputURL)
+
+        if case .completed = outcome {
+            notifyRipCompleted(outputURL: outputURL)
         }
-        if environment.appSettings.shouldAutoEjectAfterSuccessfulRip {
-            ejectCompletedDVD()
+
+        let logWriteError = appendRipOutcomeAndExitCode(
+            exitCode: exitCode,
+            outcome: outcome.logOutcome
+        )
+
+        finishRipState(
+            outputURL: outputURL,
+            exitCode: exitCode,
+            outcome: outcome,
+            logWriteError: logWriteError
+        )
+    }
+
+    private func appendOutputPreservationLog(outputURL: URL, outcome: RipFinishOutcome) {
+        switch outcome {
+        case .completed:
+            updateState { $0.mutateActiveRip { $0.protectCompletedOutput() } }
+            appendActiveLogBlankLine("SwiftRip: Rip completed successfully")
+            appendActiveLogLine("Completed output protected from cancellation cleanup: \(outputURL.path)")
+        case .failed:
+            appendActiveLogBlankLine("SwiftRip: Rip failed; output preserved for inspection")
+            appendActiveLogLine("Output preserved for inspection: \(outputURL.path)")
+        case .outputValidationFailed(let message):
+            appendActiveLogBlankLine("SwiftRip: Output validation failed")
+            appendActiveLogLine(message)
         }
     }
 
-    private func finishFailedRip(outputURL: URL, exitCode: Int32) {
-        appendActiveLogBlankLine("SwiftRip: Rip failed; output preserved for inspection")
-        appendActiveLogLine("Output preserved for inspection: \(outputURL.path)")
-        _ = saveActiveLog()
-        let logWriteError = finishRipWithOutputPreserved(
-            exitCode: exitCode,
-            outcome: "Failed"
-        )
-        notifyRipFailed(outputURL: outputURL, exitCode: exitCode)
-        let statusMessage = AppStrings.handBrakeFailed(exitCode: exitCode, logPath: activeLogPath)
-        updateState { $0.markFailed(statusMessage: statusMessage) }
-        appendLogWriteErrorIfNeeded(logWriteError)
-    }
-
-    private func finishOutputValidationFailedRip(outputURL: URL, exitCode: Int32, message: String) {
-        appendActiveLogBlankLine("SwiftRip: Output validation failed")
-        appendActiveLogLine(message)
-        _ = saveActiveLog()
-        let logWriteError = finishRipWithOutputPreserved(
-            exitCode: exitCode,
-            outcome: "Failed"
-        )
-        notifyRipFailed(outputURL: outputURL, message: message)
-        updateState { $0.markFailed(statusMessage: "\(message) \(AppStrings.logSaved(to: activeLogPath))") }
-        appendLogWriteErrorIfNeeded(logWriteError)
-    }
-
-    private func finishRipWithOutputPreserved(exitCode: Int32, outcome: String) -> Error? {
+    private func appendRipOutcomeAndExitCode(exitCode: Int32, outcome: String) -> Error? {
         updateState { $0.mutateActiveRip { $0.log.appendOutcome(outcome) } }
         return appendExitCodeAndSaveLog(exitCode)
+    }
+
+    private func finishRipState(
+        outputURL: URL,
+        exitCode: Int32,
+        outcome: RipFinishOutcome,
+        logWriteError: Error?
+    ) {
+        switch outcome {
+        case .completed(let revealOutput):
+            let statusMessage = AppStrings.done(outputPath: outputURL.path, logPath: activeLogPath)
+            updateState { $0.markCompleted(statusMessage: statusMessage) }
+            clearDVDInputAccess()
+            appendLogWriteErrorIfNeeded(logWriteError)
+            if environment.appSettings.shouldRevealCompletedFile {
+                revealOutput(outputURL)
+            }
+            if environment.appSettings.shouldAutoEjectAfterSuccessfulRip {
+                ejectCompletedDVD()
+            }
+        case .failed:
+            notifyRipFailed(outputURL: outputURL, exitCode: exitCode)
+            let statusMessage = AppStrings.handBrakeFailed(exitCode: exitCode, logPath: activeLogPath)
+            updateState { $0.markFailed(statusMessage: statusMessage) }
+            appendLogWriteErrorIfNeeded(logWriteError)
+        case .outputValidationFailed(let message):
+            notifyRipFailed(outputURL: outputURL, message: message)
+            updateState { $0.markFailed(statusMessage: "\(message) \(AppStrings.logSaved(to: activeLogPath))") }
+            appendLogWriteErrorIfNeeded(logWriteError)
+        }
     }
 
     private func notifyRipCompleted(outputURL: URL) {

@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+RELEASE_COMMON_SCRIPT="$ROOT_DIR/Scripts/lib/release-common.zsh"
 RELEASE_DMG_SCRIPT="$ROOT_DIR/Scripts/release-dmg.zsh"
 PROJECT_PATH="$ROOT_DIR/SwiftRip.xcodeproj"
 SCHEME="SwiftRip"
@@ -19,6 +20,9 @@ GENERATE_APPCAST="${SWIFTRIP_GENERATE_APPCAST:-}"
 SKIP_NOTARIZATION=false
 PRERELEASE=false
 typeset -a DMG_PATHS
+
+# shellcheck source=/dev/null
+source "$RELEASE_COMMON_SCRIPT"
 
 usage() {
     cat <<'USAGE'
@@ -104,34 +108,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-require_command() {
-    local command_name="$1"
-    if ! command -v "$command_name" >/dev/null 2>&1; then
-        echo "ERROR: Missing required command: $command_name"
-        exit 1
-    fi
-}
-
-require_executable() {
-    local executable_path="$1"
-    if [[ ! -x "$executable_path" ]]; then
-        echo "ERROR: Missing executable: $executable_path"
-        exit 1
-    fi
-}
-
-refuse_unsafe_path() {
-    local path_to_check="${1:A}"
-    local label="$2"
-
-    case "$path_to_check" in
-        "/"|"$HOME"|"$ROOT_DIR"|"$ROOT_DIR"/*)
-            echo "ERROR: Refusing to use unsafe $label: $path_to_check"
-            exit 1
-            ;;
-    esac
-}
-
 build_setting() {
     local setting_name="$1"
     /usr/bin/xcodebuild -project "$PROJECT_PATH" -scheme "$SCHEME" -configuration Release -showBuildSettings 2>/dev/null \
@@ -169,7 +145,7 @@ release_notes_arg() {
 ensure_pages_worktree() {
     local origin_url
     origin_url="$(git -C "$ROOT_DIR" remote get-url origin)"
-    refuse_unsafe_path "$PAGES_WORKTREE" "GitHub Pages worktree"
+    refuse_unsafe_path "$PAGES_WORKTREE" "GitHub Pages worktree" "$ROOT_DIR"
 
     if [[ -d "$PAGES_WORKTREE/.git" ]]; then
         git -C "$PAGES_WORKTREE" checkout gh-pages
@@ -284,7 +260,7 @@ done
 
 create_or_update_release
 
-refuse_unsafe_path "$APPCAST_WORK_DIR" "appcast work directory"
+refuse_unsafe_path "$APPCAST_WORK_DIR" "appcast work directory" "$ROOT_DIR"
 /bin/rm -rf "$APPCAST_WORK_DIR"
 /bin/mkdir -p "$APPCAST_WORK_DIR"
 

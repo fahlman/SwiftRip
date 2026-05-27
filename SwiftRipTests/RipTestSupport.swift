@@ -319,4 +319,79 @@ enum RipTestSupport {
             return URL(fileURLWithPath: arguments[outputPathIndex])
         }
     }
+
+    @MainActor
+    final class RecordingHandBrakeRunner: HandBrakeRunning {
+        private(set) var runCount = 0
+
+        func run(
+            executablePath: String,
+            arguments: [String],
+            onOutput: @escaping @MainActor @Sendable (String) -> Void
+        ) async -> HandBrakeResult {
+            runCount += 1
+            return HandBrakeResult(exitCode: 0)
+        }
+    }
+
+    @MainActor
+    final class CountingWaitingHandBrakeRunner: HandBrakeRunning {
+        private(set) var runCount = 0
+
+        func run(
+            executablePath: String,
+            arguments: [String],
+            onOutput: @escaping @MainActor @Sendable (String) -> Void
+        ) async -> HandBrakeResult {
+            runCount += 1
+            onOutput("Encoding: task 1 of 1, 1.00 %\n")
+            if let outputURL = outputURL(from: arguments) {
+                try? "incomplete output".write(to: outputURL, atomically: true, encoding: .utf8)
+            }
+
+            for _ in 0..<100 {
+                if Task.isCancelled { break }
+                try? await Task.sleep(for: .milliseconds(10))
+            }
+
+            return HandBrakeResult(exitCode: -15)
+        }
+
+        private func outputURL(from arguments: [String]) -> URL? {
+            guard let outputFlagIndex = arguments.firstIndex(of: "-o") else { return nil }
+            let outputPathIndex = arguments.index(after: outputFlagIndex)
+            guard arguments.indices.contains(outputPathIndex) else { return nil }
+
+            return URL(fileURLWithPath: arguments[outputPathIndex])
+        }
+    }
+
+    @MainActor
+    final class ArgumentOutputCreatingHandBrakeRunner: HandBrakeRunning {
+        private(set) var outputURLs: [URL] = []
+
+        func run(
+            executablePath: String,
+            arguments: [String],
+            onOutput: @escaping @MainActor @Sendable (String) -> Void
+        ) async -> HandBrakeResult {
+            onOutput("Encoding: task 1 of 1, 100.00 %\n")
+
+            guard let outputURL = outputURL(from: arguments) else {
+                return HandBrakeResult(exitCode: 2)
+            }
+
+            outputURLs.append(outputURL)
+            try? "complete output".write(to: outputURL, atomically: true, encoding: .utf8)
+            return HandBrakeResult(exitCode: 0)
+        }
+
+        private func outputURL(from arguments: [String]) -> URL? {
+            guard let outputFlagIndex = arguments.firstIndex(of: "-o") else { return nil }
+            let outputPathIndex = arguments.index(after: outputFlagIndex)
+            guard arguments.indices.contains(outputPathIndex) else { return nil }
+
+            return URL(fileURLWithPath: arguments[outputPathIndex])
+        }
+    }
 }
