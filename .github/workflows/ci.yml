@@ -31,7 +31,7 @@ jobs:
       - name: Fetch bundled tools
         id: bundled-tools
         continue-on-error: true
-        run: SwiftRipTools/Scripts/fetch-swiftrip-tools.zsh
+        run: SwiftRip-Tools/Scripts/fetch-swiftrip-tools.zsh
 
       - name: Analyze
         run: |

@@ -3,11 +3,11 @@
 SwiftRip/Binaries/
 Binaries/
 
-# SwiftRipTools generated files
-SwiftRipTools/Build/
-SwiftRipTools/Source/
-SwiftRipTools/Artifacts/
-SwiftRipTools/Packages/
+# SwiftRip-Tools generated files
+SwiftRip-Tools/Build/
+SwiftRip-Tools/Source/
+SwiftRip-Tools/Artifacts/
+SwiftRip-Tools/Packages/
 
 # App release packaging output
 .release/

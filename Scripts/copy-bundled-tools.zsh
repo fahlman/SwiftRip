@@ -19,16 +19,16 @@ case "${ARTIFACTS_ARCH}" in
     arm64|x86_64|universal)
         ;;
     *)
-        echo "ERROR: Unsupported SwiftRipTools architecture: ${ARTIFACTS_ARCH}"
+        echo "ERROR: Unsupported SwiftRip-Tools architecture: ${ARTIFACTS_ARCH}"
         echo "Supported architectures: arm64, x86_64, universal"
         exit 64
         ;;
 esac
 
-ARTIFACTS_DIR="${SRCROOT}/SwiftRipTools/Artifacts/macos-${ARTIFACTS_ARCH}"
-ARM64_ARTIFACTS_DIR="${SRCROOT}/SwiftRipTools/Artifacts/macos-arm64"
-X86_64_ARTIFACTS_DIR="${SRCROOT}/SwiftRipTools/Artifacts/macos-x86_64"
-FETCH_TOOLS_SCRIPT="${SRCROOT}/SwiftRipTools/Scripts/fetch-swiftrip-tools.zsh"
+ARTIFACTS_DIR="${SRCROOT}/SwiftRip-Tools/Artifacts/macos-${ARTIFACTS_ARCH}"
+ARM64_ARTIFACTS_DIR="${SRCROOT}/SwiftRip-Tools/Artifacts/macos-arm64"
+X86_64_ARTIFACTS_DIR="${SRCROOT}/SwiftRip-Tools/Artifacts/macos-x86_64"
+FETCH_TOOLS_SCRIPT="${SRCROOT}/SwiftRip-Tools/Scripts/fetch-swiftrip-tools.zsh"
 APP_MACOS_DIR="${TARGET_BUILD_DIR}/${EXECUTABLE_FOLDER_PATH}"
 APP_FRAMEWORKS_DIR="${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}"
 
@@ -77,10 +77,10 @@ done
 
 if [[ "${#missing_artifacts[@]}" -gt 0 ]]; then
     echo ""
-    echo "Restoring missing SwiftRipTools artifacts..."
+    echo "Restoring missing SwiftRip-Tools artifacts..."
 
     if [[ ! -x "${FETCH_TOOLS_SCRIPT}" ]]; then
-        echo "ERROR: SwiftRipTools fetch script is not executable:"
+        echo "ERROR: SwiftRip-Tools fetch script is not executable:"
         echo "${FETCH_TOOLS_SCRIPT}"
         exit 1
     fi
@@ -95,7 +95,7 @@ for artifact in "${required_artifacts[@]}"; do
         continue
     fi
 
-    echo "ERROR: Missing SwiftRipTools artifact after restore:"
+    echo "ERROR: Missing SwiftRip-Tools artifact after restore:"
     echo "${artifact}"
     exit 1
 done

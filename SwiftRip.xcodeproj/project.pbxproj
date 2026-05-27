@@ -115,7 +115,7 @@
 				94FC322A2FBA3F1600B23D1F /* SOURCE_OFFER.md */,
 				94FC322B2FBA3F1600B23D1F /* THIRD_PARTY_NOTICES.md */,
 				94FC32272FBA3D3700B23D1F /* LICENSE */,
-				94FC32212FBA2CA200B23D1F /* SwiftRipTools */,
+				94FC32212FBA2CA200B23D1F /* SwiftRip-Tools */,
 				9412AF052FB9503F004E17B6 /* Products */,
 				9412AF062FB9503F004E17B6 /* SwiftRip */,
 				9412AF142FB95040004E17B6 /* SwiftRipTests */,
@@ -166,7 +166,7 @@
 			path = Source;
 			sourceTree = "<group>";
 		};
-		94FC32212FBA2CA200B23D1F /* SwiftRipTools */ = {
+		94FC32212FBA2CA200B23D1F /* SwiftRip-Tools */ = {
 			isa = PBXGroup;
 			children = (
 				94FC321A2FBA2CA200B23D1F /* Artifacts */,
@@ -175,7 +175,7 @@
 				94FC321F2FBA2CA200B23D1F /* Source */,
 				94FC32202FBA2CA200B23D1F /* README.md */,
 			);
-			path = SwiftRipTools;
+			path = "SwiftRip-Tools";
 			sourceTree = "<group>";
 		};
 		94FC322E2FBA574000B23D1F /* macos-arm64 */ = {
@@ -324,10 +324,10 @@
 			isa = PBXShellScriptBuildPhase;
 			inputPaths = (
 				"$(SRCROOT)/Scripts/copy-bundled-tools.zsh",
-				"$(SRCROOT)/SwiftRipTools/Artifacts/macos-arm64/HandBrakeCLI",
-				"$(SRCROOT)/SwiftRipTools/Artifacts/macos-arm64/libdvdcss.2.dylib",
-				"$(SRCROOT)/SwiftRipTools/Artifacts/macos-x86_64/HandBrakeCLI",
-				"$(SRCROOT)/SwiftRipTools/Artifacts/macos-x86_64/libdvdcss.2.dylib",
+				"$(SRCROOT)/SwiftRip-Tools/Artifacts/macos-arm64/HandBrakeCLI",
+				"$(SRCROOT)/SwiftRip-Tools/Artifacts/macos-arm64/libdvdcss.2.dylib",
+				"$(SRCROOT)/SwiftRip-Tools/Artifacts/macos-x86_64/HandBrakeCLI",
+				"$(SRCROOT)/SwiftRip-Tools/Artifacts/macos-x86_64/libdvdcss.2.dylib",
 			);
 			outputPaths = (
 				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_FOLDER_PATH)/HandBrakeCLI",

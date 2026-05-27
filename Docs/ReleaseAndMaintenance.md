@@ -32,8 +32,8 @@ Prerequisites:
 
 - An Apple Developer Program membership.
 - A valid `Developer ID Application` certificate installed in the login keychain.
-- Bundled SwiftRip-Tools artifacts available under `SwiftRipTools/Artifacts/macos-arm64`.
-- For Intel releases, bundled SwiftRip-Tools artifacts available under `SwiftRipTools/Artifacts/macos-x86_64`.
+- Bundled SwiftRip-Tools artifacts available under `SwiftRip-Tools/Artifacts/macos-arm64`.
+- For Intel releases, bundled SwiftRip-Tools artifacts available under `SwiftRip-Tools/Artifacts/macos-x86_64`.
 - A notarytool credential stored in the keychain, preferably:
 
 ```sh
@@ -52,7 +52,7 @@ Scripts/release-dmg.zsh --arch arm64 --notary-profile "SwiftRip Notary"
 Build, sign, package, notarize, staple, and verify an Intel DMG:
 
 ```sh
-SwiftRipTools/Scripts/fetch-swiftrip-tools.zsh --arch x86_64
+SwiftRip-Tools/Scripts/fetch-swiftrip-tools.zsh --arch x86_64
 Scripts/release-dmg.zsh --arch x86_64 --notary-profile "SwiftRip Notary"
 ```
 
@@ -110,16 +110,16 @@ To update HandBrakeCLI or libdvdcss:
 4. Confirm the HandBrake patch still applies cleanly.
 5. Publish the packages to the SwiftRip-Tools GitHub release.
 6. Update the manifest copies in this repository if package names, URLs, versions, or checksums changed.
-7. Run `SwiftRipTools/Scripts/fetch-swiftrip-tools.zsh` for Apple Silicon.
-8. Run `SwiftRipTools/Scripts/fetch-swiftrip-tools.zsh --arch x86_64` for Intel.
+7. Run `SwiftRip-Tools/Scripts/fetch-swiftrip-tools.zsh` for Apple Silicon.
+8. Run `SwiftRip-Tools/Scripts/fetch-swiftrip-tools.zsh --arch x86_64` for Intel.
 9. Run the app test suite.
 10. Run the smoke test above with a real DVD.
 11. Update bundled license notices if upstream license text or included components changed.
 
 SwiftRip-Tools packages are pinned by architecture:
 
-- `SwiftRipTools/Manifest/swiftrip-tools.json` for Apple Silicon.
-- `SwiftRipTools/Manifest/swiftrip-tools-x86_64.json` for Intel.
+- `SwiftRip-Tools/Manifest/swiftrip-tools.json` for Apple Silicon.
+- `SwiftRip-Tools/Manifest/swiftrip-tools-x86_64.json` for Intel.
 
 The expected HandBrake behavior is that bundled `HandBrakeCLI` loads `libdvdcss.2.dylib` from:
 

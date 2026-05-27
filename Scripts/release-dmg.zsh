@@ -151,7 +151,7 @@ echo "Sparkle feed:     $SPARKLE_FEED_URL"
 echo "Work dir:         $WORK_DIR"
 echo "Output:           $OUTPUT_DIR"
 
-SWIFTRIP_TOOLS_ARCH="$RELEASE_ARCH" "$ROOT_DIR/SwiftRipTools/Scripts/verify-swiftrip-tools.zsh"
+SWIFTRIP_TOOLS_ARCH="$RELEASE_ARCH" "$ROOT_DIR/SwiftRip-Tools/Scripts/verify-swiftrip-tools.zsh"
 
 refuse_unsafe_path "$WORK_DIR" "release work directory" "$ROOT_DIR"
 
@@ -254,7 +254,7 @@ if ! /usr/bin/file "$APP_EXECUTABLE" | /usr/bin/grep -q "$RELEASE_ARCH"; then
     exit 1
 fi
 if /usr/bin/file "$APP_EXECUTABLE" | /usr/bin/grep -q "$OTHER_ARCH"; then
-    echo "ERROR: App executable contains $OTHER_ARCH, but bundled SwiftRipTools are $RELEASE_ARCH-only."
+    echo "ERROR: App executable contains $OTHER_ARCH, but bundled SwiftRip-Tools are $RELEASE_ARCH-only."
     exit 1
 fi
 

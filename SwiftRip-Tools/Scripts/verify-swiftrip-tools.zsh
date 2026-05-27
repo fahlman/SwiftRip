@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 COMMON_SCRIPT="$SCRIPT_DIR/lib/common.zsh"
 TOOLS_ARCH="${SWIFTRIP_TOOLS_ARCH:-arm64}"
-ARTIFACTS_DIR="$ROOT_DIR/SwiftRipTools/Artifacts/macos-$TOOLS_ARCH"
+ARTIFACTS_DIR="$ROOT_DIR/SwiftRip-Tools/Artifacts/macos-$TOOLS_ARCH"
 HANDBRAKE_ARTIFACT="$ARTIFACTS_DIR/HandBrakeCLI"
 LIBDVDCSS_ARTIFACT="$ARTIFACTS_DIR/libdvdcss.2.dylib"
 LIBDVDCSS_FRAMEWORKS_PATH="@executable_path/../Frameworks/libdvdcss.2.dylib"
@@ -16,7 +16,7 @@ source "$COMMON_SCRIPT"
 
 assert_supported_tools_arch "$TOOLS_ARCH"
 
-echo "SwiftRipTools: verify artifacts"
+echo "SwiftRip-Tools: verify artifacts"
 echo "Artifacts: $ARTIFACTS_DIR"
 echo "Arch:      $TOOLS_ARCH"
 
@@ -64,4 +64,4 @@ fi
 otool -D "$LIBDVDCSS_ARTIFACT"
 
 echo ""
-echo "SwiftRipTools artifacts verified."
+echo "SwiftRip-Tools artifacts verified."

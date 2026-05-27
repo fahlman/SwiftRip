@@ -10,11 +10,11 @@ echo "Checking generated artifacts are not tracked..."
 TRACKED_GENERATED="$(
     git -C "$ROOT_DIR" ls-files \
         .release \
-        SwiftRipTools/Build \
-        SwiftRipTools/Source \
-        SwiftRipTools/Artifacts \
-        SwiftRipTools/Packages \
-        SwiftRipTools/.DS_Store
+        SwiftRip-Tools/Build \
+        SwiftRip-Tools/Source \
+        SwiftRip-Tools/Artifacts \
+        SwiftRip-Tools/Packages \
+        SwiftRip-Tools/.DS_Store
 )"
 if [[ -n "$TRACKED_GENERATED" ]]; then
     echo "ERROR: Generated/vendor/build artifacts are tracked:"
@@ -29,8 +29,8 @@ done < <(
     git -C "$ROOT_DIR" ls-files \
         'Scripts/*.zsh' \
         'Scripts/**/*.zsh' \
-        'SwiftRipTools/Scripts/*.zsh' \
-        'SwiftRipTools/Scripts/**/*.zsh'
+        'SwiftRip-Tools/Scripts/*.zsh' \
+        'SwiftRip-Tools/Scripts/**/*.zsh'
 )
 
 echo "Checking JSON manifests..."
@@ -38,7 +38,7 @@ while IFS= read -r json_path; do
     /usr/bin/plutil -convert json -o /dev/null "$ROOT_DIR/$json_path"
 done < <(
     git -C "$ROOT_DIR" ls-files \
-        'SwiftRipTools/Manifest/*.json' \
+        'SwiftRip-Tools/Manifest/*.json' \
         'SwiftRip/Resources/Presets/*.json'
 )
 
