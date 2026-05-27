@@ -17,7 +17,7 @@ The repository is intended to include the Swift application source, Xcode projec
 The bundled tool source/build workspace is maintained separately:
 
 ```text
-https://github.com/fahlman/SwiftRipTools
+https://github.com/fahlman/SwiftRip-Tools
 ```
 
 ## Third-party source code
@@ -28,18 +28,18 @@ Major third-party components are listed in `THIRD_PARTY_NOTICES.md`.
 
 ## libdvdcss source and build process
 
-SwiftRipTools builds libdvdcss from VideoLAN source.
+SwiftRip-Tools builds libdvdcss from VideoLAN source.
 
 The build script is:
 
 ```text
-Scripts/build-libdvdcss.zsh in https://github.com/fahlman/SwiftRipTools
+Scripts/build-libdvdcss.zsh in https://github.com/fahlman/SwiftRip-Tools
 ```
 
 The top-level tools build script is:
 
 ```text
-Scripts/build-swiftrip-tools.zsh in https://github.com/fahlman/SwiftRipTools
+Scripts/build-swiftrip-tools.zsh in https://github.com/fahlman/SwiftRip-Tools
 ```
 
 The intended generated artifact is:
@@ -53,13 +53,13 @@ Generated source archives, extracted source trees, build folders, and binary art
 
 ## HandBrakeCLI source and build process
 
-SwiftRip uses HandBrakeCLI as the encoding backend. The exact HandBrake source version, project patch set, build script, configuration, and packaged artifacts are maintained in the public SwiftRipTools repository.
+SwiftRip uses HandBrakeCLI as the encoding backend. The exact HandBrake source version, project patch set, build script, configuration, and packaged artifacts are maintained in the public SwiftRip-Tools repository.
 
 ## Binary distribution requirement
 
 If SwiftRip is distributed in binary form with bundled GPL-covered tools or libraries, recipients must be able to obtain the corresponding source code for the exact shipped binaries.
 
-The preferred approach for this project is to make the corresponding app source available through the public SwiftRip repository and the corresponding bundled-tool source/build scripts available through the public SwiftRipTools repository. If binary releases are published separately, each release should identify the exact source revision and third-party component versions used to build it.
+The preferred approach for this project is to make the corresponding app source available through the public SwiftRip repository and the corresponding bundled-tool source/build scripts available through the public SwiftRip-Tools repository. If binary releases are published separately, each release should identify the exact source revision and third-party component versions used to build it.
 
 ## Written offer fallback
 

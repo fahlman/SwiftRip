@@ -1,9 +1,9 @@
-# SwiftRipTools Consumer Files
+# SwiftRip-Tools Consumer Files
 
 SwiftRip's tool build, package, publish scripts, patches, and release assets live in:
 
 ```text
-https://github.com/fahlman/SwiftRipTools
+https://github.com/fahlman/SwiftRip-Tools
 ```
 
 This directory intentionally keeps only the small consumer-side contract needed by SwiftRip.app:

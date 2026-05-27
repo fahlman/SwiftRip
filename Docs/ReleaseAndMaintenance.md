@@ -26,14 +26,14 @@ SwiftRip is not intended to stay local-only. Release builds should use:
 ## DMG Release Packaging
 
 SwiftRip ships as Developer ID signed and notarized DMGs for distribution outside the Mac App Store.
-Release artifacts are architecture-specific because the bundled SwiftRipTools artifacts are architecture-specific.
+Release artifacts are architecture-specific because the bundled SwiftRip-Tools artifacts are architecture-specific.
 
 Prerequisites:
 
 - An Apple Developer Program membership.
 - A valid `Developer ID Application` certificate installed in the login keychain.
-- Bundled SwiftRipTools artifacts available under `SwiftRipTools/Artifacts/macos-arm64`.
-- For Intel releases, bundled SwiftRipTools artifacts available under `SwiftRipTools/Artifacts/macos-x86_64`.
+- Bundled SwiftRip-Tools artifacts available under `SwiftRipTools/Artifacts/macos-arm64`.
+- For Intel releases, bundled SwiftRip-Tools artifacts available under `SwiftRipTools/Artifacts/macos-x86_64`.
 - A notarytool credential stored in the keychain, preferably:
 
 ```sh
@@ -83,7 +83,7 @@ The release script performs these checks:
 - Builds a single-architecture `Release` app in a temporary work directory.
 - Signs bundled executable code and the app bundle with Developer ID, hardened runtime, and secure timestamps.
 - Verifies the app signature with `codesign --verify --deep --strict`.
-- Confirms the app executable architecture matches the bundled SwiftRipTools artifacts.
+- Confirms the app executable architecture matches the bundled SwiftRip-Tools artifacts.
 - Verifies `HandBrakeCLI` and `libdvdcss.2.dylib` nested signatures.
 - Confirms the release app does not contain `com.apple.security.get-task-allow`.
 - Confirms the release app keeps sandbox, user-selected file access, and app-scope bookmark entitlements.
@@ -100,15 +100,15 @@ The Sparkle release script adds these checks and publishing steps:
 
 ## Bundled Tool Update Policy
 
-SwiftRip should consume reproducible artifacts from the separate `fahlman/SwiftRipTools` repository, not tools installed through Homebrew, MacPorts, `/usr/local`, or another developer's machine state.
+SwiftRip should consume reproducible artifacts from the separate `fahlman/SwiftRip-Tools` repository, not tools installed through Homebrew, MacPorts, `/usr/local`, or another developer's machine state.
 
 To update HandBrakeCLI or libdvdcss:
 
-1. Update the version inputs in the SwiftRipTools repository build scripts.
-2. Rebuild and package the Apple Silicon artifacts in the SwiftRipTools repository.
-3. Rebuild and package the Intel artifacts in the SwiftRipTools repository if updating Intel support.
+1. Update the version inputs in the SwiftRip-Tools repository build scripts.
+2. Rebuild and package the Apple Silicon artifacts in the SwiftRip-Tools repository.
+3. Rebuild and package the Intel artifacts in the SwiftRip-Tools repository if updating Intel support.
 4. Confirm the HandBrake patch still applies cleanly.
-5. Publish the packages to the SwiftRipTools GitHub release.
+5. Publish the packages to the SwiftRip-Tools GitHub release.
 6. Update the manifest copies in this repository if package names, URLs, versions, or checksums changed.
 7. Run `SwiftRipTools/Scripts/fetch-swiftrip-tools.zsh` for Apple Silicon.
 8. Run `SwiftRipTools/Scripts/fetch-swiftrip-tools.zsh --arch x86_64` for Intel.
@@ -116,7 +116,7 @@ To update HandBrakeCLI or libdvdcss:
 10. Run the smoke test above with a real DVD.
 11. Update bundled license notices if upstream license text or included components changed.
 
-SwiftRipTools packages are pinned by architecture:
+SwiftRip-Tools packages are pinned by architecture:
 
 - `SwiftRipTools/Manifest/swiftrip-tools.json` for Apple Silicon.
 - `SwiftRipTools/Manifest/swiftrip-tools-x86_64.json` for Intel.
