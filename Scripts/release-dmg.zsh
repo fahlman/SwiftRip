@@ -45,6 +45,7 @@ Environment variables:
   SWIFTRIP_NOTARY_PASSWORD
   SWIFTRIP_NOTARY_TEAM_ID
   SWIFTRIP_RELEASE_ARCH
+  SWIFTRIP_SPARKLE_FEED_URL
   SWIFTRIP_RELEASE_WORK_DIR
 
 Notarization uses either --notary-profile, or --apple-id plus --password.
@@ -174,6 +175,7 @@ case "$RELEASE_ARCH" in
         OTHER_ARCH="arm64"
         ;;
 esac
+SPARKLE_FEED_URL="${SWIFTRIP_SPARKLE_FEED_URL:-https://fahlman.github.io/SwiftRip/appcast-${RELEASE_ARCH}.xml}"
 
 require_value "TEAM_ID" "$TEAM_ID"
 require_value "SIGNING_IDENTITY" "$SIGNING_IDENTITY"
@@ -212,6 +214,7 @@ echo "Configuration:    $CONFIGURATION"
 echo "Team ID:          $TEAM_ID"
 echo "Signing identity: $SIGNING_IDENTITY"
 echo "Architecture:     $RELEASE_ARCH"
+echo "Sparkle feed:     $SPARKLE_FEED_URL"
 echo "Work dir:         $WORK_DIR"
 echo "Output:           $OUTPUT_DIR"
 
@@ -230,6 +233,7 @@ esac
 DERIVED_DATA_PATH="$WORK_DIR/DerivedData"
 APP_PATH="$DERIVED_DATA_PATH/Build/Products/$CONFIGURATION/$APP_NAME.app"
 APP_ENTITLEMENTS_SOURCE="$ROOT_DIR/SwiftRip/SwiftRip.entitlements"
+APP_SIGNING_ENTITLEMENTS="$WORK_DIR/$APP_NAME-signing.entitlements"
 
 echo ""
 echo "Building release app..."
@@ -242,6 +246,7 @@ echo "Building release app..."
     -derivedDataPath "$DERIVED_DATA_PATH" \
     ARCHS="$RELEASE_ARCH" \
     SWIFTRIP_TOOLS_ARCH="$RELEASE_ARCH" \
+    SWIFTRIP_SPARKLE_FEED_URL="$SPARKLE_FEED_URL" \
     ENABLE_USER_SCRIPT_SANDBOXING=NO \
     CODE_SIGNING_ALLOWED=NO \
     CODE_SIGNING_REQUIRED=NO \
@@ -259,19 +264,54 @@ echo "Removing extended attributes from app bundle..."
 /usr/bin/xattr -cr "$APP_PATH"
 
 VERSION="$(/usr/bin/plutil -extract CFBundleShortVersionString raw -o - "$APP_PATH/Contents/Info.plist")"
+BUNDLE_IDENTIFIER="$(/usr/bin/plutil -extract CFBundleIdentifier raw -o - "$APP_PATH/Contents/Info.plist")"
+APP_SPARKLE_FEED_URL="$(/usr/bin/plutil -extract SUFeedURL raw -o - "$APP_PATH/Contents/Info.plist")"
 DMG_NAME="$APP_NAME-$VERSION-$RELEASE_ARCH.dmg"
 DMG_PATH="$OUTPUT_DIR/$DMG_NAME"
 APP_ENTITLEMENTS="$WORK_DIR/$APP_NAME.entitlements"
 APP_EXECUTABLE="$APP_PATH/Contents/MacOS/$APP_NAME"
+
+if [[ "$APP_SPARKLE_FEED_URL" != "$SPARKLE_FEED_URL" ]]; then
+    echo "ERROR: Built app has the wrong Sparkle feed URL."
+    echo "Expected: $SPARKLE_FEED_URL"
+    echo "Actual:   $APP_SPARKLE_FEED_URL"
+    exit 1
+fi
+
+/usr/bin/sed "s|[$](PRODUCT_BUNDLE_IDENTIFIER)|$BUNDLE_IDENTIFIER|g" "$APP_ENTITLEMENTS_SOURCE" > "$APP_SIGNING_ENTITLEMENTS"
 
 echo ""
 echo "Signing bundled executable code..."
 /usr/bin/codesign --force --sign "$SIGNING_IDENTITY" --options runtime --timestamp "$APP_PATH/Contents/Frameworks/libdvdcss.2.dylib"
 /usr/bin/codesign --force --sign "$SIGNING_IDENTITY" --options runtime --timestamp "$APP_PATH/Contents/MacOS/HandBrakeCLI"
 
+SPARKLE_FRAMEWORK="$APP_PATH/Contents/Frameworks/Sparkle.framework"
+if [[ -d "$SPARKLE_FRAMEWORK" ]]; then
+    echo ""
+    echo "Signing Sparkle framework..."
+    SPARKLE_CURRENT="$SPARKLE_FRAMEWORK/Versions/Current"
+    SPARKLE_DOWNLOADER_XPC="$SPARKLE_CURRENT/XPCServices/Downloader.xpc"
+
+    if [[ -e "$SPARKLE_DOWNLOADER_XPC" || -L "$SPARKLE_DOWNLOADER_XPC" ]]; then
+        /bin/rm -rf "$SPARKLE_DOWNLOADER_XPC"
+    fi
+
+    if [[ -d "$SPARKLE_CURRENT/XPCServices/Installer.xpc" ]]; then
+        /usr/bin/codesign --force --sign "$SIGNING_IDENTITY" --options runtime --timestamp "$SPARKLE_CURRENT/XPCServices/Installer.xpc"
+    fi
+    if [[ -e "$SPARKLE_CURRENT/Autoupdate" ]]; then
+        /usr/bin/codesign --force --sign "$SIGNING_IDENTITY" --options runtime --timestamp "$SPARKLE_CURRENT/Autoupdate"
+    fi
+    if [[ -d "$SPARKLE_CURRENT/Updater.app" ]]; then
+        /usr/bin/codesign --force --sign "$SIGNING_IDENTITY" --options runtime --timestamp "$SPARKLE_CURRENT/Updater.app"
+    fi
+
+    /usr/bin/codesign --force --sign "$SIGNING_IDENTITY" --options runtime --timestamp "$SPARKLE_FRAMEWORK"
+fi
+
 echo ""
 echo "Signing app bundle..."
-/usr/bin/codesign --force --sign "$SIGNING_IDENTITY" --options runtime --timestamp --entitlements "$APP_ENTITLEMENTS_SOURCE" "$APP_PATH"
+/usr/bin/codesign --force --sign "$SIGNING_IDENTITY" --options runtime --timestamp --entitlements "$APP_SIGNING_ENTITLEMENTS" "$APP_PATH"
 
 echo ""
 echo "Verifying app signature and entitlements..."
@@ -294,13 +334,21 @@ assert_no_debug_entitlement "$APP_ENTITLEMENTS"
 assert_entitlement_present "$APP_ENTITLEMENTS" "com.apple.security.app-sandbox"
 assert_entitlement_present "$APP_ENTITLEMENTS" "com.apple.security.files.user-selected.read-write"
 assert_entitlement_present "$APP_ENTITLEMENTS" "com.apple.security.files.bookmarks.app-scope"
+assert_entitlement_present "$APP_ENTITLEMENTS" "com.apple.security.network.client"
+assert_entitlement_present "$APP_ENTITLEMENTS" "com.apple.security.temporary-exception.mach-lookup.global-name"
+assert_entitlement_present "$APP_ENTITLEMENTS" "$BUNDLE_IDENTIFIER-spks"
+assert_entitlement_present "$APP_ENTITLEMENTS" "$BUNDLE_IDENTIFIER-spki"
 assert_entitlement_absent "$APP_ENTITLEMENTS" "com.apple.security.files.movies.read-write"
 assert_entitlement_absent "$APP_ENTITLEMENTS" "com.apple.security.temporary-exception.shared-preference.read-write"
+assert_entitlement_absent "$APP_ENTITLEMENTS" "PRODUCT_BUNDLE_IDENTIFIER"
 
 echo ""
 echo "Verifying bundled executable code..."
 /usr/bin/codesign --verify --strict --verbose=2 "$APP_PATH/Contents/MacOS/HandBrakeCLI"
 /usr/bin/codesign --verify --strict --verbose=2 "$APP_PATH/Contents/Frameworks/libdvdcss.2.dylib"
+if [[ -d "$SPARKLE_FRAMEWORK" ]]; then
+    /usr/bin/codesign --verify --deep --strict --verbose=2 "$SPARKLE_FRAMEWORK"
+fi
 
 DMG_ROOT="$WORK_DIR/dmg-root"
 /bin/mkdir -p "$DMG_ROOT"

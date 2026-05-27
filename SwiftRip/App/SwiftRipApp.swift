@@ -4,6 +4,7 @@
 //
 
 import AppKit
+import Sparkle
 import SwiftUI
 
 @main
@@ -11,9 +12,18 @@ struct SwiftRipApp: App {
 
     @NSApplicationDelegateAdaptor(SwiftRipAppDelegate.self) private var appDelegate
     @Environment(\.openWindow) private var openWindow
+    private let updaterController: SPUStandardUpdaterController
 
     private static let aboutWindowID = "about-swiftrip"
     private static let aboutTitle = AppStrings.aboutTitle(appName: RipConfiguration.appName)
+
+    init() {
+        updaterController = SPUStandardUpdaterController(
+            startingUpdater: true,
+            updaterDelegate: nil,
+            userDriverDelegate: nil
+        )
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -26,7 +36,7 @@ struct SwiftRipApp: App {
         .windowResizability(.contentSize)
         .defaultPosition(.center)
         .commands {
-            SwiftRipCommands {
+            SwiftRipCommands(updaterController: updaterController) {
                 openWindow(id: Self.aboutWindowID)
             }
         }

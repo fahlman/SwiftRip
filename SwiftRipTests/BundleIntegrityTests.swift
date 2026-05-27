@@ -18,6 +18,14 @@ struct BundleIntegrityTests {
         #expect(configuration.presetURL.lastPathComponent == "\(RipConfiguration.presetResourceName).\(RipConfiguration.presetFileExtension)")
     }
 
+    @Test func appBundleContainsSparkleConfiguration() throws {
+        let infoDictionary = try #require(Bundle.main.infoDictionary)
+
+        #expect(infoDictionary["SUEnableInstallerLauncherService"] as? Bool == true)
+        #expect(infoDictionary["SUPublicEDKey"] as? String == "sMmU/N+9HqwHhHkwmkXaB7tNNggc7oVVSDand45m760=")
+        #expect(infoDictionary["SUFeedURL"] as? String == "https://fahlman.github.io/SwiftRip/appcast-arm64.xml")
+    }
+
     @Test func bundledToolsAndPresetExist() {
         let configuration = RipConfiguration.production
         let fileManager = FileManager.default

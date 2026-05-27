@@ -3,9 +3,12 @@
 //  SwiftRip
 //
 
+import Sparkle
 import SwiftUI
 
+@MainActor
 struct SwiftRipCommands: Commands {
+    let updaterController: SPUStandardUpdaterController
     let showAbout: @MainActor () -> Void
 
     @FocusedValue(\.ripCommandActions) private var ripCommandActions
@@ -14,6 +17,12 @@ struct SwiftRipCommands: Commands {
         CommandGroup(replacing: .appInfo) {
             Button(AppStrings.aboutTitle(appName: RipConfiguration.appName)) {
                 showAbout()
+            }
+        }
+
+        CommandGroup(after: .appInfo) {
+            Button(AppStrings.checkForUpdatesTitle) {
+                updaterController.checkForUpdates(nil)
             }
         }
 

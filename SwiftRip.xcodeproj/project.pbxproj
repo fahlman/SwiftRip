@@ -652,6 +652,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
+				SWIFTRIP_SPARKLE_FEED_URL = "https://fahlman.github.io/SwiftRip/appcast-arm64.xml";
 			};
 			name = Debug;
 		};
@@ -703,6 +704,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
+				SWIFTRIP_SPARKLE_FEED_URL = "https://fahlman.github.io/SwiftRip/appcast-arm64.xml";
 			};
 			name = Release;
 		};

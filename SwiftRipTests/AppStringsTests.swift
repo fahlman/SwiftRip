@@ -14,6 +14,7 @@ struct AppStringsTests {
         #expect(AppStrings.ripping("Movie") == "Ripping Movie...")
         #expect(AppStrings.ripStopped == "Rip stopped.")
         #expect(AppStrings.ripMenuTitle == "Rip")
+        #expect(AppStrings.checkForUpdatesTitle == "Check for Updates…")
         #expect(AppStrings.revealOutputTitle == "Reveal Output in Finder")
         #expect(AppStrings.revealLogTitle == "Reveal Log in Finder")
         #expect(AppStrings.invalidDVDSelectionTitle == "Not a Video DVD")
