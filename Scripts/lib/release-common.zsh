@@ -24,6 +24,16 @@ require_executable() {
     fi
 }
 
+require_file() {
+    local file_path="$1"
+    local label="${2:-file}"
+
+    if [[ ! -f "$file_path" ]]; then
+        echo "ERROR: Missing $label: $file_path"
+        exit 1
+    fi
+}
+
 require_value() {
     local name="$1"
     local value="$2"
