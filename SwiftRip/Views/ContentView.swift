@@ -149,11 +149,14 @@ struct ContentView: View {
     }
 
     private func chooseDVD() {
+        guard viewModel.commandAvailability.canChooseDVD else { return }
+
         isDVDPickerPresented = true
     }
 
     private func handleDVDPickerResult(_ result: Result<[URL], Error>) {
         guard case .success(let urls) = result, let url = urls.first else { return }
+        guard viewModel.commandAvailability.canChooseDVD else { return }
 
         if !viewModel.chooseDVD(at: url) {
             showInvalidDVDSelectionError()

@@ -53,3 +53,33 @@ struct RipPreflightCheck {
         }
     }
 }
+
+struct RipPostflightCheck {
+    let fileManager: FileManager
+
+    func failureMessage(outputURL: URL) -> String? {
+        var isDirectory: ObjCBool = false
+
+        guard fileManager.fileExists(atPath: outputURL.path, isDirectory: &isDirectory) else {
+            return AppStrings.outputFileMissing(outputURL.path)
+        }
+
+        guard !isDirectory.boolValue else {
+            return AppStrings.outputFileIsFolder(outputURL.path)
+        }
+
+        do {
+            let attributes = try fileManager.attributesOfItem(atPath: outputURL.path)
+            let fileSize = attributes[.size] as? NSNumber
+            let byteCount = fileSize?.int64Value ?? 0
+
+            if byteCount <= 0 {
+                return AppStrings.outputFileEmpty(outputURL.path)
+            }
+        } catch {
+            return AppStrings.outputFileNotReadable(outputURL.path, errorDescription: error.localizedDescription)
+        }
+
+        return nil
+    }
+}

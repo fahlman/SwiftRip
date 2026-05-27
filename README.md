@@ -16,11 +16,12 @@ It bundles the required ripping tools, checks that they are present before start
 - Preserves completed and failed output files.
 - Writes rip logs.
 - Includes bundled tool license information in the About window.
+- Ships architecture-specific signed/notarized DMGs with Sparkle update feeds.
 - Supports localized user-facing strings.
 
 ## Tests
 
-The test suite covers DVD selection, HandBrake arguments, progress parsing, preflight checks, rip lifecycle behavior, cancellation cleanup, logging, and localization formatting.
+The unit test suite covers DVD selection, HandBrake arguments, progress parsing, preflight checks, rip lifecycle behavior, cancellation cleanup, logging, and localization formatting. CI runs those unit tests; macOS UI tests remain available for local interactive checks.
 
 ## Release and maintenance
 

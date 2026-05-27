@@ -62,13 +62,13 @@
     "%lld%%" : {
 
     },
-    "A small macOS DVD ripping tool built around bundled ARM64 ripping tools." : {
+    "A small macOS DVD ripping tool built around bundled ripping tools." : {
       "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A small macOS DVD ripping tool built around bundled ARM64 ripping tools."
+            "value" : "A small macOS DVD ripping tool built around bundled ripping tools."
           }
         }
       }

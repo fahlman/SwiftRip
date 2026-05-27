@@ -213,6 +213,13 @@ enum RipTestSupport {
             isNotificationEnabled: Bool,
             logError: @escaping @MainActor @Sendable (String) -> Void
         ) {}
+
+        func notifyRipFailed(
+            outputURL: URL,
+            message: String,
+            isNotificationEnabled: Bool,
+            logError: @escaping @MainActor @Sendable (String) -> Void
+        ) {}
     }
 
     @MainActor
@@ -222,6 +229,7 @@ enum RipTestSupport {
         private(set) var notificationEnabledValues: [Bool] = []
         private(set) var failedOutputURLs: [URL] = []
         private(set) var failureExitCodes: [Int32] = []
+        private(set) var failureMessages: [String] = []
         private(set) var failureNotificationEnabledValues: [Bool] = []
 
         func notifyRipCompleted(
@@ -243,6 +251,17 @@ enum RipTestSupport {
         ) {
             failedOutputURLs.append(outputURL)
             failureExitCodes.append(exitCode)
+            failureNotificationEnabledValues.append(isNotificationEnabled)
+        }
+
+        func notifyRipFailed(
+            outputURL: URL,
+            message: String,
+            isNotificationEnabled: Bool,
+            logError: @escaping @MainActor @Sendable (String) -> Void
+        ) {
+            failedOutputURLs.append(outputURL)
+            failureMessages.append(message)
             failureNotificationEnabledValues.append(isNotificationEnabled)
         }
     }
@@ -279,6 +298,9 @@ enum RipTestSupport {
             onOutput: @escaping @MainActor @Sendable (String) -> Void
         ) async -> HandBrakeResult {
             onOutput("Encoding: task 1 of 1, 1.00 %\n")
+            if let outputURL = Self.outputURL(from: arguments) {
+                try? "incomplete output".write(to: outputURL, atomically: true, encoding: .utf8)
+            }
 
             for _ in 0..<100 {
                 if Task.isCancelled { break }
@@ -287,6 +309,14 @@ enum RipTestSupport {
 
             onOutput("Canceled.\n")
             return HandBrakeResult(exitCode: -15)
+        }
+
+        private static func outputURL(from arguments: [String]) -> URL? {
+            guard let outputFlagIndex = arguments.firstIndex(of: "-o") else { return nil }
+            let outputPathIndex = arguments.index(after: outputFlagIndex)
+            guard arguments.indices.contains(outputPathIndex) else { return nil }
+
+            return URL(fileURLWithPath: arguments[outputPathIndex])
         }
     }
 }

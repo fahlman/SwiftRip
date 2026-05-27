@@ -16,17 +16,17 @@
 - Added an About window with bundled tool and license information.
 - Added localized user-facing strings.
 - Added tests for selection, preflight, progress parsing, rip lifecycle, cancellation cleanup, logging, and localization formatting.
+- Added architecture-specific Sparkle update feeds for Apple Silicon and Intel releases.
 
 ## In Progress
 
-- Add an Eject primary-button state after a successful rip.
+- Harden the 1.0 release path.
 
 ## Next
 
-- Improve output destination selection and completed-file surfacing.
-- Add a rip-complete notification.
+- Run the full 1.0 smoke test on signed/notarized Apple Silicon and Intel builds.
+- Publish final appcasts and verify update behavior from the previous public release.
 - Continue small UI polish around the main window and About window.
-- Review distribution and license requirements before sharing builds outside development.
 
 ## Later
 

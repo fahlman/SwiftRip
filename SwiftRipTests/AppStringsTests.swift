@@ -51,6 +51,8 @@ struct AppStringsTests {
         #expect(AppStrings.outputFolderPermissionFailedTitle == "Could Not Use Output Folder")
         #expect(AppStrings.outputDirectoryMissing == "The output folder does not exist.")
         #expect(AppStrings.outputDirectoryNotFolder == "The output location is not a folder.")
+        #expect(AppStrings.outputFileMissing("/tmp/Movie.m4v") == "HandBrakeCLI finished, but no output file was created at /tmp/Movie.m4v.")
+        #expect(AppStrings.outputFileEmpty("/tmp/Movie.m4v") == "HandBrakeCLI finished, but the output file at /tmp/Movie.m4v is empty.")
         #expect(AppStrings.settingsCompletionTitle == "Completion")
         #expect(AppStrings.settingsCompletionSoundTitle == "Sound:")
         #expect(AppStrings.settingsNotificationTitle == "Show notification when finished")

@@ -55,6 +55,22 @@ SwiftRipTools/Scripts/bootstrap-tools.zsh --arch x86_64
 Scripts/release-dmg.zsh --arch x86_64 --notary-profile "SwiftRip Notary"
 ```
 
+Build both architecture-specific DMGs, upload them to GitHub, generate Sparkle
+appcasts, and publish those appcasts to GitHub Pages:
+
+```sh
+Scripts/release-sparkle.zsh --notary-profile "SwiftRip Notary"
+```
+
+By default, the Sparkle release script reads `MARKETING_VERSION`, creates or
+updates tag `vVERSION`, uploads `SwiftRip-VERSION-arm64.dmg` and
+`SwiftRip-VERSION-x86_64.dmg`, and publishes:
+
+```text
+https://fahlman.github.io/SwiftRip/appcast-arm64.xml
+https://fahlman.github.io/SwiftRip/appcast-x86_64.xml
+```
+
 For a local packaging check that does not contact Apple's notarization service, but still requires Developer ID signing:
 
 ```sh
@@ -73,6 +89,13 @@ The release script performs these checks:
 - Confirms broad Movies access and the old `com.apple.digihub` temporary exception are absent.
 - Creates and signs a DMG containing `SwiftRip.app` and an `/Applications` shortcut.
 - Submits the DMG with `notarytool`, staples it, and assesses it with Gatekeeper.
+
+The Sparkle release script adds these checks and publishing steps:
+
+- Builds both `arm64` and `x86_64` release DMGs through `release-dmg.zsh`.
+- Uploads both DMGs to a GitHub release.
+- Runs Sparkle `generate_appcast` separately for each architecture.
+- Publishes `appcast-arm64.xml` and `appcast-x86_64.xml` to the `gh-pages` branch.
 
 ## Bundled Tool Update Policy
 

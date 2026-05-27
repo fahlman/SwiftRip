@@ -48,6 +48,25 @@ struct RipViewModelSelectionTests {
         #expect(viewModel.outputURL?.path == "/tmp/Movie.m4v")
     }
 
+    @Test func selectedOutputAvoidsExistingFiles() throws {
+        let testDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer {
+            try? FileManager.default.removeItem(at: testDirectory)
+        }
+        try FileManager.default.createDirectory(at: testDirectory, withIntermediateDirectories: true)
+        let existingOutputURL = testDirectory.appendingPathComponent("Movie.m4v")
+        try "existing movie".write(to: existingOutputURL, atomically: true, encoding: .utf8)
+
+        let viewModel = RipTestSupport.makeViewModel()
+        viewModel.selectDVD(
+            DVDVolume(id: "/Volumes/MOVIE", name: "MOVIE", path: "/Volumes/MOVIE"),
+            outputURL: existingOutputURL
+        )
+
+        #expect(viewModel.outputURL == testDirectory.appendingPathComponent("Movie 2.m4v"))
+    }
+
     @Test func chooseDVDSelectsValidDVDAndDefaultsOutputToMovies() throws {
         let dvdURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

@@ -26,7 +26,7 @@ enum AppStrings {
     nonisolated static let initialStatusMessage = localized("Choose a DVD and output file to begin.")
     nonisolated static let fallbackMovieName = localized("Movie")
     nonisolated static let readyStatusPrefix = localized("Ready to rip ")
-    nonisolated static let aboutDescription = localized("A small macOS DVD ripping tool built around bundled ARM64 ripping tools.")
+    nonisolated static let aboutDescription = localized("A small macOS DVD ripping tool built around bundled ripping tools.")
     nonisolated static let bundledToolsTitle = localized("Bundled Tools")
     nonisolated static let licensesTitle = localized("Licenses")
     nonisolated static let showLicensesTitle = localized("Show Licenses")
@@ -138,6 +138,22 @@ enum AppStrings {
 
     nonisolated static func outputDirectoryNotWritable(_ path: String, errorDescription: String) -> String {
         String(format: localized("SwiftRip cannot write to %@. %@"), path, errorDescription)
+    }
+
+    nonisolated static func outputFileMissing(_ path: String) -> String {
+        String(format: localized("HandBrakeCLI finished, but no output file was created at %@."), path)
+    }
+
+    nonisolated static func outputFileEmpty(_ path: String) -> String {
+        String(format: localized("HandBrakeCLI finished, but the output file at %@ is empty."), path)
+    }
+
+    nonisolated static func outputFileIsFolder(_ path: String) -> String {
+        String(format: localized("HandBrakeCLI finished, but %@ is a folder instead of a movie file."), path)
+    }
+
+    nonisolated static func outputFileNotReadable(_ path: String, errorDescription: String) -> String {
+        String(format: localized("SwiftRip could not verify the output file at %@. %@"), path, errorDescription)
     }
 
     private nonisolated static func localized(_ key: String) -> String {

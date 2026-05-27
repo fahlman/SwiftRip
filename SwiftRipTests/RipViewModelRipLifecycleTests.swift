@@ -112,8 +112,6 @@ struct RipViewModelRipLifecycleTests {
         let outputURL = testEnvironment.outputURL
         var revealedURL: URL?
 
-        try "complete output".write(to: outputURL, atomically: true, encoding: .utf8)
-
         await viewModel.startRip { url in
             revealedURL = url
         }
@@ -152,8 +150,6 @@ struct RipViewModelRipLifecycleTests {
 
         #expect(viewModel.chooseDVD(at: URL(fileURLWithPath: testEnvironment.dvd.path, isDirectory: true)))
         viewModel.setOutputURL(testEnvironment.outputURL)
-        try "complete output".write(to: testEnvironment.outputURL, atomically: true, encoding: .utf8)
-
         await viewModel.startRip { _ in }
 
         #expect(inputAccessProvider.accesses.first?.stopCount == 1)
@@ -185,6 +181,103 @@ struct RipViewModelRipLifecycleTests {
 
         viewModel.cancelRip()
         await ripTask.value
+    }
+
+    @Test func chooseDVDDuringActiveRipIsIgnored() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+        let otherDVDURL = testEnvironment.rootURL.appendingPathComponent("Other", isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: otherDVDURL.appendingPathComponent(DVDVolume.videoTSDirectoryName, isDirectory: true),
+            withIntermediateDirectories: true
+        )
+
+        let runner = RipTestSupport.WaitingHandBrakeRunner()
+        let viewModel = RipTestSupport.makeRunnableViewModel(environment: testEnvironment, runner: runner)
+        let originalDVD = viewModel.selectedDVD
+        let ripTask = Task {
+            await viewModel.startRip { _ in }
+        }
+
+        await RipTestSupport.waitUntil { viewModel.progress > 0 }
+        let didChooseDVD = viewModel.chooseDVD(at: otherDVDURL)
+
+        #expect(!didChooseDVD)
+        #expect(!viewModel.commandAvailability.canChooseDVD)
+        #expect(viewModel.selectedDVD == originalDVD)
+
+        viewModel.cancelRip()
+        await ripTask.value
+    }
+
+    @Test func doubleStartDoesNotLaunchSecondRip() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+
+        let runner = CountingWaitingHandBrakeRunner()
+        let viewModel = RipTestSupport.makeRunnableViewModel(environment: testEnvironment, runner: runner)
+        let firstRipTask = Task {
+            await viewModel.startRip { _ in }
+        }
+
+        await RipTestSupport.waitUntil { runner.runCount == 1 }
+        let secondRipTask = Task {
+            await viewModel.startRip { _ in }
+        }
+        try? await Task.sleep(for: .milliseconds(50))
+
+        #expect(runner.runCount == 1)
+
+        viewModel.cancelRip()
+        await firstRipTask.value
+        await secondRipTask.value
+    }
+
+    @Test func successfulExitWithoutOutputFileFailsRip() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+
+        let ripNotifier = RipTestSupport.RecordingRipNotifier()
+        let viewModel = RipTestSupport.makeRunnableViewModel(
+            environment: testEnvironment,
+            runner: RipTestSupport.StubHandBrakeRunner(exitCode: 0, outputURLToCreate: nil),
+            ripNotifier: ripNotifier
+        )
+
+        await viewModel.startRip { _ in }
+
+        let logURL = try #require(viewModel.logFileURL)
+        let logText = try String(contentsOf: logURL, encoding: .utf8)
+        let expectedMessage = AppStrings.outputFileMissing(testEnvironment.outputURL.path)
+
+        #expect(viewModel.primaryAction == .rip)
+        #expect(viewModel.statusMessage.contains(expectedMessage))
+        #expect(ripNotifier.failedOutputURLs == [testEnvironment.outputURL])
+        #expect(ripNotifier.failureMessages == [expectedMessage])
+        #expect(logText.contains("SwiftRip: Output validation failed"))
+        #expect(logText.contains(expectedMessage))
+        #expect(logText.contains("Outcome: Failed"))
+        #expect(logText.contains("Exit code: 0"))
+    }
+
+    @Test func outputCreatedAfterSelectionIsNotOverwritten() async throws {
+        let testEnvironment = try RipTestSupport.makeRunnableTestEnvironment()
+        defer { testEnvironment.cleanup() }
+
+        let runner = ArgumentOutputCreatingHandBrakeRunner()
+        let viewModel = RipTestSupport.makeRunnableViewModel(environment: testEnvironment, runner: runner)
+        try "existing output".write(to: testEnvironment.outputURL, atomically: true, encoding: .utf8)
+
+        await viewModel.startRip { _ in }
+
+        let expectedOutputURL = testEnvironment.rootURL.appendingPathComponent("Movie 2.m4v")
+        let originalOutputText = try String(contentsOf: testEnvironment.outputURL, encoding: .utf8)
+
+        #expect(viewModel.outputURL == expectedOutputURL)
+        #expect(runner.outputURLs == [expectedOutputURL])
+        #expect(originalOutputText == "existing output")
+        #expect(FileManager.default.fileExists(atPath: expectedOutputURL.path))
+        #expect(viewModel.primaryAction == .eject)
     }
 
     @Test func outputDirectoryPreflightFailsBeforeHandBrakeRuns() async throws {
@@ -230,8 +323,6 @@ struct RipViewModelRipLifecycleTests {
         )
         var revealedURL: URL?
 
-        try "complete output".write(to: testEnvironment.outputURL, atomically: true, encoding: .utf8)
-
         await viewModel.startRip { url in
             revealedURL = url
         }
@@ -261,8 +352,6 @@ struct RipViewModelRipLifecycleTests {
             dvdDeviceEjector: dvdDeviceEjector
         )
 
-        try "complete output".write(to: testEnvironment.outputURL, atomically: true, encoding: .utf8)
-
         await viewModel.startRip { _ in }
 
         #expect(FileManager.default.fileExists(atPath: testEnvironment.outputURL.path))
@@ -287,8 +376,6 @@ struct RipViewModelRipLifecycleTests {
             dvdDeviceEjector: RipTestSupport.ThrowingDVDDeviceEjector(errorDescription: "Could not eject disc")
         )
 
-        try "complete output".write(to: testEnvironment.outputURL, atomically: true, encoding: .utf8)
-
         await viewModel.startRip { _ in }
 
         #expect(FileManager.default.fileExists(atPath: testEnvironment.outputURL.path))
@@ -310,8 +397,6 @@ struct RipViewModelRipLifecycleTests {
             runner: runner,
             ripNotifier: ripNotifier
         )
-        try "failed output".write(to: testEnvironment.outputURL, atomically: true, encoding: .utf8)
-
         await viewModel.startRip { _ in }
         await RipTestSupport.waitUntil { viewModel.statusMessage.contains("HandBrakeCLI failed with exit code 4") }
 
@@ -338,8 +423,6 @@ struct RipViewModelRipLifecycleTests {
             outputURLToCreate: testEnvironment.outputURL
         )
         let viewModel = RipTestSupport.makeRunnableViewModel(environment: testEnvironment, runner: runner)
-        try "failed output".write(to: testEnvironment.outputURL, atomically: true, encoding: .utf8)
-
         await viewModel.startRip { _ in }
 
         #expect(FileManager.default.fileExists(atPath: testEnvironment.outputURL.path))
@@ -427,8 +510,6 @@ struct RipViewModelRipLifecycleTests {
         let runner = RipTestSupport.WaitingHandBrakeRunner()
         let viewModel = RipTestSupport.makeRunnableViewModel(environment: testEnvironment, runner: runner)
         let outputURL = testEnvironment.outputURL
-        try "incomplete output".write(to: outputURL, atomically: true, encoding: .utf8)
-
         let ripTask = Task {
             await viewModel.startRip { _ in }
         }
@@ -453,8 +534,6 @@ struct RipViewModelRipLifecycleTests {
 
         let runner = RipTestSupport.WaitingHandBrakeRunner()
         let viewModel = RipTestSupport.makeRunnableViewModel(environment: testEnvironment, runner: runner)
-        try "incomplete output".write(to: testEnvironment.outputURL, atomically: true, encoding: .utf8)
-
         let ripTask = Task {
             await viewModel.startRip { _ in }
         }
@@ -477,8 +556,6 @@ struct RipViewModelRipLifecycleTests {
             outputURLToCreate: testEnvironment.outputURL
         )
         let viewModel = RipTestSupport.makeRunnableViewModel(environment: testEnvironment, runner: runner)
-        try "complete output".write(to: testEnvironment.outputURL, atomically: true, encoding: .utf8)
-
         await viewModel.startRip { _ in }
         viewModel.cancelRip()
 
@@ -492,8 +569,6 @@ struct RipViewModelRipLifecycleTests {
 
         let runner = RipTestSupport.WaitingHandBrakeRunner()
         let viewModel = RipTestSupport.makeRunnableViewModel(environment: testEnvironment, runner: runner)
-        try "incomplete output".write(to: testEnvironment.outputURL, atomically: true, encoding: .utf8)
-
         let ripTask = Task {
             await viewModel.startRip { _ in }
         }
@@ -521,6 +596,67 @@ struct RipViewModelRipLifecycleTests {
         ) async -> HandBrakeResult {
             runCount += 1
             return HandBrakeResult(exitCode: 0)
+        }
+    }
+
+    @MainActor
+    private final class CountingWaitingHandBrakeRunner: HandBrakeRunning {
+        private(set) var runCount = 0
+
+        func run(
+            executablePath: String,
+            arguments: [String],
+            onOutput: @escaping @MainActor @Sendable (String) -> Void
+        ) async -> HandBrakeResult {
+            runCount += 1
+            onOutput("Encoding: task 1 of 1, 1.00 %\n")
+            if let outputURL = outputURL(from: arguments) {
+                try? "incomplete output".write(to: outputURL, atomically: true, encoding: .utf8)
+            }
+
+            for _ in 0..<100 {
+                if Task.isCancelled { break }
+                try? await Task.sleep(for: .milliseconds(10))
+            }
+
+            return HandBrakeResult(exitCode: -15)
+        }
+
+        private func outputURL(from arguments: [String]) -> URL? {
+            guard let outputFlagIndex = arguments.firstIndex(of: "-o") else { return nil }
+            let outputPathIndex = arguments.index(after: outputFlagIndex)
+            guard arguments.indices.contains(outputPathIndex) else { return nil }
+
+            return URL(fileURLWithPath: arguments[outputPathIndex])
+        }
+    }
+
+    @MainActor
+    private final class ArgumentOutputCreatingHandBrakeRunner: HandBrakeRunning {
+        private(set) var outputURLs: [URL] = []
+
+        func run(
+            executablePath: String,
+            arguments: [String],
+            onOutput: @escaping @MainActor @Sendable (String) -> Void
+        ) async -> HandBrakeResult {
+            onOutput("Encoding: task 1 of 1, 100.00 %\n")
+
+            guard let outputURL = outputURL(from: arguments) else {
+                return HandBrakeResult(exitCode: 2)
+            }
+
+            outputURLs.append(outputURL)
+            try? "complete output".write(to: outputURL, atomically: true, encoding: .utf8)
+            return HandBrakeResult(exitCode: 0)
+        }
+
+        private func outputURL(from arguments: [String]) -> URL? {
+            guard let outputFlagIndex = arguments.firstIndex(of: "-o") else { return nil }
+            let outputPathIndex = arguments.index(after: outputFlagIndex)
+            guard arguments.indices.contains(outputPathIndex) else { return nil }
+
+            return URL(fileURLWithPath: arguments[outputPathIndex])
         }
     }
 }

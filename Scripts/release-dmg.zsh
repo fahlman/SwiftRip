@@ -156,6 +156,23 @@ signing_identity_available() {
     /usr/bin/security find-identity -v -p codesigning | /usr/bin/grep -Fq "$SIGNING_IDENTITY"
 }
 
+verify_dmg() {
+    local dmg_path="$1"
+
+    for attempt in {1..5}; do
+        if /usr/bin/hdiutil verify "$dmg_path"; then
+            return 0
+        fi
+
+        if [[ "$attempt" -lt 5 ]]; then
+            echo "DMG verification failed; retrying in 2 seconds..."
+            /bin/sleep 2
+        fi
+    done
+
+    return 1
+}
+
 case "$RELEASE_ARCH" in
     arm64|x86_64)
         ;;
@@ -370,7 +387,7 @@ echo ""
 echo "Signing DMG..."
 /usr/bin/codesign --force --sign "$SIGNING_IDENTITY" --timestamp "$DMG_PATH"
 /usr/bin/codesign --verify --verbose=2 "$DMG_PATH"
-/usr/bin/hdiutil verify "$DMG_PATH"
+verify_dmg "$DMG_PATH"
 
 if [[ "$SKIP_NOTARIZATION" == true ]]; then
     echo ""

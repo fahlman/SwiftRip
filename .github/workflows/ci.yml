@@ -41,7 +41,7 @@ jobs:
       - name: Run tests
         run: |
           if [[ "${{ steps.bundled-tools.outcome }}" == "success" ]]; then
-            xcodebuild test -project SwiftRip.xcodeproj -scheme SwiftRip -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO
+            xcodebuild test -project SwiftRip.xcodeproj -scheme SwiftRip -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO -only-testing:SwiftRipTests
           else
-            SWIFTRIP_SKIP_BUNDLED_TOOLS=1 xcodebuild test -project SwiftRip.xcodeproj -scheme SwiftRip -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO -skip-testing:SwiftRipTests/BundleIntegrityTests
+            SWIFTRIP_SKIP_BUNDLED_TOOLS=1 xcodebuild test -project SwiftRip.xcodeproj -scheme SwiftRip -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO -only-testing:SwiftRipTests -skip-testing:SwiftRipTests/BundleIntegrityTests
           fi

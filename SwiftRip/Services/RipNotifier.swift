@@ -23,6 +23,14 @@ protocol RipNotifying: Sendable {
         isNotificationEnabled: Bool,
         logError: @escaping @MainActor @Sendable (String) -> Void
     )
+
+    @MainActor
+    func notifyRipFailed(
+        outputURL: URL,
+        message: String,
+        isNotificationEnabled: Bool,
+        logError: @escaping @MainActor @Sendable (String) -> Void
+    )
 }
 
 struct SystemRipNotifier: RipNotifying {
@@ -59,6 +67,23 @@ struct SystemRipNotifier: RipNotifying {
         showNotification(
             title: AppStrings.ripFailedNotificationTitle,
             body: AppStrings.ripFailedNotificationBody(fileName: outputURL.lastPathComponent, exitCode: exitCode),
+            errorPrefix: "Could not show failure notification",
+            logError: logError
+        )
+    }
+
+    @MainActor
+    func notifyRipFailed(
+        outputURL: URL,
+        message: String,
+        isNotificationEnabled: Bool,
+        logError: @escaping @MainActor @Sendable (String) -> Void
+    ) {
+        guard isNotificationEnabled else { return }
+
+        showNotification(
+            title: AppStrings.ripFailedNotificationTitle,
+            body: message,
             errorPrefix: "Could not show failure notification",
             logError: logError
         )

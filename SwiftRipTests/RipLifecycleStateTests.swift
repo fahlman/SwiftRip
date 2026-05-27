@@ -66,7 +66,7 @@ struct RipLifecycleStateTests {
             statusMessage: "Preparing"
         )
         #expect(state.commandAvailability == RipCommandAvailability(
-            canChooseDVD: true,
+            canChooseDVD: false,
             canRip: false,
             canStop: true,
             canEject: false,

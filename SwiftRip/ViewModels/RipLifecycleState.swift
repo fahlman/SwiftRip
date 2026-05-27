@@ -125,7 +125,7 @@ struct RipLifecycleState: Sendable {
 
     var commandAvailability: RipCommandAvailability {
         RipCommandAvailability(
-            canChooseDVD: true,
+            canChooseDVD: !isEncoding,
             canRip: primaryAction == .rip,
             canStop: primaryAction == .stop,
             canEject: primaryAction == .eject,
