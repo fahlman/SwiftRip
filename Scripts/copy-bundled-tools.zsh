@@ -28,6 +28,7 @@ esac
 ARTIFACTS_DIR="${SRCROOT}/SwiftRipTools/Artifacts/macos-${ARTIFACTS_ARCH}"
 ARM64_ARTIFACTS_DIR="${SRCROOT}/SwiftRipTools/Artifacts/macos-arm64"
 X86_64_ARTIFACTS_DIR="${SRCROOT}/SwiftRipTools/Artifacts/macos-x86_64"
+FETCH_TOOLS_SCRIPT="${SRCROOT}/SwiftRipTools/Scripts/fetch-swiftrip-tools.zsh"
 APP_MACOS_DIR="${TARGET_BUILD_DIR}/${EXECUTABLE_FOLDER_PATH}"
 APP_FRAMEWORKS_DIR="${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}"
 
@@ -50,6 +51,7 @@ if [[ "${SWIFTRIP_SKIP_BUNDLED_TOOLS:-0}" == "1" ]]; then
 fi
 
 if [[ "${ARTIFACTS_ARCH}" == "universal" ]]; then
+    required_tool_arches=(arm64 x86_64)
     required_artifacts=(
         "${ARM64_ARTIFACTS_DIR}/HandBrakeCLI"
         "${ARM64_ARTIFACTS_DIR}/libdvdcss.2.dylib"
@@ -57,10 +59,35 @@ if [[ "${ARTIFACTS_ARCH}" == "universal" ]]; then
         "${X86_64_ARTIFACTS_DIR}/libdvdcss.2.dylib"
     )
 else
+    required_tool_arches=("${ARTIFACTS_ARCH}")
     required_artifacts=(
         "${HANDBRAKE_SOURCE}"
         "${LIBDVDCSS_SOURCE}"
     )
+fi
+
+missing_artifacts=()
+for artifact in "${required_artifacts[@]}"; do
+    if [[ -f "${artifact}" ]]; then
+        continue
+    fi
+
+    missing_artifacts+=("${artifact}")
+done
+
+if [[ "${#missing_artifacts[@]}" -gt 0 ]]; then
+    echo ""
+    echo "Restoring missing SwiftRipTools artifacts..."
+
+    if [[ ! -x "${FETCH_TOOLS_SCRIPT}" ]]; then
+        echo "ERROR: SwiftRipTools fetch script is not executable:"
+        echo "${FETCH_TOOLS_SCRIPT}"
+        exit 1
+    fi
+
+    for arch in "${required_tool_arches[@]}"; do
+        "${FETCH_TOOLS_SCRIPT}" --arch "${arch}"
+    done
 fi
 
 for artifact in "${required_artifacts[@]}"; do
@@ -68,9 +95,8 @@ for artifact in "${required_artifacts[@]}"; do
         continue
     fi
 
-    echo "ERROR: Missing SwiftRipTools artifact:"
+    echo "ERROR: Missing SwiftRipTools artifact after restore:"
     echo "${artifact}"
-    echo "Run SwiftRipTools/Scripts/fetch-swiftrip-tools.zsh first."
     exit 1
 done
 
