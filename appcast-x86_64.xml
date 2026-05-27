@@ -1,0 +1,14 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>SwiftRip</title>
+        <item>
+            <title>0.6</title>
+            <pubDate>Tue, 26 May 2026 22:04:03 -0400</pubDate>
+            <sparkle:version>6</sparkle:version>
+            <sparkle:shortVersionString>0.6</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.7</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/fahlman/SwiftRip/releases/download/sparkle-test-0.6/SwiftRip-0.6-x86_64.dmg" length="17342779" type="application/octet-stream" sparkle:edSignature="g+lNJam5CevRAyofilmOeQTkniNAoadhhtslYCxjzPehSGDN9kjGVJPzYNKAlea3ZqMkBlUg8fUNxlQpo0aqDA=="/>
+        </item>
+    </channel>
+</rss>
