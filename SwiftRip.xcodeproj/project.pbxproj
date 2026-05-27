@@ -6,6 +6,10 @@
 	objectVersion = 100;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		94176DDC2FC66D2800F570D2 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 94176DDB2FC66D2800F570D2 /* Sparkle */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		9412AF122FB95040004E17B6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -86,6 +90,7 @@
 		9412AF012FB9503F004E17B6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				94176DDC2FC66D2800F570D2 /* Sparkle in Frameworks */,
 			);
 		};
 		9412AF0E2FB95040004E17B6 /* Frameworks */ = {
@@ -200,6 +205,9 @@
 				9412AF062FB9503F004E17B6 /* SwiftRip */,
 			);
 			name = SwiftRip;
+			packageProductDependencies = (
+				94176DDB2FC66D2800F570D2 /* Sparkle */,
+			);
 			productName = SwiftRip;
 			productReference = 9412AF042FB9503F004E17B6 /* SwiftRip.app */;
 			productType = "com.apple.product-type.application";
@@ -279,6 +287,7 @@
 			mainGroup = 9412AEFB2FB9503F004E17B6;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				94176DDA2FC66D2800F570D2 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 100;
 			productRefGroup = 9412AF052FB9503F004E17B6 /* Products */;
@@ -813,6 +822,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		94176DDA2FC66D2800F570D2 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.9.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		94176DDB2FC66D2800F570D2 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 94176DDA2FC66D2800F570D2 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 9412AEFC2FB9503F004E17B6 /* Project object */;
 }
