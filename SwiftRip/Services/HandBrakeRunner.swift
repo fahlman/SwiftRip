@@ -9,24 +9,56 @@ struct HandBrakeResult: Sendable {
     let exitCode: Int32
 }
 
+enum HandBrakeOutputChannel: Equatable, Sendable {
+    case standardOutput
+    case standardError
+}
+
+struct HandBrakeOutput: Sendable {
+    let channel: HandBrakeOutputChannel
+    let text: String
+}
+
+enum HandBrakeEvent: Sendable {
+    case output(HandBrakeOutput)
+    case terminated(exitCode: Int32)
+}
+
 protocol HandBrakeRunning: Sendable {
-    func run(
+    nonisolated func events(
         executablePath: String,
-        arguments: [String],
-        onOutput: @escaping @MainActor @Sendable (String) -> Void
-    ) async -> HandBrakeResult
+        arguments: [String]
+    ) -> AsyncStream<HandBrakeEvent>
+}
+
+extension HandBrakeRunning {
+    nonisolated func run(executablePath: String, arguments: [String]) async -> HandBrakeResult {
+        var exitCode: Int32 = -1
+
+        for await event in events(executablePath: executablePath, arguments: arguments) {
+            if case let .terminated(code) = event {
+                exitCode = code
+            }
+        }
+
+        return HandBrakeResult(exitCode: exitCode)
+    }
 }
 
 struct ProcessHandBrakeRunner: HandBrakeRunning {
-    private static let lineFeed: UInt8 = 10
-    private static let carriageReturn: UInt8 = 13
-    private static let outputBufferLimit = 4_096
+    private nonisolated static let lineFeed: UInt8 = 10
+    private nonisolated static let carriageReturn: UInt8 = 13
+    private nonisolated static let outputBufferLimit = 4_096
 
-    func run(
+    private struct OutputPipes {
+        let standardOutput: Pipe
+        let standardError: Pipe
+    }
+
+    nonisolated func events(
         executablePath: String,
-        arguments: [String],
-        onOutput: @escaping @MainActor @Sendable (String) -> Void
-    ) async -> HandBrakeResult {
+        arguments: [String]
+    ) -> AsyncStream<HandBrakeEvent> {
         let executableURL = URL(fileURLWithPath: executablePath)
         let macOSDirectoryURL = executableURL.deletingLastPathComponent()
         let process = makeProcess(
@@ -34,11 +66,12 @@ struct ProcessHandBrakeRunner: HandBrakeRunning {
             arguments: arguments,
             currentDirectoryURL: macOSDirectoryURL
         )
-        let pipe = makeOutputPipe(for: process)
-        return await run(process, outputPipe: pipe, onOutput: onOutput)
+        let outputPipes = makeOutputPipes(for: process)
+
+        return run(process, outputPipes: outputPipes)
     }
 
-    private func makeProcess(
+    private nonisolated func makeProcess(
         executableURL: URL,
         arguments: [String],
         currentDirectoryURL: URL
@@ -50,62 +83,90 @@ struct ProcessHandBrakeRunner: HandBrakeRunning {
         return process
     }
 
-    private func makeOutputPipe(for process: Process) -> Pipe {
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = pipe
-        return pipe
+    private nonisolated func makeOutputPipes(for process: Process) -> OutputPipes {
+        let standardOutput = Pipe()
+        let standardError = Pipe()
+        process.standardOutput = standardOutput
+        process.standardError = standardError
+        return OutputPipes(standardOutput: standardOutput, standardError: standardError)
     }
 
-    private func run(
+    private nonisolated func run(
         _ process: Process,
-        outputPipe: Pipe,
-        onOutput: @escaping @MainActor @Sendable (String) -> Void
-    ) async -> HandBrakeResult {
-        return await withTaskCancellationHandler {
-            var outputTask: Task<Void, Never>?
-            let result = await launchAndWaitForTermination(
-                process,
-                outputPipe: outputPipe,
-                outputTask: &outputTask,
-                onOutput: onOutput
-            )
-            await outputTask?.value
-            return result
-        } onCancel: {
-            if process.isRunning {
-                process.terminate()
+        outputPipes: OutputPipes
+    ) -> AsyncStream<HandBrakeEvent> {
+        AsyncStream { continuation in
+            let task = Task {
+                await withTaskCancellationHandler {
+                    var outputTasks: [Task<Void, Never>] = []
+                    let result = await launchAndWaitForTermination(
+                        process,
+                        outputPipes: outputPipes,
+                        outputTasks: &outputTasks,
+                        eventContinuation: continuation
+                    )
+                    for outputTask in outputTasks {
+                        await outputTask.value
+                    }
+                    continuation.yield(.terminated(exitCode: result.exitCode))
+                    continuation.finish()
+                } onCancel: {
+                    if process.isRunning {
+                        process.terminate()
+                    }
+                }
+            }
+
+            continuation.onTermination = { _ in
+                task.cancel()
             }
         }
     }
 
-    private func launchAndWaitForTermination(
+    private nonisolated func launchAndWaitForTermination(
         _ process: Process,
-        outputPipe: Pipe,
-        outputTask: inout Task<Void, Never>?,
-        onOutput: @escaping @MainActor @Sendable (String) -> Void
+        outputPipes: OutputPipes,
+        outputTasks: inout [Task<Void, Never>],
+        eventContinuation: AsyncStream<HandBrakeEvent>.Continuation
     ) async -> HandBrakeResult {
-        await withCheckedContinuation { continuation in
+        await withCheckedContinuation { processContinuation in
             process.terminationHandler = { terminatedProcess in
-                continuation.resume(returning: HandBrakeResult(exitCode: terminatedProcess.terminationStatus))
+                processContinuation.resume(returning: HandBrakeResult(exitCode: terminatedProcess.terminationStatus))
             }
 
             do {
                 try process.run()
-                outputTask = Task {
-                    await Self.forwardOutput(from: outputPipe.fileHandleForReading, onOutput: onOutput)
-                }
+                outputTasks = [
+                    Task {
+                        await Self.forwardOutput(
+                            from: outputPipes.standardOutput.fileHandleForReading,
+                            channel: .standardOutput,
+                            continuation: eventContinuation
+                        )
+                    },
+                    Task {
+                        await Self.forwardOutput(
+                            from: outputPipes.standardError.fileHandleForReading,
+                            channel: .standardError,
+                            continuation: eventContinuation
+                        )
+                    }
+                ]
             } catch {
                 process.terminationHandler = nil
-                onOutput("Failed to launch HandBrakeCLI: \(error.localizedDescription)\n")
-                continuation.resume(returning: HandBrakeResult(exitCode: -1))
+                eventContinuation.yield(.output(HandBrakeOutput(
+                    channel: .standardError,
+                    text: "Failed to launch HandBrakeCLI: \(error.localizedDescription)\n"
+                )))
+                processContinuation.resume(returning: HandBrakeResult(exitCode: -1))
             }
         }
     }
 
-    private static func forwardOutput(
+    private nonisolated static func forwardOutput(
         from outputHandle: FileHandle,
-        onOutput: @escaping @MainActor @Sendable (String) -> Void
+        channel: HandBrakeOutputChannel,
+        continuation: AsyncStream<HandBrakeEvent>.Continuation
     ) async {
         var buffer = Data()
 
@@ -114,26 +175,28 @@ struct ProcessHandBrakeRunner: HandBrakeRunning {
                 buffer.append(byte)
 
                 if byte == Self.lineFeed || byte == Self.carriageReturn || buffer.count >= Self.outputBufferLimit {
-                    await flushOutputBuffer(&buffer, onOutput: onOutput)
+                    flushOutputBuffer(&buffer, channel: channel, continuation: continuation)
                 }
             }
         } catch {
-            onOutput("Could not read HandBrakeCLI output: \(error.localizedDescription)\n")
+            continuation.yield(.output(HandBrakeOutput(
+                channel: .standardError,
+                text: "Could not read HandBrakeCLI output: \(error.localizedDescription)\n"
+            )))
         }
 
-        await flushOutputBuffer(&buffer, onOutput: onOutput)
+        flushOutputBuffer(&buffer, channel: channel, continuation: continuation)
     }
 
-    private static func flushOutputBuffer(
+    private nonisolated static func flushOutputBuffer(
         _ buffer: inout Data,
-        onOutput: @escaping @MainActor @Sendable (String) -> Void
-    ) async {
+        channel: HandBrakeOutputChannel,
+        continuation: AsyncStream<HandBrakeEvent>.Continuation
+    ) {
         guard !buffer.isEmpty else { return }
 
-        if let text = String(data: buffer, encoding: .utf8) {
-            onOutput(text)
-        }
-
+        let text = String(decoding: buffer, as: UTF8.self)
+        continuation.yield(.output(HandBrakeOutput(channel: channel, text: text)))
         buffer.removeAll(keepingCapacity: true)
     }
 }

@@ -14,6 +14,21 @@ struct RipCommandAvailability: Equatable, Sendable {
     let canRevealLog: Bool
 }
 
+enum RipLifecycleCommand: Sendable {
+    case replaceMountedDVDs([DVDVolume])
+    case selectDVD(dvd: DVDVolume, outputURL: URL, statusMessage: String)
+    case setOutputURL(URL)
+    case clearDVDSelection(statusMessage: String)
+    case setStatusMessage(String)
+    case prepareRipSession(RipSession, statusMessage: String)
+    case beginEncoding(statusMessage: String)
+    case updateProgress(Double)
+    case markCompleted(statusMessage: String)
+    case markFailed(statusMessage: String)
+    case markCanceled(statusMessage: String)
+    case resetAfterEject
+}
+
 struct RipLifecycleState: Sendable {
     enum Phase: Sendable {
         case idle(statusMessage: String)
@@ -132,6 +147,35 @@ struct RipLifecycleState: Sendable {
             canRevealOutput: outputURL != nil,
             canRevealLog: logFileURL != nil
         )
+    }
+
+    mutating func apply(_ command: RipLifecycleCommand) {
+        switch command {
+        case .replaceMountedDVDs(let volumes):
+            replaceMountedDVDs(volumes)
+        case let .selectDVD(dvd, outputURL, statusMessage):
+            selectDVD(dvd, outputURL: outputURL, statusMessage: statusMessage)
+        case .setOutputURL(let outputURL):
+            setOutputURL(outputURL)
+        case .clearDVDSelection(let statusMessage):
+            clearDVDSelection(statusMessage: statusMessage)
+        case .setStatusMessage(let statusMessage):
+            setStatusMessage(statusMessage)
+        case let .prepareRipSession(session, statusMessage):
+            prepareRipSession(session, statusMessage: statusMessage)
+        case .beginEncoding(let statusMessage):
+            beginEncoding(statusMessage: statusMessage)
+        case .updateProgress(let value):
+            updateProgress(value)
+        case .markCompleted(let statusMessage):
+            markCompleted(statusMessage: statusMessage)
+        case .markFailed(let statusMessage):
+            markFailed(statusMessage: statusMessage)
+        case .markCanceled(let statusMessage):
+            markCanceled(statusMessage: statusMessage)
+        case .resetAfterEject:
+            resetAfterEject()
+        }
     }
 
     mutating func replaceMountedDVDs(_ volumes: [DVDVolume]) {

@@ -8,6 +8,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @State private var settings = AppSettings.shared
+    @State private var draft = SettingsDraft(settings: AppSettings.shared)
     @State private var outputDirectoryErrorMessage: String?
 
     var body: some View {
@@ -65,15 +66,15 @@ struct SettingsView: View {
 
             completionSoundRow
 
-            Toggle(AppStrings.settingsNotificationTitle, isOn: $settings.isCompletionNotificationEnabled)
+            Toggle(AppStrings.settingsNotificationTitle, isOn: $draft.isCompletionNotificationEnabled)
                 .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
                 .accessibilityIdentifier("completionNotificationToggle")
 
-            Toggle(AppStrings.settingsRevealCompletedFileTitle, isOn: $settings.shouldRevealCompletedFile)
+            Toggle(AppStrings.settingsRevealCompletedFileTitle, isOn: $draft.shouldRevealCompletedFile)
                 .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
                 .accessibilityIdentifier("revealCompletedFileToggle")
 
-            Toggle(AppStrings.settingsAutoEjectTitle, isOn: $settings.shouldAutoEjectAfterSuccessfulRip)
+            Toggle(AppStrings.settingsAutoEjectTitle, isOn: $draft.shouldAutoEjectAfterSuccessfulRip)
                 .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
                 .accessibilityIdentifier("autoEjectToggle")
         }
@@ -84,7 +85,7 @@ struct SettingsView: View {
             Spacer()
 
             Button {
-                dismissSettingsWindow()
+                cancelSettings()
             } label: {
                 Text(AppStrings.settingsCancelTitle)
                     .frame(width: SwiftRipLayout.Button.dialogFooterWidth)
@@ -94,7 +95,7 @@ struct SettingsView: View {
             .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
 
             Button {
-                dismissSettingsWindow()
+                applySettings()
             } label: {
                 Text(AppStrings.settingsOKTitle)
                     .frame(width: SwiftRipLayout.Button.dialogFooterWidth)
@@ -112,11 +113,11 @@ struct SettingsView: View {
                 .swiftRipSettingsLabel()
                 .frame(width: SwiftRipLayout.SettingsWindow.labelWidth, alignment: .trailing)
 
-            OutputDirectoryPathControl(url: settings.outputDirectoryURL)
+            OutputDirectoryPathControl(url: draft.outputDirectoryURL)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .frame(height: 24)
                 .accessibilityLabel(AppStrings.settingsOutputLocationTitle)
-                .accessibilityValue(settings.outputDirectoryURL.path)
+                .accessibilityValue(draft.outputDirectoryURL.path)
                 .accessibilityIdentifier("outputDirectoryPathControl")
         }
     }
@@ -136,7 +137,7 @@ struct SettingsView: View {
             .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
 
             Button {
-                settings.resetOutputDirectoryToMovies()
+                draft.resetOutputDirectoryToDefault()
                 outputDirectoryErrorMessage = nil
             } label: {
                 Text(AppStrings.settingsResetTitle)
@@ -144,7 +145,7 @@ struct SettingsView: View {
                     .accessibilityIdentifier("resetOutputDirectoryButton")
             }
             .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
-            .disabled(settings.isUsingDefaultOutputDirectory)
+            .disabled(draft.isUsingDefaultOutputDirectory)
 
             Spacer(minLength: 0)
         }
@@ -156,7 +157,7 @@ struct SettingsView: View {
                 .swiftRipSettingsLabel()
                 .frame(width: SwiftRipLayout.SettingsWindow.labelWidth, alignment: .trailing)
 
-            Picker("", selection: $settings.outputFilenameFormat) {
+            Picker("", selection: $draft.outputFilenameFormat) {
                 ForEach(OutputFilenameFormat.allCases) { format in
                     Text(format.title)
                         .tag(format)
@@ -175,7 +176,7 @@ struct SettingsView: View {
                 .swiftRipSettingsLabel()
                 .frame(width: SwiftRipLayout.SettingsWindow.labelWidth, alignment: .trailing)
 
-            Picker("", selection: $settings.completionSound) {
+            Picker("", selection: $draft.completionSound) {
                 ForEach(CompletionSound.allCases) { sound in
                     Text(sound.title)
                         .tag(sound)
@@ -192,22 +193,33 @@ struct SettingsView: View {
         NSApp.keyWindow?.close()
     }
 
+    private func cancelSettings() {
+        draft = SettingsDraft(settings: settings)
+        dismissSettingsWindow()
+    }
+
+    private func applySettings() {
+        do {
+            try draft.apply(to: settings)
+            outputDirectoryErrorMessage = nil
+            dismissSettingsWindow()
+        } catch {
+            outputDirectoryErrorMessage = error.localizedDescription
+        }
+    }
+
     private func chooseOutputDirectory() {
         guard
             let url = OutputDirectoryPanel.chooseDirectory(
-                defaultDirectoryURL: settings.outputDirectoryURL,
+                defaultDirectoryURL: draft.outputDirectoryURL,
                 prompt: AppStrings.settingsChangePrompt
             )
         else {
             return
         }
 
-        do {
-            try settings.setOutputDirectory(url)
-            outputDirectoryErrorMessage = nil
-        } catch {
-            outputDirectoryErrorMessage = error.localizedDescription
-        }
+        draft.setOutputDirectory(url)
+        outputDirectoryErrorMessage = nil
     }
 }
 

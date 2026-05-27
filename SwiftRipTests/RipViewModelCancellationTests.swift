@@ -23,7 +23,8 @@ struct RipViewModelCancellationTests {
 
         await RipTestSupport.waitUntil {
             guard let logFileURL = viewModel.logFileURL else { return false }
-            return FileManager.default.fileExists(atPath: logFileURL.path)
+            guard let logText = try? String(contentsOf: logFileURL, encoding: .utf8) else { return false }
+            return logText.contains("Encoding: task 1 of 1, 1.00 %")
         }
 
         let logURL = try #require(viewModel.logFileURL)

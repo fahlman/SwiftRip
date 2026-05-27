@@ -12,11 +12,16 @@ final class OutputDirectoryBookmarkStore {
 
     private let userDefaults: UserDefaults
     private let fileManager: FileManager
-    private var securityScopedOutputDirectoryURL: URL?
+    private let accessProvider: any SecurityScopedResourceAccessProviding
 
-    init(userDefaults: UserDefaults, fileManager: FileManager) {
+    init(
+        userDefaults: UserDefaults,
+        fileManager: FileManager,
+        accessProvider: any SecurityScopedResourceAccessProviding = DefaultSecurityScopedResourceAccessProvider()
+    ) {
         self.userDefaults = userDefaults
         self.fileManager = fileManager
+        self.accessProvider = accessProvider
     }
 
     var isUsingDefaultOutputDirectory: Bool {
@@ -30,13 +35,11 @@ final class OutputDirectoryBookmarkStore {
             relativeTo: nil
         )
 
-        stopAccessingSecurityScopedOutputDirectory()
         userDefaults.set(bookmarkData, forKey: Self.bookmarkKey)
         return resolvedOutputDirectoryURL()
     }
 
     func resetOutputDirectoryToDefault() -> URL {
-        stopAccessingSecurityScopedOutputDirectory()
         userDefaults.removeObject(forKey: Self.bookmarkKey)
         return defaultOutputDirectory()
     }
@@ -55,12 +58,6 @@ final class OutputDirectoryBookmarkStore {
                 bookmarkDataIsStale: &isStale
             )
 
-            guard url.startAccessingSecurityScopedResource() else {
-                return resetOutputDirectoryToDefault()
-            }
-
-            securityScopedOutputDirectoryURL = url
-
             if isStale {
                 return try setOutputDirectory(url)
             }
@@ -75,9 +72,35 @@ final class OutputDirectoryBookmarkStore {
         Self.defaultMoviesDirectory(using: fileManager)
     }
 
-    private func stopAccessingSecurityScopedOutputDirectory() {
-        securityScopedOutputDirectoryURL?.stopAccessingSecurityScopedResource()
-        securityScopedOutputDirectoryURL = nil
+    func startAccessingResolvedOutputDirectory() -> (any SecurityScopedResourceAccess)? {
+        guard let bookmarkData = userDefaults.data(forKey: Self.bookmarkKey) else {
+            return nil
+        }
+
+        do {
+            var isStale = false
+            let url = try URL(
+                resolvingBookmarkData: bookmarkData,
+                options: [.withSecurityScope],
+                relativeTo: nil,
+                bookmarkDataIsStale: &isStale
+            )
+
+            let access = accessProvider.startAccessing(url)
+            guard access.isAccessing else {
+                _ = resetOutputDirectoryToDefault()
+                return nil
+            }
+
+            if isStale {
+                _ = try setOutputDirectory(url)
+            }
+
+            return access
+        } catch {
+            _ = resetOutputDirectoryToDefault()
+            return nil
+        }
     }
 
     static func defaultMoviesDirectory(using fileManager: FileManager) -> URL {

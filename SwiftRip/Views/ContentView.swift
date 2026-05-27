@@ -8,23 +8,29 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct ContentView: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
     @State private var viewModel = RipViewModel()
     @State private var interruptionCoordinator = RipInterruptionCoordinator.shared
     @State private var isDVDPickerPresented = false
     @State private var hasPresentedInitialOutputDirectoryPrompt = false
+    @State private var hasRunLaunchAutomation = false
 
     private static let chooseDVDTitle = AppStrings.chooseDVDTitle
 
     var body: some View {
         VStack(spacing: SwiftRipLayout.MainWindow.contentSpacing) {
-            dvdIcon
-            dvdLabel
-            primaryButton
+            DVDStatusView(
+                hasSelectedDVD: viewModel.hasSelectedDVD,
+                isEncoding: viewModel.isEncoding,
+                displayName: viewModel.dvdDisplayName,
+                accessibilityValue: dvdStatusAccessibilityValue
+            )
+
+            PrimaryRipButton(title: viewModel.primaryAction.title) {
+                performPrimaryButtonAction()
+            }
 
             if viewModel.isEncoding {
-                progressSection
+                RipProgressSection(progress: viewModel.progress)
                     .transition(.opacity)
             }
         }
@@ -50,7 +56,11 @@ struct ContentView: View {
         .onAppear {
             viewModel.refreshDVDs()
             interruptionCoordinator.isRipActive = viewModel.isEncoding
-            presentInitialOutputDirectoryPromptIfNeeded()
+            Task { @MainActor in
+                await Task.yield()
+                presentInitialOutputDirectoryPromptIfNeeded()
+                runLaunchAutomationIfNeeded()
+            }
         }
         .onChange(of: viewModel.isEncoding) { _, isEncoding in
             interruptionCoordinator.updateRipActivity(isEncoding)
@@ -68,68 +78,6 @@ struct ContentView: View {
             Text(AppStrings.stopRipConfirmationMessage)
         }
         .focusedSceneValue(\.ripCommandActions, ripCommandActions)
-    }
-
-    private var dvdIcon: some View {
-        ZStack(alignment: .bottomTrailing) {
-            discImage
-            discBadge
-        }
-        .frame(
-            width: SwiftRipLayout.MainWindow.discIconFrameWidth,
-            height: SwiftRipLayout.MainWindow.discIconFrameHeight
-        )
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(AppStrings.dvdStatusAccessibilityLabel)
-        .accessibilityValue(dvdStatusAccessibilityValue)
-        .accessibilityIdentifier("dvdStatus")
-    }
-
-    private var discImage: some View {
-        Image(systemName: hasSelectedDVD ? SwiftRipSymbols.selectedOpticalDisc : SwiftRipSymbols.opticalDisc)
-            .font(.system(size: SwiftRipLayout.MainWindow.discIconSize, weight: .regular))
-            .symbolRenderingMode(.hierarchical)
-            .foregroundStyle(SwiftRipColors.discIcon)
-            .opacity(hasSelectedDVD ? 1 : 0.45)
-            .symbolEffect(.rotate.byLayer, options: .repeat(.continuous), isActive: viewModel.isEncoding && !reduceMotion)
-    }
-
-    private var discBadge: some View {
-        Image(systemName: hasSelectedDVD ? SwiftRipSymbols.selectedBadge : SwiftRipSymbols.missingBadge)
-            .font(.system(size: SwiftRipLayout.MainWindow.badgeIconSize, weight: .semibold))
-            .symbolRenderingMode(.palette)
-            .foregroundStyle(
-                hasSelectedDVD ? SwiftRipColors.selectedBadgeForeground : SwiftRipColors.missingBadgeForeground,
-                hasSelectedDVD ? SwiftRipColors.selectedBadgeBackground : SwiftRipColors.missingBadgeBackground
-            )
-            .offset(
-                x: SwiftRipLayout.MainWindow.badgeOffsetX,
-                y: SwiftRipLayout.MainWindow.badgeOffsetY
-            )
-    }
-
-    private var dvdLabel: some View {
-        VStack(spacing: 4) {
-            Text(viewModel.dvdDisplayName)
-                .font(.headline)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .frame(maxWidth: .infinity)
-                .accessibilityIdentifier("dvdName")
-        }
-    }
-
-    private var primaryButton: some View {
-        Button {
-            performPrimaryButtonAction()
-        } label: {
-            Text(viewModel.primaryAction.title)
-                .frame(width: SwiftRipLayout.Button.mainWidth)
-        }
-        .keyboardShortcut(.defaultAction)
-        .buttonStyle(SwiftRipButtonStyle(prominence: .primary))
-        .controlSize(.large)
-        .accessibilityIdentifier("primaryActionButton")
     }
 
     private func performPrimaryButtonAction() {
@@ -158,16 +106,7 @@ struct ContentView: View {
         guard case .success(let urls) = result, let url = urls.first else { return }
         guard viewModel.commandAvailability.canChooseDVD else { return }
 
-        if !viewModel.chooseDVD(at: url) {
-            AppAlertPresenter.showWarning(
-                messageText: AppStrings.invalidDVDSelectionTitle,
-                informativeText: AppStrings.chooseVideoTSFolder(directoryName: DVDVolume.videoTSDirectoryName)
-            )
-        }
-    }
-
-    private var hasSelectedDVD: Bool {
-        viewModel.hasSelectedDVD
+        chooseDVD(at: url)
     }
 
     private var dvdStatusAccessibilityValue: String {
@@ -190,23 +129,38 @@ struct ContentView: View {
 
     private func presentInitialOutputDirectoryPromptIfNeeded() {
         guard !hasPresentedInitialOutputDirectoryPrompt else { return }
-        guard !isFirstRunOutputDirectoryPromptSuppressed else { return }
-        guard viewModel.needsOutputDirectoryPermission else { return }
+        guard !FirstRunOutputPermissionPrompter.isSuppressed() else { return }
+        guard FirstRunOutputPermissionPrompter.isForced() || viewModel.needsOutputDirectoryPermission else { return }
 
         hasPresentedInitialOutputDirectoryPrompt = true
-        _ = ensureOutputDirectoryPermission(message: AppStrings.firstRunOutputFolderMessage)
+        _ = ensureOutputDirectoryPermission(
+            message: AppStrings.firstRunOutputFolderMessage,
+            force: FirstRunOutputPermissionPrompter.isForced()
+        )
     }
 
-    private var isFirstRunOutputDirectoryPromptSuppressed: Bool {
-        let environment = ProcessInfo.processInfo.environment
+    private func runLaunchAutomationIfNeeded() {
+        guard !hasRunLaunchAutomation else { return }
+        hasRunLaunchAutomation = true
 
-        return environment["SWIFTRIP_SUPPRESS_FIRST_RUN_OUTPUT_PROMPT"] == "1"
-            || environment["XCTestConfigurationFilePath"] != nil
-            || NSClassFromString("XCTest.XCTestCase") != nil
+        guard let invalidDVDPath = AppLaunchConfiguration.value(for: "SWIFTRIP_UI_TEST_INVALID_DVD_PATH") else {
+            return
+        }
+
+        chooseDVD(at: URL(fileURLWithPath: invalidDVDPath, isDirectory: true))
     }
 
-    private func ensureOutputDirectoryPermission(message: String) -> Bool {
-        guard viewModel.needsOutputDirectoryPermission else { return true }
+    private func chooseDVD(at url: URL) {
+        if !viewModel.chooseDVD(at: url) {
+            AppAlertPresenter.showWarning(
+                messageText: AppStrings.invalidDVDSelectionTitle,
+                informativeText: AppStrings.chooseVideoTSFolder(directoryName: DVDVolume.videoTSDirectoryName)
+            )
+        }
+    }
+
+    private func ensureOutputDirectoryPermission(message: String, force: Bool = false) -> Bool {
+        guard force || viewModel.needsOutputDirectoryPermission else { return true }
 
         guard
             let url = OutputDirectoryPanel.chooseDirectory(
@@ -275,26 +229,6 @@ struct ContentView: View {
 
     private var mainWindowHeight: CGFloat {
         viewModel.isEncoding ? SwiftRipLayout.MainWindow.encodingHeight : SwiftRipLayout.MainWindow.height
-    }
-
-    private var progressSection: some View {
-        VStack(spacing: SwiftRipLayout.MainWindow.statusSpacing) {
-            ProgressView(value: viewModel.progress)
-                .frame(width: SwiftRipLayout.MainWindow.progressWidth)
-                .accessibilityLabel(AppStrings.progressAccessibilityLabel)
-                .accessibilityValue(AppStrings.percentComplete(progressPercent))
-                .accessibilityIdentifier("ripProgress")
-
-            Text("\(progressPercent)%")
-                .swiftRipProgressCaption()
-                .accessibilityHidden(true)
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: SwiftRipLayout.MainWindow.statusHeight)
-    }
-
-    private var progressPercent: Int {
-        Int(viewModel.progress * 100)
     }
 }
 

@@ -1,21 +1,18 @@
 #!/bin/zsh
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TOOLS_DIR="$ROOT_DIR/SwiftRipTools"
-SCRIPTS_DIR="$TOOLS_DIR/Scripts"
+SCRIPTS_DIR="$SCRIPT_DIR"
+COMMON_SCRIPT="$SCRIPTS_DIR/lib/common.zsh"
 TOOLS_ARCH="${SWIFTRIP_TOOLS_ARCH:-arm64}"
 ARTIFACTS_DIR="$TOOLS_DIR/Artifacts/macos-$TOOLS_ARCH"
 
-case "$TOOLS_ARCH" in
-    arm64|x86_64)
-        ;;
-    *)
-        echo "ERROR: Unsupported SwiftRipTools architecture: $TOOLS_ARCH" >&2
-        echo "Supported architectures: arm64, x86_64" >&2
-        exit 64
-        ;;
-esac
+# shellcheck source=/dev/null
+source "$COMMON_SCRIPT"
+
+assert_supported_tools_arch "$TOOLS_ARCH"
 
 echo "SwiftRipTools build"
 echo "Root:      $ROOT_DIR"
@@ -26,23 +23,14 @@ echo "Arch:      $TOOLS_ARCH"
 
 mkdir -p "$ARTIFACTS_DIR"
 
-required_commands=(
-    curl
-    file
-    otool
-    strings
-    tar
-    xcrun
-)
-
 echo ""
 echo "Checking required build tools..."
-for command_name in "${required_commands[@]}"; do
-    if ! command -v "$command_name" >/dev/null 2>&1; then
-        echo "ERROR: Required command not found: $command_name"
-        exit 1
-    fi
-done
+require_command curl
+require_command file
+require_command otool
+require_command strings
+require_command tar
+require_command xcrun
 echo "Required build tools found."
 
 echo ""

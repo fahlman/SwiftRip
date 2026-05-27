@@ -74,3 +74,95 @@ verify_dmg() {
 
     return 1
 }
+
+codesign_entitlements() {
+    local target_path="$1"
+    local output_path="$2"
+    /usr/bin/codesign -d --entitlements - "$target_path" > "$output_path" 2>/dev/null
+}
+
+assert_no_debug_entitlement() {
+    local entitlements_path="$1"
+    if /usr/bin/grep -q "com.apple.security.get-task-allow" "$entitlements_path"; then
+        echo "ERROR: Release app has the debug get-task-allow entitlement."
+        echo "$entitlements_path"
+        exit 1
+    fi
+}
+
+assert_entitlement_present() {
+    local entitlements_path="$1"
+    local entitlement="$2"
+    if ! /usr/bin/grep -q "$entitlement" "$entitlements_path"; then
+        echo "ERROR: Missing expected entitlement: $entitlement"
+        echo "$entitlements_path"
+        exit 1
+    fi
+}
+
+assert_entitlement_absent() {
+    local entitlements_path="$1"
+    local entitlement="$2"
+    if /usr/bin/grep -q "$entitlement" "$entitlements_path"; then
+        echo "ERROR: Found unwanted entitlement: $entitlement"
+        echo "$entitlements_path"
+        exit 1
+    fi
+}
+
+signing_identity_available() {
+    local signing_identity="$1"
+    /usr/bin/security find-identity -v -p codesigning | /usr/bin/grep -Fq "$signing_identity"
+}
+
+json_escape() {
+    local value="$1"
+
+    value="${value//\\/\\\\}"
+    value="${value//\"/\\\"}"
+    value="${value//$'\n'/\\n}"
+    value="${value//$'\r'/\\r}"
+    value="${value//$'\t'/\\t}"
+    printf '%s' "$value"
+}
+
+json_string() {
+    local value="$1"
+
+    printf '"%s"' "$(json_escape "$value")"
+}
+
+write_release_manifest() {
+    local manifest_path="$1"
+    local app_name="$2"
+    local version="$3"
+    local bundle_identifier="$4"
+    local release_arch="$5"
+    local sparkle_feed_url="$6"
+    local app_path="$7"
+    local dmg_path="$8"
+    local notarized="$9"
+    local dmg_name
+    local dmg_sha256
+    local generated_at
+
+    dmg_name="$(basename "$dmg_path")"
+    dmg_sha256="$(/usr/bin/shasum -a 256 "$dmg_path" | /usr/bin/awk '{print $1}')"
+    generated_at="$(/bin/date -u '+%Y-%m-%dT%H:%M:%SZ')"
+
+    cat > "$manifest_path" <<EOF
+{
+  "appName": $(json_string "$app_name"),
+  "version": $(json_string "$version"),
+  "bundleIdentifier": $(json_string "$bundle_identifier"),
+  "architecture": $(json_string "$release_arch"),
+  "sparkleFeedURL": $(json_string "$sparkle_feed_url"),
+  "appPath": $(json_string "$app_path"),
+  "dmgName": $(json_string "$dmg_name"),
+  "dmgPath": $(json_string "$dmg_path"),
+  "dmgSHA256": $(json_string "$dmg_sha256"),
+  "notarized": $notarized,
+  "generatedAt": $(json_string "$generated_at")
+}
+EOF
+}

@@ -25,6 +25,9 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
+      - name: Validate repository
+        run: Scripts/ci-validate-repo.zsh
+
       - name: Fetch bundled tools
         id: bundled-tools
         continue-on-error: true

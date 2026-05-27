@@ -6,7 +6,6 @@
 import XCTest
 
 final class SwiftRipUITests: XCTestCase {
-
     override func setUpWithError() throws {
         continueAfterFailure = false
     }
@@ -51,11 +50,108 @@ final class SwiftRipUITests: XCTestCase {
     }
 
     @MainActor
-    private func launchApp() -> XCUIApplication {
+    func testFirstRunOutputPermissionPromptCanBeCanceled() throws {
+        let app = launchApp(environment: [
+            "SWIFTRIP_FORCE_FIRST_RUN_OUTPUT_PROMPT": "1"
+        ])
+
+        let openPanel = app.dialogs["open-panel"]
+        XCTAssertTrue(openPanel.buttons["Cancel"].waitForExistence(timeout: 5))
+
+        openPanel.buttons["Cancel"].click()
+        XCTAssertTrue(element("primaryActionButton", in: app).waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func testInvalidDVDSelectionShowsWarning() throws {
+        let invalidDVDURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("SwiftRipUITests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: invalidDVDURL, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: invalidDVDURL) }
+
+        let app = launchApp(environment: [
+            "SWIFTRIP_SUPPRESS_FIRST_RUN_OUTPUT_PROMPT": "1"
+        ])
+
+        cancelOutputPromptIfPresent(in: app)
+        element("primaryActionButton", in: app).click()
+        chooseFolder(invalidDVDURL, confirmationButtons: ["Choose DVD…", "Choose DVD", "Open"], in: app)
+
+        XCTAssertTrue(app.staticTexts["Not a Video DVD"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Choose a folder that contains a VIDEO_TS directory."].exists)
+        app.dialogs.firstMatch.buttons["OK"].click()
+    }
+
+    @MainActor
+    private func launchApp(environment: [String: String] = [
+        "SWIFTRIP_SUPPRESS_FIRST_RUN_OUTPUT_PROMPT": "1"
+    ]) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchEnvironment["SWIFTRIP_SUPPRESS_FIRST_RUN_OUTPUT_PROMPT"] = "1"
+        var launchEnvironment = [
+            "SWIFTRIP_APP_SETTINGS_SUITE": "SwiftRipUITests.\(UUID().uuidString)"
+        ]
+        launchEnvironment.merge(environment) { _, newValue in newValue }
+
+        for (key, value) in launchEnvironment {
+            app.launchEnvironment[key] = value
+            app.launchArguments.append("--\(key)=\(value)")
+            app.launchArguments.append("--\(key)")
+            app.launchArguments.append(value)
+            app.launchArguments.append("-\(key)")
+            app.launchArguments.append(value)
+        }
         app.launch()
         return app
+    }
+
+    @MainActor
+    private func chooseFolder(_ url: URL, confirmationButtons: [String], in app: XCUIApplication) {
+        app.typeKey("g", modifierFlags: [.command, .shift])
+
+        let goToFolderSheet = app.sheets.firstMatch
+        XCTAssertTrue(goToFolderSheet.waitForExistence(timeout: 5))
+
+        let destinationField = firstExistingTextInput(in: goToFolderSheet)
+        XCTAssertTrue(destinationField.waitForExistence(timeout: 5))
+        destinationField.typeText(url.path)
+        app.typeKey(.return, modifierFlags: [])
+
+        let openPanel = app.sheets["open-panel"]
+        XCTAssertTrue(openPanel.waitForExistence(timeout: 5))
+
+        let confirmationButton = firstExistingButton(named: confirmationButtons, in: openPanel)
+        XCTAssertTrue(confirmationButton.waitForExistence(timeout: 5))
+        confirmationButton.click()
+    }
+
+    @MainActor
+    private func cancelOutputPromptIfPresent(in app: XCUIApplication) {
+        let cancelButton = app.buttons["Cancel"]
+        if cancelButton.waitForExistence(timeout: 1) {
+            cancelButton.click()
+        }
+    }
+
+    @MainActor
+    private func firstExistingButton(named names: [String], in element: XCUIElement) -> XCUIElement {
+        for name in names {
+            let button = element.buttons[name]
+            if button.exists || button.waitForExistence(timeout: 1) {
+                return button
+            }
+        }
+
+        return element.buttons[names[0]]
+    }
+
+    @MainActor
+    private func firstExistingTextInput(in element: XCUIElement) -> XCUIElement {
+        let textField = element.textFields.firstMatch
+        if textField.exists || textField.waitForExistence(timeout: 1) {
+            return textField
+        }
+
+        return element.comboBoxes.firstMatch
     }
 
     @MainActor

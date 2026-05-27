@@ -106,45 +106,44 @@ struct OutputFilenameFormatter: Sendable {
 final class AppSettings {
     static let shared = AppSettings()
 
-    private static let completionSoundKey = "completionSound"
-    private static let completionNotificationEnabledKey = "completionNotificationEnabled"
-    private static let revealCompletedFileKey = "revealCompletedFile"
-    private static let autoEjectAfterSuccessfulRipKey = "autoEjectAfterSuccessfulRip"
-    private static let outputFilenameFormatKey = "outputFilenameFormat"
+    private static let userDefaultsSuiteEnvironmentKey = "SWIFTRIP_APP_SETTINGS_SUITE"
 
     private(set) var outputDirectoryURL: URL
     var completionSound: CompletionSound {
-        didSet {
-            userDefaults.set(completionSound.rawValue, forKey: Self.completionSoundKey)
-        }
+        get { preferences.completionSound }
+        set { updatePreferences { $0.completionSound = newValue } }
     }
     var isCompletionNotificationEnabled: Bool {
-        didSet {
-            userDefaults.set(isCompletionNotificationEnabled, forKey: Self.completionNotificationEnabledKey)
-        }
+        get { preferences.isCompletionNotificationEnabled }
+        set { updatePreferences { $0.isCompletionNotificationEnabled = newValue } }
     }
     var shouldRevealCompletedFile: Bool {
-        didSet {
-            userDefaults.set(shouldRevealCompletedFile, forKey: Self.revealCompletedFileKey)
-        }
+        get { preferences.shouldRevealCompletedFile }
+        set { updatePreferences { $0.shouldRevealCompletedFile = newValue } }
     }
     var shouldAutoEjectAfterSuccessfulRip: Bool {
-        didSet {
-            userDefaults.set(shouldAutoEjectAfterSuccessfulRip, forKey: Self.autoEjectAfterSuccessfulRipKey)
-        }
+        get { preferences.shouldAutoEjectAfterSuccessfulRip }
+        set { updatePreferences { $0.shouldAutoEjectAfterSuccessfulRip = newValue } }
     }
     var outputFilenameFormat: OutputFilenameFormat {
-        didSet {
-            userDefaults.set(outputFilenameFormat.rawValue, forKey: Self.outputFilenameFormatKey)
-        }
+        get { preferences.outputFilenameFormat }
+        set { updatePreferences { $0.outputFilenameFormat = newValue } }
     }
 
     @ObservationIgnored
-    private let userDefaults: UserDefaults
+    private let preferencesStore: UserPreferencesStoring
     @ObservationIgnored
     private let outputDirectoryBookmarkStore: OutputDirectoryBookmarkStore
+    private var preferences: UserPreferences
 
     convenience init() {
+        if
+            let suiteName = AppLaunchConfiguration.value(for: Self.userDefaultsSuiteEnvironmentKey),
+            let userDefaults = UserDefaults(suiteName: suiteName) {
+            self.init(userDefaults: userDefaults, fileManager: .default)
+            return
+        }
+
         self.init(userDefaults: .standard, fileManager: .default)
     }
 
@@ -152,29 +151,13 @@ final class AppSettings {
         userDefaults: UserDefaults,
         fileManager: FileManager
     ) {
-        self.userDefaults = userDefaults
+        self.preferencesStore = UserDefaultsUserPreferencesStore(userDefaults: userDefaults)
         self.outputDirectoryBookmarkStore = OutputDirectoryBookmarkStore(
             userDefaults: userDefaults,
             fileManager: fileManager
         )
         self.outputDirectoryURL = Self.defaultMoviesDirectory(using: fileManager)
-        self.completionSound = Self.completionSound(from: userDefaults)
-        self.isCompletionNotificationEnabled = Self.boolValue(
-            forKey: Self.completionNotificationEnabledKey,
-            defaultValue: true,
-            in: userDefaults
-        )
-        self.shouldRevealCompletedFile = Self.boolValue(
-            forKey: Self.revealCompletedFileKey,
-            defaultValue: true,
-            in: userDefaults
-        )
-        self.shouldAutoEjectAfterSuccessfulRip = Self.boolValue(
-            forKey: Self.autoEjectAfterSuccessfulRipKey,
-            defaultValue: false,
-            in: userDefaults
-        )
-        self.outputFilenameFormat = Self.outputFilenameFormat(from: userDefaults)
+        self.preferences = preferencesStore.load()
         self.outputDirectoryURL = outputDirectoryBookmarkStore.resolvedOutputDirectoryURL()
     }
 
@@ -194,21 +177,16 @@ final class AppSettings {
         outputDirectoryURL = outputDirectoryBookmarkStore.resetOutputDirectoryToDefault()
     }
 
+    func startAccessingOutputDirectory() -> (any SecurityScopedResourceAccess)? {
+        outputDirectoryBookmarkStore.startAccessingResolvedOutputDirectory()
+    }
+
     static func defaultMoviesDirectory(using fileManager: FileManager) -> URL {
         OutputDirectoryBookmarkStore.defaultMoviesDirectory(using: fileManager)
     }
 
-    private static func completionSound(from userDefaults: UserDefaults) -> CompletionSound {
-        guard let rawValue = userDefaults.string(forKey: completionSoundKey) else { return .glass }
-        return CompletionSound(rawValue: rawValue) ?? .glass
-    }
-
-    private static func outputFilenameFormat(from userDefaults: UserDefaults) -> OutputFilenameFormat {
-        guard let rawValue = userDefaults.string(forKey: outputFilenameFormatKey) else { return .titleCase }
-        return OutputFilenameFormat(rawValue: rawValue) ?? .titleCase
-    }
-
-    private static func boolValue(forKey key: String, defaultValue: Bool, in userDefaults: UserDefaults) -> Bool {
-        userDefaults.object(forKey: key) as? Bool ?? defaultValue
+    private func updatePreferences(_ update: (inout UserPreferences) -> Void) {
+        update(&preferences)
+        preferencesStore.save(preferences)
     }
 }

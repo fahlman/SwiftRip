@@ -1,8 +1,10 @@
 #!/bin/zsh
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TOOLS_DIR="$ROOT_DIR/SwiftRipTools"
+COMMON_SCRIPT="$SCRIPT_DIR/lib/common.zsh"
 SOURCE_DIR="$TOOLS_DIR/Source"
 BUILD_DIR="$TOOLS_DIR/Build/handbrake"
 TOOLS_ARCH="${SWIFTRIP_TOOLS_ARCH:-arm64}"
@@ -19,6 +21,9 @@ LIBDVDREAD_PATCH="$PATCHES_DIR/libdvdread/A03-macOS-hardened-runtime-dlopen.patc
 ARCH_BUILD_DIR="$BUILD_DIR/$TOOLS_ARCH"
 ARCH_PREFIX_DIR="$BUILD_DIR/$TOOLS_ARCH-prefix"
 
+# shellcheck source=/dev/null
+source "$COMMON_SCRIPT"
+
 echo "SwiftRipTools: build HandBrakeCLI"
 echo "Root:      $ROOT_DIR"
 echo "Source:    $SOURCE_DIR"
@@ -27,15 +32,7 @@ echo "Artifacts: $ARTIFACTS_DIR"
 echo "Version:   $HANDBRAKE_VERSION"
 echo "Arch:      $TOOLS_ARCH"
 
-case "$TOOLS_ARCH" in
-    arm64|x86_64)
-        ;;
-    *)
-        echo "ERROR: Unsupported HandBrakeCLI architecture: $TOOLS_ARCH" >&2
-        echo "Supported architectures: arm64, x86_64" >&2
-        exit 64
-        ;;
-esac
+assert_supported_tools_arch "$TOOLS_ARCH" "HandBrakeCLI"
 
 mkdir -p "$SOURCE_DIR"
 mkdir -p "$BUILD_DIR"
@@ -51,7 +48,7 @@ else
 fi
 
 echo "Verifying $HANDBRAKE_ARCHIVE checksum..."
-ACTUAL_HANDBRAKE_SHA256="$(shasum -a 256 "$HANDBRAKE_ARCHIVE" | awk '{print $1}')"
+ACTUAL_HANDBRAKE_SHA256="$(sha256_file "$HANDBRAKE_ARCHIVE")"
 if [[ "$ACTUAL_HANDBRAKE_SHA256" != "$HANDBRAKE_SHA256" ]]; then
     echo "ERROR: $HANDBRAKE_ARCHIVE checksum mismatch."
     echo "Expected: $HANDBRAKE_SHA256"
@@ -67,11 +64,7 @@ else
 fi
 
 echo "Applying SwiftRip HandBrake patches..."
-if [[ ! -f "$LIBDVDREAD_PATCH" ]]; then
-    echo "ERROR: Missing SwiftRip HandBrake patch:"
-    echo "$LIBDVDREAD_PATCH"
-    exit 1
-fi
+require_file "$LIBDVDREAD_PATCH" "SwiftRip HandBrake patch"
 
 cp "$LIBDVDREAD_PATCH" "$HANDBRAKE_SOURCE_DIR/contrib/libdvdread/A03-macOS-hardened-runtime-dlopen.patch"
 if ! cmp -s "$LIBDVDREAD_PATCH" "$HANDBRAKE_SOURCE_DIR/contrib/libdvdread/A03-macOS-hardened-runtime-dlopen.patch"; then

@@ -1,23 +1,17 @@
 #!/bin/zsh
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TOOLS_DIR="$ROOT_DIR/SwiftRipTools"
 ARTIFACTS_ROOT="$TOOLS_DIR/Artifacts"
 TOOLS_ARCH="${SWIFTRIP_TOOLS_ARCH:-arm64}"
 PACKAGE_DIR="$TOOLS_DIR/Packages"
-VERIFY_SCRIPT="$TOOLS_DIR/Scripts/verify-swiftrip-tools.zsh"
+VERIFY_SCRIPT="$SCRIPT_DIR/verify-swiftrip-tools.zsh"
+COMMON_SCRIPT="$SCRIPT_DIR/lib/common.zsh"
 
-manifest_file_for_arch() {
-    case "$TOOLS_ARCH" in
-        arm64)
-            echo "$TOOLS_DIR/Manifest/swiftrip-tools.json"
-            ;;
-        x86_64)
-            echo "$TOOLS_DIR/Manifest/swiftrip-tools-x86_64.json"
-            ;;
-    esac
-}
+# shellcheck source=/dev/null
+source "$COMMON_SCRIPT"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -32,30 +26,17 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-json_value() {
-    local key="$1"
-    /usr/bin/plutil -extract "$key" raw -o - "$MANIFEST_FILE"
-}
+assert_supported_tools_arch "$TOOLS_ARCH"
 
-case "$TOOLS_ARCH" in
-    arm64|x86_64)
-        ;;
-    *)
-        echo "ERROR: Unsupported SwiftRipTools architecture: $TOOLS_ARCH" >&2
-        echo "Supported architectures: arm64, x86_64" >&2
-        exit 64
-        ;;
-esac
-
-MANIFEST_FILE="$(manifest_file_for_arch)"
+MANIFEST_FILE="$(manifest_file_for_arch "$TOOLS_DIR" "$TOOLS_ARCH")"
 if [[ ! -f "$MANIFEST_FILE" ]]; then
     echo "ERROR: Missing SwiftRipTools manifest for $TOOLS_ARCH:"
     echo "$MANIFEST_FILE"
     exit 1
 fi
 
-ARTIFACT_NAME="$(json_value artifactName)"
-EXPECTED_SHA256="$(json_value sha256)"
+ARTIFACT_NAME="$(json_value "$MANIFEST_FILE" artifactName)"
+EXPECTED_SHA256="$(json_value "$MANIFEST_FILE" sha256)"
 PACKAGE_PATH="$PACKAGE_DIR/$ARTIFACT_NAME"
 TAR_PATH="$PACKAGE_DIR/${ARTIFACT_NAME:r}"
 
@@ -76,7 +57,7 @@ echo "Creating package..."
 COPYFILE_DISABLE=1 tar -cf "$TAR_PATH" -C "$ARTIFACTS_ROOT" "macos-$TOOLS_ARCH"
 gzip -n "$TAR_PATH"
 
-ACTUAL_SHA256="$(shasum -a 256 "$PACKAGE_PATH" | awk '{print $1}')"
+ACTUAL_SHA256="$(sha256_file "$PACKAGE_PATH")"
 
 echo ""
 echo "Package SHA-256:"

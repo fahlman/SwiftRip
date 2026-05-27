@@ -52,26 +52,36 @@ struct RipLog: Sendable {
         return directoryURL.appendingPathComponent(fileName)
     }
 
-    mutating func append(_ output: String) {
+    @discardableResult
+    mutating func append(_ output: String) -> String {
         text += output
+        return output
     }
 
-    mutating func appendLine(_ line: String) {
-        text += "\(line)\n"
+    @discardableResult
+    mutating func appendLine(_ line: String) -> String {
+        append("\(line)\n")
     }
 
-    mutating func appendBlankLine(_ line: String) {
-        text += "\n\(line)\n"
+    @discardableResult
+    mutating func appendBlankLine(_ line: String) -> String {
+        append("\n\(line)\n")
     }
 
-    mutating func appendExitCode(_ exitCode: Int32) {
+    @discardableResult
+    mutating func appendExitCode(_ exitCode: Int32) -> String {
         appendBlankLine("Exit code: \(exitCode)")
     }
 
-    mutating func appendOutcome(_ outcome: String, finishedAt: Date = Date()) {
-        appendLine("Outcome: \(outcome)")
-        appendLine("Finished: \(Self.displayFormatter.string(from: finishedAt))")
-        appendLine("Elapsed: \(Self.elapsedText(from: startedAt, to: finishedAt))")
+    @discardableResult
+    mutating func appendOutcome(_ outcome: String, finishedAt: Date = Date()) -> String {
+        let output = """
+        Outcome: \(outcome)
+        Finished: \(Self.displayFormatter.string(from: finishedAt))
+        Elapsed: \(Self.elapsedText(from: startedAt, to: finishedAt))
+        """
+            + "\n"
+        return append(output)
     }
 
     func save(using fileManager: FileManager) -> Error? {

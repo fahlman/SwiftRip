@@ -88,7 +88,7 @@ struct WindowCloseConfirmationGate: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
-        DispatchQueue.main.async {
+        Task { @MainActor in
             guard let window = nsView.window, window.delegate !== context.coordinator else { return }
             context.coordinator.previousDelegate = window.delegate
             window.delegate = context.coordinator

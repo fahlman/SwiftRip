@@ -1,11 +1,16 @@
 #!/bin/zsh
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
-SCRIPTS_DIR="$ROOT_DIR/SwiftRipTools/Scripts"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+SCRIPTS_DIR="$SCRIPT_DIR"
+COMMON_SCRIPT="$SCRIPT_DIR/lib/common.zsh"
 TOOLS_ARCH="${SWIFTRIP_TOOLS_ARCH:-arm64}"
 ARTIFACTS_DIR="$ROOT_DIR/SwiftRipTools/Artifacts/macos-$TOOLS_ARCH"
 FORCE_BUILD=0
+
+# shellcheck source=/dev/null
+source "$COMMON_SCRIPT"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -25,15 +30,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-case "$TOOLS_ARCH" in
-    arm64|x86_64)
-        ;;
-    *)
-        echo "ERROR: Unsupported SwiftRipTools architecture: $TOOLS_ARCH" >&2
-        echo "Supported architectures: arm64, x86_64" >&2
-        exit 64
-        ;;
-esac
+assert_supported_tools_arch "$TOOLS_ARCH"
 
 echo "SwiftRipTools bootstrap"
 echo "Root:      $ROOT_DIR"

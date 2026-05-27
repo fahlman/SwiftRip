@@ -1,7 +1,9 @@
 #!/bin/zsh
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+COMMON_SCRIPT="$SCRIPT_DIR/lib/common.zsh"
 TOOLS_ARCH="${SWIFTRIP_TOOLS_ARCH:-arm64}"
 ARTIFACTS_DIR="$ROOT_DIR/SwiftRipTools/Artifacts/macos-$TOOLS_ARCH"
 HANDBRAKE_ARTIFACT="$ARTIFACTS_DIR/HandBrakeCLI"
@@ -9,31 +11,17 @@ LIBDVDCSS_ARTIFACT="$ARTIFACTS_DIR/libdvdcss.2.dylib"
 LIBDVDCSS_FRAMEWORKS_PATH="@executable_path/../Frameworks/libdvdcss.2.dylib"
 LEGACY_LIBDVDCSS_PATH="/usr/local/lib/libdvdcss.2.dylib"
 
-case "$TOOLS_ARCH" in
-    arm64|x86_64)
-        ;;
-    *)
-        echo "ERROR: Unsupported SwiftRipTools architecture: $TOOLS_ARCH" >&2
-        echo "Supported architectures: arm64, x86_64" >&2
-        exit 64
-        ;;
-esac
+# shellcheck source=/dev/null
+source "$COMMON_SCRIPT"
+
+assert_supported_tools_arch "$TOOLS_ARCH"
 
 echo "SwiftRipTools: verify artifacts"
 echo "Artifacts: $ARTIFACTS_DIR"
 echo "Arch:      $TOOLS_ARCH"
 
-if [[ ! -x "$HANDBRAKE_ARTIFACT" ]]; then
-    echo "ERROR: Missing executable HandBrakeCLI artifact:"
-    echo "$HANDBRAKE_ARTIFACT"
-    exit 1
-fi
-
-if [[ ! -f "$LIBDVDCSS_ARTIFACT" ]]; then
-    echo "ERROR: Missing libdvdcss.2.dylib artifact:"
-    echo "$LIBDVDCSS_ARTIFACT"
-    exit 1
-fi
+require_executable "$HANDBRAKE_ARTIFACT"
+require_file "$LIBDVDCSS_ARTIFACT" "libdvdcss.2.dylib artifact"
 
 echo ""
 echo "HandBrakeCLI:"

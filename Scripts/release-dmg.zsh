@@ -14,9 +14,6 @@ OUTPUT_DIR="$ROOT_DIR/dist"
 TEAM_ID="${SWIFTRIP_TEAM_ID:-PUT2KYMV2W}"
 SIGNING_IDENTITY="${SWIFTRIP_SIGNING_IDENTITY:-Developer ID Application}"
 NOTARY_PROFILE="${SWIFTRIP_NOTARY_PROFILE:-}"
-NOTARY_APPLE_ID="${SWIFTRIP_NOTARY_APPLE_ID:-}"
-NOTARY_PASSWORD="${SWIFTRIP_NOTARY_PASSWORD:-}"
-NOTARY_TEAM_ID="${SWIFTRIP_NOTARY_TEAM_ID:-$TEAM_ID}"
 SKIP_NOTARIZATION=false
 typeset -a NOTARY_ARGS
 
@@ -33,8 +30,6 @@ Options:
   --skip-notarization        Build and sign the DMG without submitting to Apple.
                              Still requires Developer ID signing.
   --notary-profile NAME      notarytool keychain profile name.
-  --apple-id EMAIL           Apple ID for notarytool.
-  --password PASSWORD        App-specific password or keychain password reference.
   --team-id TEAMID           Apple Developer Team ID.
   --signing-identity NAME    Code signing identity. Defaults to Developer ID Application.
   --arch ARCH                Release architecture: arm64 or x86_64. Defaults to arm64.
@@ -45,14 +40,11 @@ Environment variables:
   SWIFTRIP_TEAM_ID
   SWIFTRIP_SIGNING_IDENTITY
   SWIFTRIP_NOTARY_PROFILE
-  SWIFTRIP_NOTARY_APPLE_ID
-  SWIFTRIP_NOTARY_PASSWORD
-  SWIFTRIP_NOTARY_TEAM_ID
   SWIFTRIP_RELEASE_ARCH
   SWIFTRIP_SPARKLE_FEED_URL
   SWIFTRIP_RELEASE_WORK_DIR
 
-Notarization uses either --notary-profile, or --apple-id plus --password.
+Notarization requires a notarytool keychain profile.
 USAGE
 }
 
@@ -66,17 +58,12 @@ while [[ $# -gt 0 ]]; do
             NOTARY_PROFILE="${2:-}"
             shift 2
             ;;
-        --apple-id)
-            NOTARY_APPLE_ID="${2:-}"
-            shift 2
-            ;;
-        --password)
-            NOTARY_PASSWORD="${2:-}"
-            shift 2
+        --apple-id|--password)
+            echo "ERROR: $1 is not supported. Store credentials with notarytool and pass --notary-profile."
+            exit 64
             ;;
         --team-id)
             TEAM_ID="${2:-}"
-            NOTARY_TEAM_ID="${2:-}"
             shift 2
             ;;
         --signing-identity)
@@ -103,45 +90,6 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
-
-codesign_entitlements() {
-    local target_path="$1"
-    local output_path="$2"
-    /usr/bin/codesign -d --entitlements - "$target_path" > "$output_path" 2>/dev/null
-}
-
-assert_no_debug_entitlement() {
-    local entitlements_path="$1"
-    if /usr/bin/grep -q "com.apple.security.get-task-allow" "$entitlements_path"; then
-        echo "ERROR: Release app has the debug get-task-allow entitlement."
-        echo "$entitlements_path"
-        exit 1
-    fi
-}
-
-assert_entitlement_present() {
-    local entitlements_path="$1"
-    local entitlement="$2"
-    if ! /usr/bin/grep -q "$entitlement" "$entitlements_path"; then
-        echo "ERROR: Missing expected entitlement: $entitlement"
-        echo "$entitlements_path"
-        exit 1
-    fi
-}
-
-assert_entitlement_absent() {
-    local entitlements_path="$1"
-    local entitlement="$2"
-    if /usr/bin/grep -q "$entitlement" "$entitlements_path"; then
-        echo "ERROR: Found unwanted entitlement: $entitlement"
-        echo "$entitlements_path"
-        exit 1
-    fi
-}
-
-signing_identity_available() {
-    /usr/bin/security find-identity -v -p codesigning | /usr/bin/grep -Fq "$SIGNING_IDENTITY"
-}
 
 case "$RELEASE_ARCH" in
     arm64|x86_64)
@@ -177,16 +125,14 @@ require_command /usr/bin/xcrun
 if [[ "$SKIP_NOTARIZATION" == false ]]; then
     if [[ -n "$NOTARY_PROFILE" ]]; then
         NOTARY_ARGS=(--keychain-profile "$NOTARY_PROFILE")
-    elif [[ -n "$NOTARY_APPLE_ID" && -n "$NOTARY_PASSWORD" ]]; then
-        NOTARY_ARGS=(--apple-id "$NOTARY_APPLE_ID" --password "$NOTARY_PASSWORD" --team-id "$NOTARY_TEAM_ID")
     else
-        echo "ERROR: Notarization needs --notary-profile, or --apple-id plus --password."
+        echo "ERROR: Notarization needs --notary-profile."
         echo "Use --skip-notarization for a local packaging check without Apple notarization."
         exit 1
     fi
 fi
 
-if ! signing_identity_available; then
+if ! signing_identity_available "$SIGNING_IDENTITY"; then
     echo "ERROR: Code signing identity was not found in the keychain:"
     echo "$SIGNING_IDENTITY"
     echo ""
@@ -250,6 +196,7 @@ BUNDLE_IDENTIFIER="$(/usr/bin/plutil -extract CFBundleIdentifier raw -o - "$APP_
 APP_SPARKLE_FEED_URL="$(/usr/bin/plutil -extract SUFeedURL raw -o - "$APP_PATH/Contents/Info.plist")"
 DMG_NAME="$APP_NAME-$VERSION-$RELEASE_ARCH.dmg"
 DMG_PATH="$OUTPUT_DIR/$DMG_NAME"
+MANIFEST_PATH="$OUTPUT_DIR/$APP_NAME-$VERSION-$RELEASE_ARCH-manifest.json"
 APP_ENTITLEMENTS="$WORK_DIR/$APP_NAME.entitlements"
 APP_EXECUTABLE="$APP_PATH/Contents/MacOS/$APP_NAME"
 
@@ -356,6 +303,17 @@ verify_dmg "$DMG_PATH"
 
 if [[ "$SKIP_NOTARIZATION" == true ]]; then
     echo ""
+    write_release_manifest \
+        "$MANIFEST_PATH" \
+        "$APP_NAME" \
+        "$VERSION" \
+        "$BUNDLE_IDENTIFIER" \
+        "$RELEASE_ARCH" \
+        "$SPARKLE_FEED_URL" \
+        "$APP_PATH" \
+        "$DMG_PATH" \
+        false
+    echo "Release manifest: $MANIFEST_PATH"
     echo "Skipped notarization."
     echo "DMG: $DMG_PATH"
     exit 0
@@ -377,3 +335,15 @@ echo "Assessing notarized DMG with Gatekeeper..."
 echo ""
 echo "Release DMG is ready:"
 echo "$DMG_PATH"
+write_release_manifest \
+    "$MANIFEST_PATH" \
+    "$APP_NAME" \
+    "$VERSION" \
+    "$BUNDLE_IDENTIFIER" \
+    "$RELEASE_ARCH" \
+    "$SPARKLE_FEED_URL" \
+    "$APP_PATH" \
+    "$DMG_PATH" \
+    true
+echo "Release manifest:"
+echo "$MANIFEST_PATH"

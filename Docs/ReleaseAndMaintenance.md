@@ -41,6 +41,7 @@ xcrun notarytool store-credentials "SwiftRip Notary" --apple-id "APPLE_ID_EMAIL"
 ```
 
 Enter the app-specific password at the secure prompt rather than passing it on the command line.
+The release scripts intentionally require this Keychain profile and do not accept Apple ID passwords as command-line arguments.
 
 Build, sign, package, notarize, staple, and verify an Apple Silicon DMG:
 

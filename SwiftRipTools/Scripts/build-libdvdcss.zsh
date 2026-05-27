@@ -1,8 +1,10 @@
 #!/bin/zsh
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TOOLS_DIR="$ROOT_DIR/SwiftRipTools"
+COMMON_SCRIPT="$SCRIPT_DIR/lib/common.zsh"
 SOURCE_DIR="$TOOLS_DIR/Source"
 BUILD_DIR="$TOOLS_DIR/Build/libdvdcss"
 TOOLS_ARCH="${SWIFTRIP_TOOLS_ARCH:-arm64}"
@@ -19,6 +21,9 @@ ARCH_PREFIX="$BUILD_DIR/$TOOLS_ARCH-prefix"
 MESON_CMD="${MESON_CMD:-}"
 NINJA_CMD="${NINJA_CMD:-}"
 
+# shellcheck source=/dev/null
+source "$COMMON_SCRIPT"
+
 echo "SwiftRipTools: build libdvdcss"
 echo "Root:      $ROOT_DIR"
 echo "Source:    $SOURCE_DIR"
@@ -27,15 +32,7 @@ echo "Artifacts: $ARTIFACTS_DIR"
 echo "Version:   $LIBDVDCSS_VERSION"
 echo "Arch:      $TOOLS_ARCH"
 
-case "$TOOLS_ARCH" in
-    arm64|x86_64)
-        ;;
-    *)
-        echo "ERROR: Unsupported libdvdcss architecture: $TOOLS_ARCH" >&2
-        echo "Supported architectures: arm64, x86_64" >&2
-        exit 64
-        ;;
-esac
+assert_supported_tools_arch "$TOOLS_ARCH" "libdvdcss"
 
 mkdir -p "$SOURCE_DIR"
 mkdir -p "$BUILD_DIR"
@@ -51,7 +48,7 @@ else
 fi
 
 echo "Verifying $LIBDVDCSS_ARCHIVE checksum..."
-ACTUAL_LIBDVDCSS_SHA256="$(shasum -a 256 "$LIBDVDCSS_ARCHIVE" | awk '{print $1}')"
+ACTUAL_LIBDVDCSS_SHA256="$(sha256_file "$LIBDVDCSS_ARCHIVE")"
 if [[ "$ACTUAL_LIBDVDCSS_SHA256" != "$LIBDVDCSS_SHA256" ]]; then
     echo "ERROR: $LIBDVDCSS_ARCHIVE checksum mismatch."
     echo "Expected: $LIBDVDCSS_SHA256"
