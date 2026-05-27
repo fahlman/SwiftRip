@@ -45,4 +45,32 @@ struct AppLaunchConfigurationTests {
         ))
     }
 
+    @Test func detectsXCTestLaunchConfiguration() {
+        #expect(AppLaunchConfiguration.isRunningUnderXCTest(
+            environment: ["XCTestConfigurationFilePath": "/tmp/session.xctestconfiguration"],
+            arguments: ["SwiftRip"],
+            bundlePaths: []
+        ))
+        #expect(AppLaunchConfiguration.isRunningUnderXCTest(
+            environment: ["XCInjectBundle": "/tmp/SwiftRipTests.xctest"],
+            arguments: ["SwiftRip"],
+            bundlePaths: []
+        ))
+        #expect(AppLaunchConfiguration.isRunningUnderXCTest(
+            environment: [:],
+            arguments: ["SwiftRip", "-XCTest", "/tmp/SwiftRipTests.xctest"],
+            bundlePaths: []
+        ))
+        #expect(AppLaunchConfiguration.isRunningUnderXCTest(
+            environment: [:],
+            arguments: ["SwiftRip"],
+            bundlePaths: ["/tmp/SwiftRipTests.xctest"]
+        ))
+        #expect(!AppLaunchConfiguration.isRunningUnderXCTest(
+            environment: [:],
+            arguments: ["SwiftRip"],
+            bundlePaths: []
+        ))
+    }
+
 }

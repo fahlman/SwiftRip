@@ -122,6 +122,10 @@ enum FirstRunOutputPermissionPrompter {
             return false
         }
 
+        if AppLaunchConfiguration.isRunningUnderXCTest(environment: environment, arguments: arguments) {
+            return true
+        }
+
         return AppLaunchConfiguration.isEnabled(
             "SWIFTRIP_SUPPRESS_FIRST_RUN_OUTPUT_PROMPT",
             environment: environment,

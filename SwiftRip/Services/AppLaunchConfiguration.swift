@@ -44,4 +44,26 @@ enum AppLaunchConfiguration {
     ) -> Bool {
         value(for: key, environment: environment, arguments: arguments) == "1"
     }
+
+    nonisolated static func isRunningUnderXCTest(
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        arguments: [String] = ProcessInfo.processInfo.arguments,
+        bundlePaths: [String] = Bundle.allBundles.map(\.bundlePath)
+    ) -> Bool {
+        environment.keys.contains(where: isXCTestEnvironmentKey)
+            || arguments.contains(where: isXCTestArgument)
+            || bundlePaths.contains(where: isXCTestBundlePath)
+    }
+
+    private nonisolated static func isXCTestEnvironmentKey(_ key: String) -> Bool {
+        ["XCTest", "XCInjectBundle"].contains { key.hasPrefix($0) }
+    }
+
+    private nonisolated static func isXCTestArgument(_ argument: String) -> Bool {
+        argument.hasPrefix("-XCTest") || argument.contains(".xctest")
+    }
+
+    private nonisolated static func isXCTestBundlePath(_ path: String) -> Bool {
+        path.hasSuffix(".xctest") || path.contains("/XCTest.framework")
+    }
 }
