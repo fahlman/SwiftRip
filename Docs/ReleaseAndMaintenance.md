@@ -52,7 +52,7 @@ Scripts/release-dmg.zsh --arch arm64 --notary-profile "SwiftRip Notary"
 Build, sign, package, notarize, staple, and verify an Intel DMG:
 
 ```sh
-SwiftRipTools/Scripts/bootstrap-tools.zsh --arch x86_64
+SwiftRipTools/Scripts/fetch-swiftrip-tools.zsh --arch x86_64
 Scripts/release-dmg.zsh --arch x86_64 --notary-profile "SwiftRip Notary"
 ```
 
@@ -100,18 +100,21 @@ The Sparkle release script adds these checks and publishing steps:
 
 ## Bundled Tool Update Policy
 
-SwiftRip should consume reproducible local artifacts from `SwiftRipTools`, not tools installed through Homebrew, MacPorts, `/usr/local`, or another developer's machine state.
+SwiftRip should consume reproducible artifacts from the separate `fahlman/SwiftRipTools` repository, not tools installed through Homebrew, MacPorts, `/usr/local`, or another developer's machine state.
 
 To update HandBrakeCLI or libdvdcss:
 
-1. Update the version inputs in the SwiftRipTools build scripts.
-2. Run `SwiftRipTools/Scripts/bootstrap-tools.zsh --force`.
-3. Run `SwiftRipTools/Scripts/bootstrap-tools.zsh --arch x86_64 --force` if updating the Intel artifacts.
+1. Update the version inputs in the SwiftRipTools repository build scripts.
+2. Rebuild and package the Apple Silicon artifacts in the SwiftRipTools repository.
+3. Rebuild and package the Intel artifacts in the SwiftRipTools repository if updating Intel support.
 4. Confirm the HandBrake patch still applies cleanly.
-5. Run `SwiftRipTools/Scripts/verify-swiftrip-tools.zsh`.
-6. Run the app test suite.
-7. Run the smoke test above with a real DVD.
-8. Update bundled license notices if upstream license text or included components changed.
+5. Publish the packages to the SwiftRipTools GitHub release.
+6. Update the manifest copies in this repository if package names, URLs, versions, or checksums changed.
+7. Run `SwiftRipTools/Scripts/fetch-swiftrip-tools.zsh` for Apple Silicon.
+8. Run `SwiftRipTools/Scripts/fetch-swiftrip-tools.zsh --arch x86_64` for Intel.
+9. Run the app test suite.
+10. Run the smoke test above with a real DVD.
+11. Update bundled license notices if upstream license text or included components changed.
 
 SwiftRipTools packages are pinned by architecture:
 

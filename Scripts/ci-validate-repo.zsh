@@ -12,6 +12,7 @@ TRACKED_GENERATED="$(
         .release \
         SwiftRipTools/Build \
         SwiftRipTools/Source \
+        SwiftRipTools/Artifacts \
         SwiftRipTools/Packages \
         SwiftRipTools/.DS_Store
 )"

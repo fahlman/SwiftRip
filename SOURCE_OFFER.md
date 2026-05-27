@@ -14,6 +14,12 @@ https://github.com/fahlman/SwiftRip
 
 The repository is intended to include the Swift application source, Xcode project files, configuration files, build scripts, legal notices, and documentation needed to inspect, modify, and rebuild SwiftRip.
 
+The bundled tool source/build workspace is maintained separately:
+
+```text
+https://github.com/fahlman/SwiftRipTools
+```
+
 ## Third-party source code
 
 SwiftRip may build, bundle, or invoke third-party GPL components, including HandBrakeCLI and libdvdcss.
@@ -22,41 +28,38 @@ Major third-party components are listed in `THIRD_PARTY_NOTICES.md`.
 
 ## libdvdcss source and build process
 
-SwiftRipTools currently builds libdvdcss from VideoLAN source.
+SwiftRipTools builds libdvdcss from VideoLAN source.
 
 The build script is:
 
 ```text
-SwiftRipTools/Scripts/build-libdvdcss.zsh
+Scripts/build-libdvdcss.zsh in https://github.com/fahlman/SwiftRipTools
 ```
 
 The top-level tools build script is:
 
 ```text
-SwiftRipTools/Scripts/build-swiftrip-tools.zsh
+Scripts/build-swiftrip-tools.zsh in https://github.com/fahlman/SwiftRipTools
 ```
 
 The intended generated artifact is:
 
 ```text
-SwiftRipTools/Artifacts/macos-universal/libdvdcss.2.dylib
+Artifacts/macos-arm64/libdvdcss.2.dylib
+Artifacts/macos-x86_64/libdvdcss.2.dylib
 ```
 
 Generated source archives, extracted source trees, build folders, and binary artifacts are intentionally not committed to Git. They are produced locally by the build scripts.
 
 ## HandBrakeCLI source and build process
 
-SwiftRip intends to use HandBrakeCLI as the encoding backend.
-
-The HandBrakeCLI build/rebuild process is still under development for this project. Before distributing a SwiftRip binary that includes HandBrakeCLI, the project should document the exact HandBrake source version, patch set if any, build script, configuration, and resulting bundled artifact.
-
-Until that process is finalized, SwiftRip binary distribution should be treated as incomplete from a GPL source-compliance standpoint.
+SwiftRip uses HandBrakeCLI as the encoding backend. The exact HandBrake source version, project patch set, build script, configuration, and packaged artifacts are maintained in the public SwiftRipTools repository.
 
 ## Binary distribution requirement
 
 If SwiftRip is distributed in binary form with bundled GPL-covered tools or libraries, recipients must be able to obtain the corresponding source code for the exact shipped binaries.
 
-The preferred approach for this project is to make the corresponding source and build scripts available through the public SwiftRip repository. If binary releases are published separately, each release should identify the exact source revision and third-party component versions used to build it.
+The preferred approach for this project is to make the corresponding app source available through the public SwiftRip repository and the corresponding bundled-tool source/build scripts available through the public SwiftRipTools repository. If binary releases are published separately, each release should identify the exact source revision and third-party component versions used to build it.
 
 ## Written offer fallback
 
