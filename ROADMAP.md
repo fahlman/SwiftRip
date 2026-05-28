@@ -23,19 +23,19 @@
 - Added scheduled upstream checks for HandBrake and libdvdcss updates.
 - Added branch and tag protection for release-critical SwiftRip repositories.
 - Verified local app builds, GitHub CI, SwiftRip-Tools CI, and Xcode Cloud archive builds.
+- Published signed, notarized, architecture-specific releases with Sparkle updates.
+- Added release checklist, support guidance, and security reporting policy.
 
 ## In Progress
 
-- Validate the 1.0 release candidate path end to end.
-- Keep the app, tool packages, source pins, and release documentation aligned as release artifacts are finalized.
+- Keep the app, tool packages, source pins, and release documentation aligned as maintenance releases ship.
+- Watch real-world install, update, sandbox, and DVD read behavior after public releases.
 
 ## Next
 
-- Build final signed and notarized Apple Silicon and Intel DMGs.
-- Run the full real-DVD smoke test against the final signed/notarized build.
-- Verify Sparkle updates from the previous public release to the final 1.0 build.
-- Publish the final GitHub release assets and appcasts.
-- Confirm the public source-offer trail points to the exact source, scripts, manifests, and checksums used for the release.
+- Improve failure messages for unusual DVD structures and HandBrake errors.
+- Expand real-disc smoke coverage as more discs and drives are available.
+- Keep the public source-offer trail matched to every shipped binary.
 
 ## Later
 

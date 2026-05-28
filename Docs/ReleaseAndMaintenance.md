@@ -1,5 +1,7 @@
 # Release and Maintenance
 
+For an end-to-end public release, use the root [`RELEASE_CHECKLIST.md`](../RELEASE_CHECKLIST.md). This file keeps the supporting maintenance policy and command reference.
+
 ## Smoke Test
 
 Run this checklist after changes that touch ripping, bundled tools, sandbox access, signing, or app lifecycle behavior.
@@ -17,11 +19,13 @@ Run this checklist after changes that touch ripping, bundled tools, sandbox acce
 
 ## Release Track
 
-SwiftRip is not intended to stay local-only. Release builds should use:
+SwiftRip public releases use:
 
-- Developer ID signing once an Apple Developer account is available.
+- Developer ID signing.
 - Notarization before distributing outside local development machines.
 - A documented release artifact, separate from local Debug builds.
+- Architecture-specific DMGs for Apple Silicon and Intel.
+- Architecture-specific Sparkle update feeds.
 
 ## DMG Release Packaging
 

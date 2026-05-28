@@ -23,9 +23,15 @@ It bundles the required ripping tools, checks that they are present before start
 
 The unit test suite covers DVD selection, HandBrake arguments, progress parsing, preflight checks, rip lifecycle behavior, cancellation cleanup, logging, and localization formatting. CI runs those unit tests; macOS UI tests remain available for local interactive checks.
 
-## Release and maintenance
+## Project docs
 
-See [Docs/ReleaseAndMaintenance.md](Docs/ReleaseAndMaintenance.md) for the smoke test checklist, signing release track, and bundled HandBrakeCLI/libdvdcss update policy.
+- [Release checklist](RELEASE_CHECKLIST.md)
+- [Release and maintenance notes](Docs/ReleaseAndMaintenance.md)
+- [Security policy](SECURITY.md)
+- [Support guide](SUPPORT.md)
+- [Legal notes](LEGAL.md)
+- [Source offer](SOURCE_OFFER.md)
+- [Third-party notices](THIRD_PARTY_NOTICES.md)
 
 ## License notes
 
