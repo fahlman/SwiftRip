@@ -104,17 +104,20 @@ SwiftRip should consume reproducible artifacts from the separate `fahlman/SwiftR
 
 To update HandBrakeCLI or libdvdcss:
 
-1. Update the version inputs in the SwiftRip-Tools repository build scripts.
-2. Rebuild and package the Apple Silicon artifacts in the SwiftRip-Tools repository.
-3. Rebuild and package the Intel artifacts in the SwiftRip-Tools repository if updating Intel support.
-4. Confirm the HandBrake patch still applies cleanly.
-5. Publish the packages to the SwiftRip-Tools GitHub release.
-6. Update the manifest copies in this repository if package names, URLs, versions, or checksums changed.
-7. Run `SwiftRip-Tools/Scripts/fetch-swiftrip-tools.zsh` for Apple Silicon.
-8. Run `SwiftRip-Tools/Scripts/fetch-swiftrip-tools.zsh --arch x86_64` for Intel.
-9. Run the app test suite.
-10. Run the smoke test above with a real DVD.
-11. Update bundled license notices if upstream license text or included components changed.
+1. Review the upstream update issue created by the SwiftRip-Tools scheduled check.
+2. Sync the matching SwiftRip source pin repository: `SwiftRip-HandBrake` or `SwiftRip-libdvdcss`.
+3. Create a new protected SwiftRip source tag for the chosen upstream version.
+4. Update the version and commit pins in the SwiftRip-Tools repository build scripts.
+5. Rebuild and package the Apple Silicon artifacts in the SwiftRip-Tools repository.
+6. Rebuild and package the Intel artifacts in the SwiftRip-Tools repository if updating Intel support.
+7. Confirm the HandBrake patch still applies cleanly if HandBrake changed.
+8. Publish the packages to the SwiftRip-Tools GitHub release.
+9. Update the manifest copies in this repository if package names, URLs, versions, or checksums changed.
+10. Run `SwiftRip-Tools/Scripts/fetch-swiftrip-tools.zsh` for Apple Silicon.
+11. Run `SwiftRip-Tools/Scripts/fetch-swiftrip-tools.zsh --arch x86_64` for Intel.
+12. Run the app test suite.
+13. Run the smoke test above with a real DVD.
+14. Update bundled license notices if upstream license text or included components changed.
 
 SwiftRip-Tools packages are pinned by architecture:
 

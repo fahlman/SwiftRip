@@ -2,8 +2,8 @@
 
 ## Completed
 
-- Bundled ARM64 `HandBrakeCLI` inside the app.
-- Bundled ARM64 `libdvdcss.2.dylib` inside the app.
+- Bundled architecture-specific `HandBrakeCLI` inside the app.
+- Bundled architecture-specific `libdvdcss.2.dylib` inside the app.
 - Added the SwiftRip HandBrake preset.
 - Verified the bundled tools run without `/opt/local` runtime dependencies.
 - Added DVD volume detection for mounted discs with a `VIDEO_TS` folder.

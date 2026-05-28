@@ -10,6 +10,8 @@ This file is intended to document the major third-party components used by Swift
 - Project: HandBrake
 - Website: https://handbrake.fr/
 - Source: https://github.com/HandBrake/HandBrake
+- SwiftRip source pin: https://github.com/fahlman/SwiftRip-HandBrake/tree/swiftrip-handbrake-1.11.1
+- Current SwiftRip-Tools target version: 1.11.1
 - License: GNU General Public License version 2
 - Use in SwiftRip: SwiftRip invokes HandBrakeCLI to scan and encode DVD/video sources.
 
@@ -23,8 +25,9 @@ When SwiftRip distributes a bundled HandBrakeCLI binary, SwiftRip must also prov
 - Project: VideoLAN libdvdcss
 - Website: https://www.videolan.org/developers/libdvdcss.html
 - Source: https://code.videolan.org/videolan/libdvdcss
-- License: GNU General Public License
+- SwiftRip source pin: https://github.com/fahlman/SwiftRip-libdvdcss/tree/swiftrip-libdvdcss-1.5.0
 - Current SwiftRip-Tools target version: 1.5.0
+- License: GNU General Public License
 - Use in SwiftRip: SwiftRip-Tools builds libdvdcss so DVD CSS access can be provided by a bundled app-local dynamic library instead of relying on Homebrew, MacPorts, `/usr/local/lib`, `/opt/local/lib`, or other user-installed runtime libraries.
 
 libdvdcss is not authored by the SwiftRip project. libdvdcss remains under the copyright and license notices of the VideoLAN project and its contributors.

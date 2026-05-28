@@ -42,16 +42,16 @@
 		9412AF112FB95040004E17B6 /* SwiftRipTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftRipTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9412AF1B2FB95040004E17B6 /* SwiftRipUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SwiftRipUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		94B378792FBAC0A400D4C4C8 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		94FC321B2FBA2CA200B23D1F /* ArtifactLayout.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ArtifactLayout.md; sourceTree = "<group>"; };
-		94FC321D2FBA2CA200B23D1F /* build-swiftrip-tools.zsh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-swiftrip-tools.zsh"; sourceTree = "<group>"; };
+		94C1A0022FC9000000000001 /* swiftrip-tools.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "swiftrip-tools.json"; sourceTree = "<group>"; };
+		94C1A0032FC9000000000001 /* swiftrip-tools-x86_64.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "swiftrip-tools-x86_64.json"; sourceTree = "<group>"; };
+		94C1A0042FC9000000000001 /* fetch-swiftrip-tools.zsh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "fetch-swiftrip-tools.zsh"; sourceTree = "<group>"; };
+		94C1A0052FC9000000000001 /* verify-swiftrip-tools.zsh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "verify-swiftrip-tools.zsh"; sourceTree = "<group>"; };
+		94C1A0072FC9000000000001 /* common.zsh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = common.zsh; sourceTree = "<group>"; };
 		94FC32202FBA2CA200B23D1F /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		94FC32252FBA2D5B00B23D1F /* build-libdvdcss.zsh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-libdvdcss.zsh"; sourceTree = "<group>"; };
 		94FC32272FBA3D3700B23D1F /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		94FC32292FBA3F1600B23D1F /* LEGAL.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LEGAL.md; sourceTree = "<group>"; };
 		94FC322A2FBA3F1600B23D1F /* SOURCE_OFFER.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SOURCE_OFFER.md; sourceTree = "<group>"; };
 		94FC322B2FBA3F1600B23D1F /* THIRD_PARTY_NOTICES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = THIRD_PARTY_NOTICES.md; sourceTree = "<group>"; };
-		94FC322C2FBA517E00B23D1F /* build-handbrakecli.zsh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "build-handbrakecli.zsh"; sourceTree = "<group>"; };
-		94FC322D2FBA574000B23D1F /* HandBrakeCLI */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = HandBrakeCLI; sourceTree = "<group>"; };
 		94FC32312FBA6B9600B23D1F /* ROADMAP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ROADMAP.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -133,57 +133,41 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		94FC321A2FBA2CA200B23D1F /* Artifacts */ = {
+		94C1A0012FC9000000000001 /* Manifest */ = {
 			isa = PBXGroup;
 			children = (
-				94FC322E2FBA574000B23D1F /* macos-arm64 */,
+				94C1A0032FC9000000000001 /* swiftrip-tools-x86_64.json */,
+				94C1A0022FC9000000000001 /* swiftrip-tools.json */,
 			);
-			path = Artifacts;
+			path = Manifest;
 			sourceTree = "<group>";
 		};
-		94FC321C2FBA2CA200B23D1F /* Notes */ = {
+		94C1A0062FC9000000000001 /* lib */ = {
 			isa = PBXGroup;
 			children = (
-				94FC321B2FBA2CA200B23D1F /* ArtifactLayout.md */,
+				94C1A0072FC9000000000001 /* common.zsh */,
 			);
-			path = Notes;
+			path = lib;
 			sourceTree = "<group>";
 		};
 		94FC321E2FBA2CA200B23D1F /* Scripts */ = {
 			isa = PBXGroup;
 			children = (
-				94FC322C2FBA517E00B23D1F /* build-handbrakecli.zsh */,
-				94FC321D2FBA2CA200B23D1F /* build-swiftrip-tools.zsh */,
-				94FC32252FBA2D5B00B23D1F /* build-libdvdcss.zsh */,
+				94C1A0042FC9000000000001 /* fetch-swiftrip-tools.zsh */,
+				94C1A0052FC9000000000001 /* verify-swiftrip-tools.zsh */,
+				94C1A0062FC9000000000001 /* lib */,
 			);
 			path = Scripts;
-			sourceTree = "<group>";
-		};
-		94FC321F2FBA2CA200B23D1F /* Source */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Source;
 			sourceTree = "<group>";
 		};
 		94FC32212FBA2CA200B23D1F /* SwiftRip-Tools */ = {
 			isa = PBXGroup;
 			children = (
-				94FC321A2FBA2CA200B23D1F /* Artifacts */,
-				94FC321C2FBA2CA200B23D1F /* Notes */,
+				94C1A0012FC9000000000001 /* Manifest */,
 				94FC321E2FBA2CA200B23D1F /* Scripts */,
-				94FC321F2FBA2CA200B23D1F /* Source */,
 				94FC32202FBA2CA200B23D1F /* README.md */,
 			);
 			path = "SwiftRip-Tools";
-			sourceTree = "<group>";
-		};
-		94FC322E2FBA574000B23D1F /* macos-arm64 */ = {
-			isa = PBXGroup;
-			children = (
-				94FC322D2FBA574000B23D1F /* HandBrakeCLI */,
-			);
-			path = "macos-arm64";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

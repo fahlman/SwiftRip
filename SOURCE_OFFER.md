@@ -28,7 +28,13 @@ Major third-party components are listed in `THIRD_PARTY_NOTICES.md`.
 
 ## libdvdcss source and build process
 
-SwiftRip-Tools builds libdvdcss from VideoLAN source.
+SwiftRip-Tools builds libdvdcss from a SwiftRip-controlled source tag that points at VideoLAN upstream source.
+
+The pinned source tag is:
+
+```text
+https://github.com/fahlman/SwiftRip-libdvdcss/tree/swiftrip-libdvdcss-1.5.0
+```
 
 The build script is:
 
@@ -53,13 +59,19 @@ Generated source archives, extracted source trees, build folders, and binary art
 
 ## HandBrakeCLI source and build process
 
-SwiftRip uses HandBrakeCLI as the encoding backend. The exact HandBrake source version, project patch set, build script, configuration, and packaged artifacts are maintained in the public SwiftRip-Tools repository.
+SwiftRip uses HandBrakeCLI as the encoding backend. SwiftRip's app-specific HandBrake source pin is tracked in:
+
+```text
+https://github.com/fahlman/SwiftRip-HandBrake/tree/swiftrip-handbrake-1.11.1
+```
+
+The exact HandBrake source version, project patch set, build script, configuration, and packaged artifacts are maintained in the public SwiftRip-Tools repository.
 
 ## Binary distribution requirement
 
 If SwiftRip is distributed in binary form with bundled GPL-covered tools or libraries, recipients must be able to obtain the corresponding source code for the exact shipped binaries.
 
-The preferred approach for this project is to make the corresponding app source available through the public SwiftRip repository and the corresponding bundled-tool source/build scripts available through the public SwiftRip-Tools repository. If binary releases are published separately, each release should identify the exact source revision and third-party component versions used to build it.
+The preferred approach for this project is to make the corresponding app source available through the public SwiftRip repository, the bundled-tool source/build scripts available through the public SwiftRip-Tools repository, and the app-specific third-party source pins available through the public SwiftRip-HandBrake and SwiftRip-libdvdcss repositories. If binary releases are published separately, each release should identify the exact source revision and third-party component versions used to build it.
 
 ## Written offer fallback
 
