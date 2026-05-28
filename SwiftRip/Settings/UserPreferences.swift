@@ -11,6 +11,7 @@ struct UserPreferences: Equatable, Sendable {
     var shouldRevealCompletedFile = true
     var shouldAutoEjectAfterSuccessfulRip = false
     var outputFilenameFormat: OutputFilenameFormat = .titleCase
+    var usageNoticeAcknowledgedVersion = 0
 }
 
 protocol UserPreferencesStoring {
@@ -24,6 +25,7 @@ struct UserDefaultsUserPreferencesStore: UserPreferencesStoring {
     private static let revealCompletedFileKey = "revealCompletedFile"
     private static let autoEjectAfterSuccessfulRipKey = "autoEjectAfterSuccessfulRip"
     private static let outputFilenameFormatKey = "outputFilenameFormat"
+    private static let usageNoticeAcknowledgedVersionKey = "usageNoticeAcknowledgedVersion"
 
     let userDefaults: UserDefaults
 
@@ -42,7 +44,8 @@ struct UserDefaultsUserPreferencesStore: UserPreferencesStoring {
                 forKey: Self.autoEjectAfterSuccessfulRipKey,
                 defaultValue: false
             ),
-            outputFilenameFormat: outputFilenameFormat(from: userDefaults)
+            outputFilenameFormat: outputFilenameFormat(from: userDefaults),
+            usageNoticeAcknowledgedVersion: userDefaults.integer(forKey: Self.usageNoticeAcknowledgedVersionKey)
         )
     }
 
@@ -52,6 +55,7 @@ struct UserDefaultsUserPreferencesStore: UserPreferencesStoring {
         userDefaults.set(preferences.shouldRevealCompletedFile, forKey: Self.revealCompletedFileKey)
         userDefaults.set(preferences.shouldAutoEjectAfterSuccessfulRip, forKey: Self.autoEjectAfterSuccessfulRipKey)
         userDefaults.set(preferences.outputFilenameFormat.rawValue, forKey: Self.outputFilenameFormatKey)
+        userDefaults.set(preferences.usageNoticeAcknowledgedVersion, forKey: Self.usageNoticeAcknowledgedVersionKey)
     }
 
     private func completionSound(from userDefaults: UserDefaults) -> CompletionSound {

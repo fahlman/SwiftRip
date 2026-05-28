@@ -89,6 +89,10 @@ final class RipViewModel {
         coordinator.needsOutputDirectoryPermission
     }
 
+    var hasAcknowledgedCurrentUsageNotice: Bool {
+        coordinator.hasAcknowledgedCurrentUsageNotice
+    }
+
     var defaultLogDirectory: URL {
         coordinator.defaultLogDirectory
     }
@@ -108,6 +112,10 @@ final class RipViewModel {
 
     func setOutputDirectory(_ url: URL) throws {
         try coordinator.setOutputDirectory(url)
+    }
+
+    func acknowledgeCurrentUsageNotice() {
+        coordinator.acknowledgeCurrentUsageNotice()
     }
 
     func selectDVD(_ dvd: DVDVolume, outputURL: URL? = nil, statusMessage: String? = nil) {

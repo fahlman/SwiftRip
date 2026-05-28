@@ -88,7 +88,9 @@ final class SwiftRipUITests: XCTestCase {
     ]) -> XCUIApplication {
         let app = XCUIApplication()
         var launchEnvironment = [
-            "SWIFTRIP_APP_SETTINGS_SUITE": "SwiftRipUITests.\(UUID().uuidString)"
+            "SWIFTRIP_APP_SETTINGS_SUITE": "SwiftRipUITests.\(UUID().uuidString)",
+            "SWIFTRIP_SUPPRESS_USAGE_NOTICE": "1",
+            "SWIFTRIP_SUPPRESS_FIRST_RUN_OUTPUT_PROMPT": "1"
         ]
         launchEnvironment.merge(environment) { _, newValue in newValue }
 

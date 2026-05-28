@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var viewModel = RipViewModel()
     @State private var interruptionCoordinator = RipInterruptionCoordinator.shared
     @State private var isDVDPickerPresented = false
+    @State private var hasPresentedUsageNotice = false
     @State private var hasPresentedInitialOutputDirectoryPrompt = false
     @State private var hasRunLaunchAutomation = false
 
@@ -58,6 +59,7 @@ struct ContentView: View {
             interruptionCoordinator.isRipActive = viewModel.isEncoding
             Task { @MainActor in
                 await Task.yield()
+                guard presentUsageNoticeIfNeeded() else { return }
                 presentInitialOutputDirectoryPromptIfNeeded()
                 runLaunchAutomationIfNeeded()
             }
@@ -125,6 +127,22 @@ struct ContentView: View {
                 NSWorkspace.shared.activateFileViewerSelecting([outputURL])
             }
         }
+    }
+
+    private func presentUsageNoticeIfNeeded() -> Bool {
+        guard !hasPresentedUsageNotice else { return true }
+        guard !FirstRunUsageNoticePrompter.isSuppressed() else { return true }
+        guard !viewModel.hasAcknowledgedCurrentUsageNotice else { return true }
+
+        hasPresentedUsageNotice = true
+
+        guard AppAlertPresenter.showUsageNotice() else {
+            NSApp.terminate(nil)
+            return false
+        }
+
+        viewModel.acknowledgeCurrentUsageNotice()
+        return true
     }
 
     private func presentInitialOutputDirectoryPromptIfNeeded() {
@@ -229,6 +247,23 @@ struct ContentView: View {
 
     private var mainWindowHeight: CGFloat {
         viewModel.isEncoding ? SwiftRipLayout.MainWindow.encodingHeight : SwiftRipLayout.MainWindow.height
+    }
+}
+
+private enum FirstRunUsageNoticePrompter {
+    static func isSuppressed(
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        arguments: [String] = ProcessInfo.processInfo.arguments
+    ) -> Bool {
+        if AppLaunchConfiguration.isRunningUnderXCTest(environment: environment, arguments: arguments) {
+            return true
+        }
+
+        return AppLaunchConfiguration.isEnabled(
+            "SWIFTRIP_SUPPRESS_USAGE_NOTICE",
+            environment: environment,
+            arguments: arguments
+        )
     }
 }
 
