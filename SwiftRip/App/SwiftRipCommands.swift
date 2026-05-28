@@ -38,6 +38,8 @@ struct SwiftRipCommands: Commands {
         CommandGroup(replacing: .pasteboard) {}
         CommandGroup(replacing: .toolbar) {}
         CommandGroup(replacing: .sidebar) {}
+        CommandGroup(replacing: .windowSize) {}
+        CommandGroup(replacing: .windowArrangement) {}
 
         CommandMenu(AppStrings.ripMenuTitle) {
             Button(AppStrings.ripTitle) {
