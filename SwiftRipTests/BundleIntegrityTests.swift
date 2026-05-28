@@ -26,6 +26,12 @@ struct BundleIntegrityTests {
         #expect(infoDictionary["SUFeedURL"] as? String == "https://fahlman.github.io/SwiftRip/appcast-arm64.xml")
     }
 
+    @Test func appBundleDeclaresMacAppCategory() throws {
+        let infoDictionary = try #require(Bundle.main.infoDictionary)
+
+        #expect(infoDictionary["LSApplicationCategoryType"] as? String == "public.app-category.video")
+    }
+
     @Test func bundledToolsAndPresetExist() {
         let configuration = RipConfiguration.production
         let fileManager = FileManager.default
