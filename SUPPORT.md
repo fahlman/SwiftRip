@@ -5,7 +5,7 @@ SwiftRip support happens through GitHub issues for now. The project is small, so
 ## Before Opening an Issue
 
 - Install the latest public SwiftRip release.
-- Confirm your Mac is running a supported macOS version. SwiftRip currently targets macOS 15.7 or later.
+- Confirm your Mac meets the minimum macOS version listed on the latest release.
 - Confirm the disc is a DVD with a `VIDEO_TS` folder.
 - Confirm the output folder was selected through SwiftRip, not only typed or copied from another app.
 - Try a second disc if possible.

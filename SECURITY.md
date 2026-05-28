@@ -2,6 +2,8 @@
 
 SwiftRip is a sandboxed macOS app that bundles command-line ripping tools and publishes signed, notarized, architecture-specific DMGs with Sparkle update feeds. Security reports are welcome and should be handled privately until there is a fix or a clear mitigation.
 
+The release checklist is the source of truth for release artifact verification. This policy focuses on vulnerability reporting, security expectations, and secret handling.
+
 ## Supported Versions
 
 | Version | Security support |
@@ -71,7 +73,7 @@ Secrets should not be committed to the repository. This includes:
 - GitHub tokens.
 - Sparkle private keys.
 
-Release notarization should use a keychain profile such as `SwiftRip Notary`; scripts should not accept Apple account passwords on the command line.
+Release credentials should be stored in the Keychain and referenced by profile. Scripts should not accept Apple account passwords on the command line.
 
 ## Out of Scope
 

@@ -106,6 +106,7 @@ The expected public artifacts are:
 
 ## 8. Check Source and License Availability
 
+- If HandBrakeCLI or libdvdcss changed, follow [`Docs/BundledTools.md`](Docs/BundledTools.md).
 - Confirm `THIRD_PARTY_NOTICES.md` lists the exact HandBrake and libdvdcss versions shipped.
 - Confirm `SOURCE_OFFER.md` points to the matching SwiftRip, SwiftRip-Tools, SwiftRip-HandBrake, and SwiftRip-libdvdcss sources.
 - Confirm SwiftRip-Tools release assets and checksums match the manifests consumed by this repository.

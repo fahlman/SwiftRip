@@ -26,12 +26,14 @@ The unit test suite covers DVD selection, HandBrake arguments, progress parsing,
 ## Project docs
 
 - [Release checklist](RELEASE_CHECKLIST.md)
-- [Release and maintenance notes](Docs/ReleaseAndMaintenance.md)
+- [Bundled tool maintenance](Docs/BundledTools.md)
 - [Security policy](SECURITY.md)
 - [Support guide](SUPPORT.md)
 - [Legal notes](LEGAL.md)
 - [Source offer](SOURCE_OFFER.md)
 - [Third-party notices](THIRD_PARTY_NOTICES.md)
+
+Process details intentionally live in one place: release steps in the release checklist, bundled tool updates in the bundled tool maintenance note, vulnerability handling in the security policy, and user support intake in the support guide.
 
 ## License notes
 
