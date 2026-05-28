@@ -26,7 +26,7 @@ struct SwiftRipCommands: Commands {
             }
         }
 
-        CommandGroup(replacing: .newItem) {
+        CommandGroup(after: .newItem) {
             Button(AppStrings.chooseDVDTitle) {
                 ripCommandActions?.chooseDVD()
             }
