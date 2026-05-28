@@ -157,7 +157,7 @@ struct SettingsView: View {
                 .swiftRipSettingsLabel()
                 .frame(width: SwiftRipLayout.SettingsWindow.labelWidth, alignment: .trailing)
 
-            Picker("", selection: $draft.outputFilenameFormat) {
+            Picker(AppStrings.settingsFilenameFormatTitle, selection: $draft.outputFilenameFormat) {
                 ForEach(OutputFilenameFormat.allCases) { format in
                     Text(format.title)
                         .tag(format)
@@ -176,7 +176,7 @@ struct SettingsView: View {
                 .swiftRipSettingsLabel()
                 .frame(width: SwiftRipLayout.SettingsWindow.labelWidth, alignment: .trailing)
 
-            Picker("", selection: $draft.completionSound) {
+            Picker(AppStrings.settingsCompletionSoundTitle, selection: $draft.completionSound) {
                 ForEach(CompletionSound.allCases) { sound in
                     Text(sound.title)
                         .tag(sound)

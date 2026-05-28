@@ -67,9 +67,9 @@ final class RipCoordinator {
         var logOutcome: String {
             switch self {
             case .completed:
-                return "Completed"
+                return AppStrings.ripLogOutcomeCompleted
             case .failed, .outputValidationFailed:
-                return "Failed"
+                return AppStrings.ripLogOutcomeFailed
             }
         }
     }
@@ -308,12 +308,12 @@ final class RipCoordinator {
         activeLogWriter = logWriter
         appendLogWriteErrorIfNeeded(await logWriter.start(log: plan.session.log))
 
-        _ = await appendActiveLogBlankLine("SwiftRip: Selected DVD: \(input.name)")
-        _ = await appendActiveLogLine("SwiftRip: Output file: \(plan.request.outputURL.path)")
+        _ = await appendActiveLogBlankLine(AppStrings.ripLogSelectedDVD(input.name))
+        _ = await appendActiveLogLine(AppStrings.ripLogOutputFile(plan.request.outputURL.path))
     }
 
     private func beginEncoding(_ selectedDVD: DVDVolume) async {
-        _ = await appendActiveLogBlankLine("SwiftRip: Started ripping \(selectedDVD.name)")
+        _ = await appendActiveLogBlankLine(AppStrings.ripLogStartedRipping(selectedDVD.name))
         updateState { $0.apply(.beginEncoding(statusMessage: AppStrings.ripping(selectedDVD.name))) }
     }
 
@@ -376,13 +376,13 @@ final class RipCoordinator {
         switch outcome {
         case .completed:
             updateState { $0.mutateActiveRip { $0.protectCompletedOutput() } }
-            _ = await appendActiveLogBlankLine("SwiftRip: Rip completed successfully")
-            _ = await appendActiveLogLine("Completed output protected from cancellation cleanup: \(outputURL.path)")
+            _ = await appendActiveLogBlankLine(AppStrings.ripLogRipCompletedSuccessfully())
+            _ = await appendActiveLogLine(AppStrings.ripLogCompletedOutputProtected(outputURL.path))
         case .failed:
-            _ = await appendActiveLogBlankLine("SwiftRip: Rip failed; output preserved for inspection")
-            _ = await appendActiveLogLine("Output preserved for inspection: \(outputURL.path)")
+            _ = await appendActiveLogBlankLine(AppStrings.ripLogRipFailedOutputPreserved())
+            _ = await appendActiveLogLine(AppStrings.ripLogOutputPreserved(outputURL.path))
         case .outputValidationFailed(let message):
-            _ = await appendActiveLogBlankLine("SwiftRip: Output validation failed")
+            _ = await appendActiveLogBlankLine(AppStrings.ripLogOutputValidationFailed())
             _ = await appendActiveLogLine(message)
         }
     }
@@ -471,9 +471,11 @@ final class RipCoordinator {
 
         do {
             try environment.fileManager.removeItem(at: url)
-            appendActiveLogBlankLineSynchronously("Deleted incomplete output file: \(url.path)")
+            appendActiveLogBlankLineSynchronously(AppStrings.ripLogDeletedIncompleteOutputFile(url.path))
         } catch {
-            appendActiveLogBlankLineSynchronously("Could not delete incomplete output file: \(error.localizedDescription)")
+            appendActiveLogBlankLineSynchronously(
+                AppStrings.ripLogCouldNotDeleteIncompleteOutputFile(error.localizedDescription)
+            )
         }
     }
 
@@ -486,14 +488,14 @@ final class RipCoordinator {
             appendActiveLogExitCodeSynchronously(exitCode)
         }
 
-        appendActiveLogBlankLineSynchronously("SwiftRip: User requested stop")
+        appendActiveLogBlankLineSynchronously(AppStrings.ripLogUserRequestedStop())
 
         if activeRip.shouldDeleteOutputOnCancel {
             deleteIncompleteOutputFile(at: activeRip.outputURL)
         }
 
-        appendActiveLogBlankLineSynchronously("Rip stopped by user.")
-        appendActiveLogOutcomeSynchronously("Canceled")
+        appendActiveLogBlankLineSynchronously(AppStrings.ripLogRipStoppedByUser)
+        appendActiveLogOutcomeSynchronously(AppStrings.ripLogOutcomeCanceled)
         updateState { $0.apply(.markCanceled(statusMessage: AppStrings.ripStopped)) }
     }
 
@@ -510,7 +512,7 @@ final class RipCoordinator {
 
     private func savePreflightFailure(_ message: String) async {
         let lineError = await appendActiveLogLine(message)
-        let outcomeError = await appendActiveLogOutcome("Preflight failed")
+        let outcomeError = await appendActiveLogOutcome(AppStrings.ripLogOutcomePreflightFailed)
         updateState { $0.apply(.markFailed(statusMessage: "\(message) \(AppStrings.logSaved(to: activeLogPath))")) }
         appendLogWriteErrorIfNeeded(lineError ?? outcomeError)
     }

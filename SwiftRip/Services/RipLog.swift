@@ -6,7 +6,6 @@
 import Foundation
 
 struct RipLog: Sendable {
-    private static let fallbackDVDName = "DVD"
     private static let timestampFormat = "yyyy-MM-dd-HHmmss"
 
     let url: URL
@@ -48,7 +47,7 @@ struct RipLog: Sendable {
             .filter { !$0.isEmpty }
             .joined(separator: "-")
 
-        let fileName = "\(safeName.isEmpty ? fallbackDVDName : safeName)-\(formatter.string(from: Date())).log"
+        let fileName = "\(safeName.isEmpty ? AppStrings.ripLogFallbackDVDName : safeName)-\(formatter.string(from: Date())).log"
         return directoryURL.appendingPathComponent(fileName)
     }
 
@@ -70,15 +69,15 @@ struct RipLog: Sendable {
 
     @discardableResult
     mutating func appendExitCode(_ exitCode: Int32) -> String {
-        appendBlankLine("Exit code: \(exitCode)")
+        appendBlankLine(AppStrings.ripLogExitCode(exitCode))
     }
 
     @discardableResult
     mutating func appendOutcome(_ outcome: String, finishedAt: Date = Date()) -> String {
         let output = """
-        Outcome: \(outcome)
-        Finished: \(Self.displayFormatter.string(from: finishedAt))
-        Elapsed: \(Self.elapsedText(from: startedAt, to: finishedAt))
+        \(AppStrings.ripLogOutcome(outcome))
+        \(AppStrings.ripLogFinished(Self.displayFormatter.string(from: finishedAt)))
+        \(AppStrings.ripLogElapsed(Self.elapsedText(from: startedAt, to: finishedAt)))
         """
             + "\n"
         return append(output)
@@ -101,7 +100,7 @@ struct RipLog: Sendable {
     }
 
     private static func elapsedText(from startDate: Date, to endDate: Date) -> String {
-        String(format: "%.2f seconds", max(endDate.timeIntervalSince(startDate), 0))
+        AppStrings.ripLogElapsedSeconds(max(endDate.timeIntervalSince(startDate), 0))
     }
 
     private static func header(
@@ -114,16 +113,16 @@ struct RipLog: Sendable {
         startedAt: Date
     ) -> String {
         """
-        \(RipConfiguration.appName) Log
-        App: \(RipConfiguration.appName) \(appVersionText)
-        Started: \(displayFormatter.string(from: startedAt))
-        DVD: \(input.name)
-        Input: \(input.path)
-        Output: \(outputURL.path)
-        HandBrakeCLI: \(executablePath)
-        libdvdcss: \(libdvdcssPath)
-        Preset: \(presetURL.path)
-        Command: \(executablePath) \(arguments.joined(separator: " "))
+        \(AppStrings.ripLogTitle(appName: RipConfiguration.appName))
+        \(AppStrings.ripLogApp(appName: RipConfiguration.appName, version: appVersionText))
+        \(AppStrings.ripLogStarted(displayFormatter.string(from: startedAt)))
+        \(AppStrings.ripLogDVD(input.name))
+        \(AppStrings.ripLogInput(input.path))
+        \(AppStrings.ripLogOutput(outputURL.path))
+        \(AppStrings.ripLogHandBrakeCLI(executablePath))
+        \(AppStrings.ripLogLibdvdcss(libdvdcssPath))
+        \(AppStrings.ripLogPreset(presetURL.path))
+        \(AppStrings.ripLogCommand(executablePath: executablePath, arguments: arguments.joined(separator: " ")))
 
         """
     }
@@ -139,9 +138,9 @@ struct RipLog: Sendable {
         case let (.some(version), .none):
             return version
         case let (.none, .some(build)):
-            return "build \(build)"
+            return AppStrings.build(build)
         case (.none, .none):
-            return "version unknown"
+            return AppStrings.versionUnknown
         }
     }
 }

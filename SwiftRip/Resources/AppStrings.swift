@@ -25,7 +25,6 @@ enum AppStrings {
     nonisolated static let progressAccessibilityLabel = localized("Rip progress")
     nonisolated static let initialStatusMessage = localized("Choose a DVD and output file to begin.")
     nonisolated static let fallbackMovieName = localized("Movie")
-    nonisolated static let readyStatusPrefix = localized("Ready to rip ")
     nonisolated static let aboutDescription = localized("A small macOS DVD ripping tool built around bundled ripping tools.")
     nonisolated static let bundledToolsTitle = localized("Bundled Tools")
     nonisolated static let licensesTitle = localized("Licenses")
@@ -58,6 +57,14 @@ enum AppStrings {
     nonisolated static let filenameFormatTitleCaseTitle = localized("Movie Name.m4v")
     nonisolated static let filenameFormatOriginalNameTitle = localized("MOVIE_NAME.m4v")
     nonisolated static let filenameFormatDatedTitleCaseTitle = localized("Movie Name - YYYY-MM-DD.m4v")
+    nonisolated static let ripLogOutcomeCompleted = localized("Completed")
+    nonisolated static let ripLogOutcomeFailed = localized("Failed")
+    nonisolated static let ripLogOutcomeCanceled = localized("Canceled")
+    nonisolated static let ripLogOutcomePreflightFailed = localized("Preflight failed")
+    nonisolated static let ripLogFallbackDVDName = localized("DVD")
+    nonisolated static let ripLogRipStoppedByUser = localized("Rip stopped by user.")
+    nonisolated static let ripNotificationCompletionErrorPrefix = localized("Could not show completion notification")
+    nonisolated static let ripNotificationFailureErrorPrefix = localized("Could not show failure notification")
 
     nonisolated static func aboutTitle(appName: String) -> String {
         String(format: localized("About %@"), appName)
@@ -96,6 +103,10 @@ enum AppStrings {
 
     nonisolated static func percentComplete(_ percent: Int) -> String {
         String(format: localized("%d percent"), percent)
+    }
+
+    nonisolated static func percentDisplay(_ percent: Int) -> String {
+        String(format: localized("%d%%"), percent)
     }
 
     nonisolated static func ripCompleteNotificationBody(fileName: String) -> String {
@@ -154,6 +165,118 @@ enum AppStrings {
 
     nonisolated static func outputFileNotReadable(_ path: String, errorDescription: String) -> String {
         String(format: localized("SwiftRip could not verify the output file at %@. %@"), path, errorDescription)
+    }
+
+    nonisolated static func ripLogTitle(appName: String) -> String {
+        String(format: localized("%@ Log"), appName)
+    }
+
+    nonisolated static func ripLogApp(appName: String, version: String) -> String {
+        String(format: localized("App: %@ %@"), appName, version)
+    }
+
+    nonisolated static func ripLogStarted(_ startedAt: String) -> String {
+        String(format: localized("Started: %@"), startedAt)
+    }
+
+    nonisolated static func ripLogDVD(_ dvdName: String) -> String {
+        String(format: localized("DVD: %@"), dvdName)
+    }
+
+    nonisolated static func ripLogInput(_ path: String) -> String {
+        String(format: localized("Input: %@"), path)
+    }
+
+    nonisolated static func ripLogOutput(_ path: String) -> String {
+        String(format: localized("Output: %@"), path)
+    }
+
+    nonisolated static func ripLogHandBrakeCLI(_ path: String) -> String {
+        String(format: localized("HandBrakeCLI: %@"), path)
+    }
+
+    nonisolated static func ripLogLibdvdcss(_ path: String) -> String {
+        String(format: localized("libdvdcss: %@"), path)
+    }
+
+    nonisolated static func ripLogPreset(_ path: String) -> String {
+        String(format: localized("Preset: %@"), path)
+    }
+
+    nonisolated static func ripLogCommand(executablePath: String, arguments: String) -> String {
+        String(format: localized("Command: %@ %@"), executablePath, arguments)
+    }
+
+    nonisolated static func ripLogExitCode(_ exitCode: Int32) -> String {
+        String(format: localized("Exit code: %d"), exitCode)
+    }
+
+    nonisolated static func ripLogOutcome(_ outcome: String) -> String {
+        String(format: localized("Outcome: %@"), outcome)
+    }
+
+    nonisolated static func ripLogFinished(_ finishedAt: String) -> String {
+        String(format: localized("Finished: %@"), finishedAt)
+    }
+
+    nonisolated static func ripLogElapsed(_ elapsed: String) -> String {
+        String(format: localized("Elapsed: %@"), elapsed)
+    }
+
+    nonisolated static func ripLogElapsedSeconds(_ seconds: Double) -> String {
+        String(format: localized("%.2f seconds"), seconds)
+    }
+
+    nonisolated static func ripLogSelectedDVD(_ dvdName: String) -> String {
+        String(format: localized("%@: Selected DVD: %@"), RipConfiguration.appName, dvdName)
+    }
+
+    nonisolated static func ripLogOutputFile(_ path: String) -> String {
+        String(format: localized("%@: Output file: %@"), RipConfiguration.appName, path)
+    }
+
+    nonisolated static func ripLogStartedRipping(_ dvdName: String) -> String {
+        String(format: localized("%@: Started ripping %@"), RipConfiguration.appName, dvdName)
+    }
+
+    nonisolated static func ripLogCompletedOutputProtected(_ path: String) -> String {
+        String(format: localized("Completed output protected from cancellation cleanup: %@"), path)
+    }
+
+    nonisolated static func ripLogOutputPreserved(_ path: String) -> String {
+        String(format: localized("Output preserved for inspection: %@"), path)
+    }
+
+    nonisolated static func ripLogRipCompletedSuccessfully() -> String {
+        String(format: localized("%@: Rip completed successfully"), RipConfiguration.appName)
+    }
+
+    nonisolated static func ripLogRipFailedOutputPreserved() -> String {
+        String(format: localized("%@: Rip failed; output preserved for inspection"), RipConfiguration.appName)
+    }
+
+    nonisolated static func ripLogOutputValidationFailed() -> String {
+        String(format: localized("%@: Output validation failed"), RipConfiguration.appName)
+    }
+
+    nonisolated static func ripLogDeletedIncompleteOutputFile(_ path: String) -> String {
+        String(format: localized("Deleted incomplete output file: %@"), path)
+    }
+
+    nonisolated static func ripLogCouldNotDeleteIncompleteOutputFile(_ errorDescription: String) -> String {
+        String(format: localized("Could not delete incomplete output file: %@"), errorDescription)
+    }
+
+    nonisolated static func ripLogUserRequestedStop() -> String {
+        String(format: localized("%@: User requested stop"), RipConfiguration.appName)
+    }
+
+    nonisolated static func handBrakeLaunchFailed(_ errorDescription: String) -> String {
+        String(format: localized("Failed to launch HandBrakeCLI: %@"), errorDescription)
+    }
+
+    nonisolated static func handBrakeOutputReadFailed(_ errorDescription: String) -> String {
+        String(format: localized("Could not read HandBrakeCLI output: %@"), errorDescription)
     }
 
     private nonisolated static func localized(_ key: String) -> String {

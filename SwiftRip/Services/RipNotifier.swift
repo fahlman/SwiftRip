@@ -50,7 +50,7 @@ struct SystemRipNotifier: RipNotifying {
         showNotification(
             title: AppStrings.ripCompleteNotificationTitle,
             body: AppStrings.ripCompleteNotificationBody(fileName: outputURL.lastPathComponent),
-            errorPrefix: "Could not show completion notification",
+            errorPrefix: AppStrings.ripNotificationCompletionErrorPrefix,
             logError: logError
         )
     }
@@ -67,7 +67,7 @@ struct SystemRipNotifier: RipNotifying {
         showNotification(
             title: AppStrings.ripFailedNotificationTitle,
             body: AppStrings.ripFailedNotificationBody(fileName: outputURL.lastPathComponent, exitCode: exitCode),
-            errorPrefix: "Could not show failure notification",
+            errorPrefix: AppStrings.ripNotificationFailureErrorPrefix,
             logError: logError
         )
     }
@@ -84,7 +84,7 @@ struct SystemRipNotifier: RipNotifying {
         showNotification(
             title: AppStrings.ripFailedNotificationTitle,
             body: message,
-            errorPrefix: "Could not show failure notification",
+            errorPrefix: AppStrings.ripNotificationFailureErrorPrefix,
             logError: logError
         )
     }

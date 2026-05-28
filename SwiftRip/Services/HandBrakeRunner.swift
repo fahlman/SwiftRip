@@ -156,7 +156,7 @@ struct ProcessHandBrakeRunner: HandBrakeRunning {
                 process.terminationHandler = nil
                 eventContinuation.yield(.output(HandBrakeOutput(
                     channel: .standardError,
-                    text: "Failed to launch HandBrakeCLI: \(error.localizedDescription)\n"
+                    text: "\(AppStrings.handBrakeLaunchFailed(error.localizedDescription))\n"
                 )))
                 processContinuation.resume(returning: HandBrakeResult(exitCode: -1))
             }
@@ -181,7 +181,7 @@ struct ProcessHandBrakeRunner: HandBrakeRunning {
         } catch {
             continuation.yield(.output(HandBrakeOutput(
                 channel: .standardError,
-                text: "Could not read HandBrakeCLI output: \(error.localizedDescription)\n"
+                text: "\(AppStrings.handBrakeOutputReadFailed(error.localizedDescription))\n"
             )))
         }
 

@@ -89,7 +89,7 @@ struct RipProgressSection: View {
                 .accessibilityValue(AppStrings.percentComplete(progressPercent))
                 .accessibilityIdentifier("ripProgress")
 
-            Text("\(progressPercent)%")
+            Text(AppStrings.percentDisplay(progressPercent))
                 .swiftRipProgressCaption()
                 .accessibilityHidden(true)
         }
