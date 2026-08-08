@@ -9,11 +9,20 @@ import Testing
 struct HandBrakeProgressParserTests {
 
     @Test func parsesProgressPercentage() {
-        let progress = HandBrakeProgressParser.progressValue(
+        let update = HandBrakeProgressParser.progressUpdate(
             from: "Encoding: task 1 of 1, 42.50 %"
         )
 
-        #expect(progress == 0.425)
+        #expect(update?.value == 0.425)
+        #expect(update?.remainingTime == nil)
+    }
+
+    @Test func parsesProgressETA() {
+        let update = HandBrakeProgressParser.progressUpdate(
+            from: "Encoding: task 1 of 1, 42.50 % (30.00 fps, avg 28.00 fps, ETA 01h02m03s)"
+        )
+
+        #expect(update == HandBrakeProgressUpdate(value: 0.425, remainingTime: 3_723))
     }
 
     @Test func parsesLastProgressWhenChunkContainsMultipleUpdates() {

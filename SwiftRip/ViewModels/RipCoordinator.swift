@@ -16,6 +16,7 @@ struct RipEnvironment {
     let ripNotifier: RipNotifying
     let dvdDeviceEjector: DVDDeviceEjecting
     let logDirectoryOverride: URL?
+    let dateProvider: @Sendable () -> Date
 
     static var production: RipEnvironment {
         RipEnvironment(
@@ -39,7 +40,8 @@ struct RipEnvironment {
         appSettings: AppSettings,
         ripNotifier: RipNotifying = SystemRipNotifier(),
         dvdDeviceEjector: DVDDeviceEjecting = WorkspaceDVDDeviceEjector(),
-        logDirectoryOverride: URL? = nil
+        logDirectoryOverride: URL? = nil,
+        dateProvider: @escaping @Sendable () -> Date = Date.init
     ) {
         self.configuration = configuration
         self.fileManager = fileManager
@@ -50,6 +52,7 @@ struct RipEnvironment {
         self.ripNotifier = ripNotifier
         self.dvdDeviceEjector = dvdDeviceEjector
         self.logDirectoryOverride = logDirectoryOverride
+        self.dateProvider = dateProvider
     }
 }
 
@@ -87,6 +90,7 @@ final class RipCoordinator {
     private var activeOutputDirectoryAccess: (any SecurityScopedResourceAccess)?
     private var activeLogWriter: (any RipLogWriting)?
     private var didFinalizeCancellation = false
+    private var encodingStartedAt: Date?
 
     init(environment: RipEnvironment = .production) {
         self.environment = environment
@@ -302,7 +306,12 @@ final class RipCoordinator {
         case .toolOutput(let output):
             await handleToolOutput(output)
         case .progressUpdated(let progress):
-            updateState { $0.apply(.updateProgress(progress)) }
+            updateState {
+                $0.apply(.updateProgress(
+                    value: progress.value,
+                    remainingTime: progress.remainingTime ?? estimatedRemainingTime(for: progress.value)
+                ))
+            }
         case .finished(let result):
             await finishRip(result, outputURL: outputURL, revealOutput: revealOutput)
         }
@@ -322,7 +331,17 @@ final class RipCoordinator {
 
     private func beginEncoding(_ selectedDVD: DVDVolume) async {
         _ = await appendActiveLogBlankLine(AppStrings.ripLogStartedRipping(selectedDVD.name))
+        encodingStartedAt = environment.dateProvider()
         updateState { $0.apply(.beginEncoding(statusMessage: AppStrings.ripping(selectedDVD.name))) }
+    }
+
+    private func estimatedRemainingTime(for progress: Double) -> TimeInterval? {
+        guard progress > 0.01, progress < 1, let encodingStartedAt else { return nil }
+
+        let elapsedTime = environment.dateProvider().timeIntervalSince(encodingStartedAt)
+        guard elapsedTime >= 10 else { return nil }
+
+        return elapsedTime * ((1 - progress) / progress)
     }
 
     private func handleToolOutput(_ output: RipToolOutput) async {
@@ -410,6 +429,7 @@ final class RipCoordinator {
         switch outcome {
         case .completed(let revealOutput):
             let statusMessage = AppStrings.done(outputPath: outputURL.path, logPath: activeLogPath)
+            encodingStartedAt = nil
             updateState { $0.apply(.markCompleted(statusMessage: statusMessage)) }
             clearDVDInputAccess()
             appendLogWriteErrorIfNeeded(logWriteError)
@@ -422,10 +442,12 @@ final class RipCoordinator {
         case .failed:
             notifyRipFailed(outputURL: outputURL, exitCode: exitCode)
             let statusMessage = AppStrings.handBrakeFailed(exitCode: exitCode, logPath: activeLogPath)
+            encodingStartedAt = nil
             updateState { $0.apply(.markFailed(statusMessage: statusMessage)) }
             appendLogWriteErrorIfNeeded(logWriteError)
         case .outputValidationFailed(let message):
             notifyRipFailed(outputURL: outputURL, message: message)
+            encodingStartedAt = nil
             updateState { $0.apply(.markFailed(statusMessage: "\(message) \(AppStrings.logSaved(to: activeLogPath))")) }
             appendLogWriteErrorIfNeeded(logWriteError)
         }
@@ -504,6 +526,7 @@ final class RipCoordinator {
 
         appendActiveLogBlankLineSynchronously(AppStrings.ripLogRipStoppedByUser)
         appendActiveLogOutcomeSynchronously(AppStrings.ripLogOutcomeCanceled)
+        encodingStartedAt = nil
         updateState { $0.apply(.markCanceled(statusMessage: AppStrings.ripStopped)) }
     }
 

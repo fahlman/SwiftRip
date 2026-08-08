@@ -14,6 +14,24 @@ struct RipCommandAvailability: Equatable, Sendable {
     let canRevealLog: Bool
 }
 
+struct RipProgress: Equatable, Sendable {
+    static let zero = RipProgress(value: 0)
+    static let complete = RipProgress(value: 1, remainingTime: 0)
+
+    let value: Double
+    let remainingTime: TimeInterval?
+
+    init(value: Double, remainingTime: TimeInterval? = nil) {
+        self.value = min(max(value, 0), 1)
+
+        if let remainingTime, remainingTime.isFinite, remainingTime >= 0 {
+            self.remainingTime = remainingTime
+        } else {
+            self.remainingTime = nil
+        }
+    }
+}
+
 enum RipLifecycleCommand: Sendable {
     case replaceMountedDVDs([DVDVolume])
     case selectDVD(dvd: DVDVolume, outputURL: URL, statusMessage: String)
@@ -22,7 +40,7 @@ enum RipLifecycleCommand: Sendable {
     case setStatusMessage(String)
     case prepareRipSession(RipSession, statusMessage: String)
     case beginEncoding(statusMessage: String)
-    case updateProgress(Double)
+    case updateProgress(value: Double, remainingTime: TimeInterval?)
     case markCompleted(statusMessage: String)
     case markFailed(statusMessage: String)
     case markCanceled(statusMessage: String)
@@ -34,7 +52,7 @@ struct RipLifecycleState: Sendable {
         case idle(statusMessage: String)
         case ready(dvd: DVDVolume, outputURL: URL, statusMessage: String)
         case preflighting(dvd: DVDVolume, outputURL: URL, statusMessage: String)
-        case ripping(dvd: DVDVolume, outputURL: URL, progress: Double, statusMessage: String)
+        case ripping(dvd: DVDVolume, outputURL: URL, progress: RipProgress, statusMessage: String)
         case completed(dvd: DVDVolume, outputURL: URL, logFileURL: URL?, statusMessage: String)
         case failed(dvd: DVDVolume, outputURL: URL, logFileURL: URL?, statusMessage: String)
         case canceled(dvd: DVDVolume, outputURL: URL, logFileURL: URL?, statusMessage: String)
@@ -111,9 +129,20 @@ struct RipLifecycleState: Sendable {
         case .idle, .ready, .preflighting, .failed, .canceled:
             return 0
         case let .ripping(_, _, progress, _):
-            return progress
+            return progress.value
         case .completed:
             return 1
+        }
+    }
+
+    var estimatedRemainingTime: TimeInterval? {
+        switch phase {
+        case let .ripping(_, _, progress, _):
+            return progress.remainingTime
+        case .completed:
+            return 0
+        case .idle, .ready, .preflighting, .failed, .canceled:
+            return nil
         }
     }
 
@@ -165,8 +194,8 @@ struct RipLifecycleState: Sendable {
             prepareRipSession(session, statusMessage: statusMessage)
         case .beginEncoding(let statusMessage):
             beginEncoding(statusMessage: statusMessage)
-        case .updateProgress(let value):
-            updateProgress(value)
+        case let .updateProgress(value, remainingTime):
+            updateProgress(value, remainingTime: remainingTime)
         case .markCompleted(let statusMessage):
             markCompleted(statusMessage: statusMessage)
         case .markFailed(let statusMessage):
@@ -231,12 +260,22 @@ struct RipLifecycleState: Sendable {
 
     mutating func beginEncoding(statusMessage: String) {
         guard let activeRip else { return }
-        phase = .ripping(dvd: activeRip.input, outputURL: activeRip.outputURL, progress: 0, statusMessage: statusMessage)
+        phase = .ripping(
+            dvd: activeRip.input,
+            outputURL: activeRip.outputURL,
+            progress: .zero,
+            statusMessage: statusMessage
+        )
     }
 
-    mutating func updateProgress(_ value: Double) {
+    mutating func updateProgress(_ value: Double, remainingTime: TimeInterval?) {
         guard case let .ripping(dvd, outputURL, _, statusMessage) = phase else { return }
-        phase = .ripping(dvd: dvd, outputURL: outputURL, progress: value, statusMessage: statusMessage)
+        phase = .ripping(
+            dvd: dvd,
+            outputURL: outputURL,
+            progress: RipProgress(value: value, remainingTime: remainingTime),
+            statusMessage: statusMessage
+        )
     }
 
     mutating func markCompleted(statusMessage: String) {

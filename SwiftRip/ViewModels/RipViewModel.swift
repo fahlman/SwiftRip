@@ -65,6 +65,10 @@ final class RipViewModel {
         state.progress
     }
 
+    var estimatedRemainingTime: TimeInterval? {
+        state.estimatedRemainingTime
+    }
+
     var canEjectCompletedDVD: Bool {
         state.canEjectCompletedDVD
     }

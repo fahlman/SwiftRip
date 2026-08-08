@@ -31,7 +31,7 @@ struct RipEngineTests {
         var progressValues: [Double] = []
         for await event in engine.events(for: request) {
             if case .progressUpdated(let progress) = event {
-                progressValues.append(progress)
+                progressValues.append(progress.value)
             }
         }
 

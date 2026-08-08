@@ -11,14 +11,9 @@ import SwiftUI
 struct SwiftRipApp: App {
 
     @NSApplicationDelegateAdaptor(SwiftRipAppDelegate.self) private var appDelegate
-    @Environment(\.openWindow) private var openWindow
     private let updaterController: SPUStandardUpdaterController
 
-    private static let aboutWindowID = "about-swiftrip"
-    private static let aboutTitle = AppStrings.aboutTitle(appName: RipConfiguration.appName)
-
     init() {
-        AppMenuCleaner.configureWindowBehavior()
         updaterController = SPUStandardUpdaterController(
             startingUpdater: true,
             updaterDelegate: nil,
@@ -27,47 +22,31 @@ struct SwiftRipApp: App {
     }
 
     var body: some Scene {
-        WindowGroup {
+        Window(RipConfiguration.appName, id: "main") {
             ContentView()
         }
         .defaultSize(
-            width: SwiftRipLayout.MainWindow.width,
-            height: SwiftRipLayout.MainWindow.height
+            width: SwiftRipLayout.MainWindow.defaultWidth,
+            height: SwiftRipLayout.MainWindow.defaultHeight
         )
-        .windowResizability(.contentSize)
         .defaultPosition(.center)
         .commands {
-            SwiftRipCommands(updaterController: updaterController) {
-                openWindow(id: Self.aboutWindowID)
-            }
+            SwiftRipCommands(updaterController: updaterController)
         }
 
         Settings {
             SettingsView()
         }
-
-        Window(Self.aboutTitle, id: Self.aboutWindowID) {
-            AboutSwiftRipView()
-        }
-        .commandsRemoved()
-        .windowResizability(.contentSize)
-        .defaultPosition(.center)
+        .defaultSize(
+            width: SwiftRipLayout.SettingsWindow.defaultWidth,
+            height: SwiftRipLayout.SettingsWindow.defaultHeight
+        )
+        .windowResizability(.contentMinSize)
     }
 }
 
 @MainActor
 final class SwiftRipAppDelegate: NSObject, NSApplicationDelegate {
-
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        AppMenuCleaner.removeUnusedMenus(from: NSApp.mainMenu)
-        DispatchQueue.main.async {
-            AppMenuCleaner.removeUnusedMenus(from: NSApp.mainMenu)
-        }
-    }
-
-    func applicationDidBecomeActive(_ notification: Notification) {
-        AppMenuCleaner.removeUnusedMenus(from: NSApp.mainMenu)
-    }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         let coordinator = RipInterruptionCoordinator.shared

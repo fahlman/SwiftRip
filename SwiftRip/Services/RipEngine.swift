@@ -40,7 +40,7 @@ enum RipEngineEvent: Sendable {
     case preflightFailed(message: String)
     case encodingStarted(DVDVolume)
     case toolOutput(RipToolOutput)
-    case progressUpdated(Double)
+    case progressUpdated(HandBrakeProgressUpdate)
     case finished(RipResult)
 }
 
@@ -80,7 +80,7 @@ struct RipEngine: Sendable {
                     case .output(let output):
                         let toolOutput = RipToolOutput(handBrakeOutput: output)
                         continuation.yield(.toolOutput(toolOutput))
-                        if let progress = HandBrakeProgressParser.progressValue(from: output.text) {
+                        if let progress = HandBrakeProgressParser.progressUpdate(from: output.text) {
                             continuation.yield(.progressUpdated(progress))
                         }
                     case .terminated(let terminatedExitCode):

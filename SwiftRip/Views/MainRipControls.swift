@@ -7,98 +7,177 @@ import Foundation
 import SwiftUI
 
 struct DVDStatusView: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
     let hasSelectedDVD: Bool
     let isEncoding: Bool
+    let progress: Double
+    let remainingTimeText: String?
     let displayName: String
     let accessibilityValue: String
 
     var body: some View {
-        VStack(spacing: 4) {
-            ZStack(alignment: .bottomTrailing) {
-                discImage
-                discBadge
-            }
-            .frame(
-                width: SwiftRipLayout.MainWindow.discIconFrameWidth,
-                height: SwiftRipLayout.MainWindow.discIconFrameHeight
-            )
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(AppStrings.dvdStatusAccessibilityLabel)
-            .accessibilityValue(accessibilityValue)
-            .accessibilityIdentifier("dvdStatus")
+        VStack {
+            GeometryReader { proxy in
+                let discLength = min(proxy.size.width, proxy.size.height)
 
-            Text(displayName)
-                .font(.headline)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .frame(maxWidth: .infinity)
-                .accessibilityIdentifier("dvdName")
+                ZStack(alignment: .bottomTrailing) {
+                    discImage
+                        .frame(width: discLength, height: discLength)
+
+                    if !isEncoding {
+                        discBadge(discLength: discLength)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(AppStrings.dvdStatusAccessibilityLabel)
+                .accessibilityValue(accessibilityValue)
+                .accessibilityIdentifier("dvdStatus")
+            }
+            .layoutPriority(1)
+
+            VStack {
+                Text(displayName)
+                    .font(.headline)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .minimumScaleFactor(0.5)
+                    .allowsTightening(true)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityIdentifier("dvdName")
+
+                if isEncoding {
+                    RipProgressSection(
+                        progress: clampedProgress,
+                        remainingTimeText: remainingTimeText
+                    )
+                }
+            }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var discImage: some View {
         Image(systemName: hasSelectedDVD ? SwiftRipSymbols.selectedOpticalDisc : SwiftRipSymbols.opticalDisc)
-            .font(.system(size: SwiftRipLayout.MainWindow.discIconSize, weight: .regular))
+            .resizable()
+            .scaledToFit()
             .symbolRenderingMode(.hierarchical)
-            .foregroundStyle(SwiftRipColors.discIcon)
-            .opacity(hasSelectedDVD ? 1 : 0.45)
-            .symbolEffect(.rotate.byLayer, options: .repeat(.continuous), isActive: isEncoding && !reduceMotion)
+            .foregroundStyle(hasSelectedDVD ? SwiftRipColors.selectedDiscIcon : SwiftRipColors.discIcon)
     }
 
-    private var discBadge: some View {
-        Image(systemName: hasSelectedDVD ? SwiftRipSymbols.selectedBadge : SwiftRipSymbols.missingBadge)
-            .font(.system(size: SwiftRipLayout.MainWindow.badgeIconSize, weight: .semibold))
+    private var clampedProgress: Double {
+        min(max(progress, 0), 1)
+    }
+
+    private func discBadge(discLength: CGFloat) -> some View {
+        let badgeLength = discLength * SwiftRipLayout.MainWindow.badgeScale
+        let badgeOffset = discLength * SwiftRipLayout.MainWindow.badgeOffsetScale
+
+        return Image(systemName: hasSelectedDVD ? SwiftRipSymbols.selectedBadge : SwiftRipSymbols.missingBadge)
+            .resizable()
+            .scaledToFit()
             .symbolRenderingMode(.palette)
             .foregroundStyle(
                 hasSelectedDVD ? SwiftRipColors.selectedBadgeForeground : SwiftRipColors.missingBadgeForeground,
                 hasSelectedDVD ? SwiftRipColors.selectedBadgeBackground : SwiftRipColors.missingBadgeBackground
             )
+            .frame(width: badgeLength, height: badgeLength)
             .offset(
-                x: SwiftRipLayout.MainWindow.badgeOffsetX,
-                y: SwiftRipLayout.MainWindow.badgeOffsetY
+                x: badgeOffset,
+                y: badgeOffset
             )
-    }
-}
-
-struct PrimaryRipButton: View {
-    let title: String
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .frame(width: SwiftRipLayout.Button.mainWidth)
-        }
-        .keyboardShortcut(.defaultAction)
-        .buttonStyle(SwiftRipButtonStyle(prominence: .primary))
-        .controlSize(.large)
-        .accessibilityIdentifier("primaryActionButton")
     }
 }
 
 struct RipProgressSection: View {
     let progress: Double
+    let remainingTimeText: String?
 
     var body: some View {
-        VStack(spacing: SwiftRipLayout.MainWindow.statusSpacing) {
+        VStack {
             ProgressView(value: progress)
-                .frame(width: SwiftRipLayout.MainWindow.progressWidth)
                 .accessibilityLabel(AppStrings.progressAccessibilityLabel)
                 .accessibilityValue(AppStrings.percentComplete(progressPercent))
                 .accessibilityIdentifier("ripProgress")
 
-            Text(AppStrings.percentDisplay(progressPercent))
-                .swiftRipProgressCaption()
-                .accessibilityHidden(true)
+            if let remainingTimeText {
+                Text(remainingTimeText)
+                    .swiftRipProgressCaption()
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityIdentifier("ripRemainingTime")
+            }
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: SwiftRipLayout.MainWindow.statusHeight)
     }
 
     private var progressPercent: Int {
         Int(progress * 100)
+    }
+}
+
+struct RipToolbar: ToolbarContent {
+    let actions: RipCommandActions
+
+    var body: some ToolbarContent {
+        ToolbarItem(placement: .primaryAction) {
+            ControlGroup {
+                toolbarButton(
+                    title: AppStrings.chooseDVDTitle,
+                    label: AppStrings.ripLogFallbackDVDName,
+                    systemImage: SwiftRipSymbols.chooseDVD,
+                    accessibilityIdentifier: "chooseDVDToolbarButton",
+                    isEnabled: actions.canChooseDVD,
+                    action: actions.chooseDVD
+                )
+
+                toolbarButton(
+                    title: AppStrings.ejectTitle,
+                    label: AppStrings.ejectTitle,
+                    systemImage: SwiftRipSymbols.eject,
+                    accessibilityIdentifier: "ejectToolbarButton",
+                    isEnabled: actions.canEject,
+                    action: actions.eject
+                )
+            }
+        }
+
+        ToolbarItem(placement: .primaryAction) {
+            ControlGroup {
+                toolbarButton(
+                    title: AppStrings.ripTitle,
+                    label: AppStrings.ripTitle,
+                    systemImage: SwiftRipSymbols.rip,
+                    accessibilityIdentifier: "ripToolbarButton",
+                    isEnabled: actions.canRip,
+                    action: actions.rip
+                )
+
+                toolbarButton(
+                    title: AppStrings.stopTitle,
+                    label: AppStrings.stopTitle,
+                    systemImage: SwiftRipSymbols.stop,
+                    accessibilityIdentifier: "stopToolbarButton",
+                    isEnabled: actions.canStop,
+                    action: actions.stop
+                )
+            }
+        }
+    }
+
+    private func toolbarButton(
+        title: String,
+        label: String,
+        systemImage: String,
+        accessibilityIdentifier: String,
+        isEnabled: Bool,
+        action: @escaping @MainActor () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Label(label, systemImage: systemImage)
+        }
+        .disabled(!isEnabled)
+        .help(title)
+        .accessibilityLabel(title)
+        .accessibilityIdentifier(accessibilityIdentifier)
     }
 }
 

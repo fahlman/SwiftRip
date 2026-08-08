@@ -3,48 +3,63 @@
 //  SwiftRip
 //
 
-import AppKit
+import Foundation
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @State private var settings = AppSettings.shared
-    @State private var draft = SettingsDraft(settings: AppSettings.shared)
     @State private var outputDirectoryErrorMessage: String?
+    @State private var isOutputDirectoryPickerPresented = false
+    @State private var selection: SettingsPane? = .files
 
     var body: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: SwiftRipLayout.SettingsWindow.contentSpacing) {
-                settingsHeader
-                Divider()
-                filesSection
-                Divider()
-                completionSection
-                Spacer(minLength: 0)
+        NavigationSplitView {
+            List(SettingsPane.allCases, selection: $selection) { pane in
+                Label(pane.title, systemImage: pane.systemImage)
+                    .tag(pane)
             }
-            .padding(SwiftRipLayout.SettingsWindow.contentPadding)
+            .navigationSplitViewColumnWidth(
+                min: SwiftRipLayout.SettingsWindow.sidebarMinWidth,
+                ideal: SwiftRipLayout.SettingsWindow.sidebarIdealWidth,
+                max: SwiftRipLayout.SettingsWindow.sidebarMaxWidth
+            )
+        } detail: {
+            Form {
+                switch selection ?? .files {
+                case .files:
+                    Section {
+                        filesSection
+                    }
 
-            Divider()
-            footer
+                case .completion:
+                    Section {
+                        completionSection
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            .padding()
+            .navigationTitle((selection ?? .files).title)
         }
-        .swiftRipWindowFrame(width: SwiftRipLayout.SettingsWindow.width, height: SwiftRipLayout.SettingsWindow.height)
+        .frame(
+            minWidth: SwiftRipLayout.SettingsWindow.minWidth,
+            minHeight: SwiftRipLayout.SettingsWindow.minHeight
+        )
+        .fileImporter(
+            isPresented: $isOutputDirectoryPickerPresented,
+            allowedContentTypes: [.folder],
+            allowsMultipleSelection: false
+        ) { result in
+            handleOutputDirectoryPickerResult(result)
+        }
+        .fileDialogDefaultDirectory(settings.outputDirectoryURL)
+        .fileDialogConfirmationLabel(AppStrings.settingsChangePrompt)
         .accessibilityIdentifier("settingsWindow")
     }
 
-    private var settingsHeader: some View {
-        VStack(spacing: SwiftRipLayout.SettingsWindow.headerSpacing) {
-            Image(systemName: SwiftRipSymbols.folder)
-                .font(.system(size: SwiftRipLayout.SettingsWindow.iconSize))
-                .symbolRenderingMode(.hierarchical)
-
-            Text(AppStrings.settingsFilesTitle)
-                .swiftRipSectionTitle()
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("settingsHeader")
-    }
-
     private var filesSection: some View {
-        VStack(alignment: .leading, spacing: SwiftRipLayout.SettingsWindow.rowSpacing) {
+        Group {
             outputLocationRow
             outputLocationControls
             filenameFormatRow
@@ -52,174 +67,131 @@ struct SettingsView: View {
             if let outputDirectoryErrorMessage {
                 Text(outputDirectoryErrorMessage)
                     .foregroundStyle(SwiftRipColors.errorText)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
                     .accessibilityIdentifier("outputDirectoryErrorMessage")
             }
         }
     }
 
     private var completionSection: some View {
-        VStack(alignment: .leading, spacing: SwiftRipLayout.SettingsWindow.rowSpacing) {
-            Text(AppStrings.settingsCompletionTitle)
-                .swiftRipSectionTitle()
-
+        Group {
             completionSoundRow
 
-            Toggle(AppStrings.settingsNotificationTitle, isOn: $draft.isCompletionNotificationEnabled)
-                .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
+            Toggle(AppStrings.settingsNotificationTitle, isOn: isCompletionNotificationEnabledBinding)
                 .accessibilityIdentifier("completionNotificationToggle")
 
-            Toggle(AppStrings.settingsRevealCompletedFileTitle, isOn: $draft.shouldRevealCompletedFile)
-                .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
+            Toggle(AppStrings.settingsRevealCompletedFileTitle, isOn: shouldRevealCompletedFileBinding)
                 .accessibilityIdentifier("revealCompletedFileToggle")
 
-            Toggle(AppStrings.settingsAutoEjectTitle, isOn: $draft.shouldAutoEjectAfterSuccessfulRip)
-                .padding(.leading, SwiftRipLayout.SettingsWindow.controlIndent)
+            Toggle(AppStrings.settingsAutoEjectTitle, isOn: shouldAutoEjectAfterSuccessfulRipBinding)
                 .accessibilityIdentifier("autoEjectToggle")
         }
     }
 
-    private var footer: some View {
-        HStack {
-            Spacer()
-
-            Button {
-                cancelSettings()
-            } label: {
-                Text(AppStrings.settingsCancelTitle)
-                    .frame(width: SwiftRipLayout.Button.dialogFooterWidth)
-                    .accessibilityIdentifier("settingsCancelButton")
-            }
-            .keyboardShortcut(.cancelAction)
-            .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
-
-            Button {
-                applySettings()
-            } label: {
-                Text(AppStrings.settingsOKTitle)
-                    .frame(width: SwiftRipLayout.Button.dialogFooterWidth)
-                    .accessibilityIdentifier("settingsOKButton")
-            }
-            .keyboardShortcut(.defaultAction)
-            .buttonStyle(SwiftRipButtonStyle(prominence: .primary))
-        }
-        .swiftRipDialogFooterPadding()
-    }
-
     private var outputLocationRow: some View {
-        HStack(alignment: .center, spacing: 10) {
-            Text(AppStrings.settingsOutputLocationTitle)
-                .swiftRipSettingsLabel()
-                .frame(width: SwiftRipLayout.SettingsWindow.labelWidth, alignment: .trailing)
-
-            OutputDirectoryPathControl(url: draft.outputDirectoryURL)
+        LabeledContent(AppStrings.settingsOutputLocationTitle) {
+            OutputDirectoryLocationView(url: settings.outputDirectoryURL)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .frame(height: 24)
                 .accessibilityLabel(AppStrings.settingsOutputLocationTitle)
-                .accessibilityValue(draft.outputDirectoryURL.path)
+                .accessibilityValue(settings.outputDirectoryURL.path(percentEncoded: false))
                 .accessibilityIdentifier("outputDirectoryPathControl")
         }
     }
 
     private var outputLocationControls: some View {
-        HStack(spacing: SwiftRipLayout.SettingsWindow.controlSpacing) {
+        HStack {
             Spacer()
-                .frame(width: SwiftRipLayout.SettingsWindow.controlIndent)
 
             Button {
-                chooseOutputDirectory()
+                isOutputDirectoryPickerPresented = true
             } label: {
                 Text(AppStrings.settingsChangeTitle)
-                    .frame(width: SwiftRipLayout.Button.settingsWidth)
                     .accessibilityIdentifier("changeOutputDirectoryButton")
             }
-            .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
+            .buttonStyle(.bordered)
 
             Button {
-                draft.resetOutputDirectoryToDefault()
+                settings.resetOutputDirectoryToMovies()
                 outputDirectoryErrorMessage = nil
             } label: {
                 Text(AppStrings.settingsResetTitle)
-                    .frame(width: SwiftRipLayout.Button.settingsWidth)
                     .accessibilityIdentifier("resetOutputDirectoryButton")
             }
-            .buttonStyle(SwiftRipButtonStyle(prominence: .secondary))
-            .disabled(draft.isUsingDefaultOutputDirectory)
-
-            Spacer(minLength: 0)
+            .buttonStyle(.bordered)
+            .disabled(settings.isUsingDefaultOutputDirectory)
         }
     }
 
     private var filenameFormatRow: some View {
-        HStack {
-            Text(AppStrings.settingsFilenameFormatTitle)
-                .swiftRipSettingsLabel()
-                .frame(width: SwiftRipLayout.SettingsWindow.labelWidth, alignment: .trailing)
-
-            Picker(AppStrings.settingsFilenameFormatTitle, selection: $draft.outputFilenameFormat) {
-                ForEach(OutputFilenameFormat.allCases) { format in
-                    Text(format.title)
-                        .tag(format)
-                }
+        Picker(AppStrings.settingsFilenameFormatTitle, selection: outputFilenameFormatBinding) {
+            ForEach(OutputFilenameFormat.allCases) { format in
+                Text(format.title)
+                    .tag(format)
             }
-            .labelsHidden()
-            .frame(width: 240, alignment: .leading)
-            .accessibilityLabel(AppStrings.settingsFilenameFormatTitle)
-            .accessibilityIdentifier("filenameFormatPicker")
         }
+        .accessibilityLabel(AppStrings.settingsFilenameFormatTitle)
+        .accessibilityIdentifier("filenameFormatPicker")
     }
 
     private var completionSoundRow: some View {
-        HStack {
-            Text(AppStrings.settingsCompletionSoundTitle)
-                .swiftRipSettingsLabel()
-                .frame(width: SwiftRipLayout.SettingsWindow.labelWidth, alignment: .trailing)
-
-            Picker(AppStrings.settingsCompletionSoundTitle, selection: $draft.completionSound) {
-                ForEach(CompletionSound.allCases) { sound in
-                    Text(sound.title)
-                        .tag(sound)
-                }
+        Picker(AppStrings.settingsCompletionSoundTitle, selection: completionSoundBinding) {
+            ForEach(CompletionSound.allCases) { sound in
+                Text(sound.title)
+                    .tag(sound)
             }
-            .labelsHidden()
-            .frame(width: 160, alignment: .leading)
-            .accessibilityLabel(AppStrings.settingsCompletionSoundTitle)
-            .accessibilityIdentifier("completionSoundPicker")
+        }
+        .accessibilityLabel(AppStrings.settingsCompletionSoundTitle)
+        .accessibilityIdentifier("completionSoundPicker")
+    }
+
+    private var outputFilenameFormatBinding: Binding<OutputFilenameFormat> {
+        Binding {
+            settings.outputFilenameFormat
+        } set: {
+            settings.outputFilenameFormat = $0
         }
     }
 
-    private func dismissSettingsWindow() {
-        NSApp.keyWindow?.close()
+    private var completionSoundBinding: Binding<CompletionSound> {
+        Binding {
+            settings.completionSound
+        } set: {
+            settings.completionSound = $0
+        }
     }
 
-    private func cancelSettings() {
-        draft = SettingsDraft(settings: settings)
-        dismissSettingsWindow()
+    private var isCompletionNotificationEnabledBinding: Binding<Bool> {
+        Binding {
+            settings.isCompletionNotificationEnabled
+        } set: {
+            settings.isCompletionNotificationEnabled = $0
+        }
     }
 
-    private func applySettings() {
+    private var shouldRevealCompletedFileBinding: Binding<Bool> {
+        Binding {
+            settings.shouldRevealCompletedFile
+        } set: {
+            settings.shouldRevealCompletedFile = $0
+        }
+    }
+
+    private var shouldAutoEjectAfterSuccessfulRipBinding: Binding<Bool> {
+        Binding {
+            settings.shouldAutoEjectAfterSuccessfulRip
+        } set: {
+            settings.shouldAutoEjectAfterSuccessfulRip = $0
+        }
+    }
+
+    private func handleOutputDirectoryPickerResult(_ result: Result<[URL], Error>) {
+        guard case .success(let urls) = result, let url = urls.first else { return }
+
         do {
-            try draft.apply(to: settings)
+            try settings.setOutputDirectory(url)
             outputDirectoryErrorMessage = nil
-            dismissSettingsWindow()
         } catch {
             outputDirectoryErrorMessage = error.localizedDescription
         }
-    }
-
-    private func chooseOutputDirectory() {
-        guard
-            let url = OutputDirectoryPanel.chooseDirectory(
-                defaultDirectoryURL: draft.outputDirectoryURL,
-                prompt: AppStrings.settingsChangePrompt
-            )
-        else {
-            return
-        }
-
-        draft.setOutputDirectory(url)
-        outputDirectoryErrorMessage = nil
     }
 }
 
@@ -227,19 +199,53 @@ struct SettingsView: View {
     SettingsView()
 }
 
-private struct OutputDirectoryPathControl: NSViewRepresentable {
-    let url: URL
+private enum SettingsPane: String, CaseIterable, Identifiable {
+    case files
+    case completion
 
-    func makeNSView(context: Context) -> NSPathControl {
-        let pathControl = NSPathControl()
-        pathControl.pathStyle = .standard
-        pathControl.isEditable = false
-        pathControl.controlSize = .regular
-        pathControl.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        return pathControl
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .files:
+            AppStrings.settingsFilesTitle
+        case .completion:
+            AppStrings.settingsCompletionTitle
+        }
     }
 
-    func updateNSView(_ pathControl: NSPathControl, context: Context) {
-        pathControl.url = url
+    var systemImage: String {
+        switch self {
+        case .files:
+            SwiftRipSymbols.folder
+        case .completion:
+            SwiftRipSymbols.completion
+        }
+    }
+}
+
+private struct OutputDirectoryLocationView: View {
+    let url: URL
+
+    var body: some View {
+        HStack {
+            Text(displayPath)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .foregroundStyle(.secondary)
+                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+
+            Image(systemName: "arrow.right")
+                .foregroundStyle(.tint)
+        }
+        .help(fullPath)
+    }
+
+    private var displayPath: String {
+        fullPath
+    }
+
+    private var fullPath: String {
+        url.path(percentEncoded: false)
     }
 }

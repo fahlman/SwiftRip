@@ -11,6 +11,10 @@ struct ContentView: View {
     @State private var viewModel = RipViewModel()
     @State private var interruptionCoordinator = RipInterruptionCoordinator.shared
     @State private var isDVDPickerPresented = false
+    @State private var isOutputDirectoryPickerPresented = false
+    @State private var outputDirectoryPickerPurpose: OutputDirectoryPickerPurpose?
+    @State private var outputDirectoryPickerMessage: String?
+    @State private var activeAlert: AppAlert?
     @State private var hasPresentedUsageNotice = false
     @State private var hasPresentedInitialOutputDirectoryPrompt = false
     @State private var hasRunLaunchAutomation = false
@@ -18,30 +22,19 @@ struct ContentView: View {
     private static let chooseDVDTitle = AppStrings.chooseDVDTitle
 
     var body: some View {
-        VStack(spacing: SwiftRipLayout.MainWindow.contentSpacing) {
-            DVDStatusView(
-                hasSelectedDVD: viewModel.hasSelectedDVD,
-                isEncoding: viewModel.isEncoding,
-                displayName: viewModel.dvdDisplayName,
-                accessibilityValue: dvdStatusAccessibilityValue
-            )
-
-            PrimaryRipButton(title: viewModel.primaryAction.title) {
-                performPrimaryButtonAction()
-            }
-
-            if viewModel.isEncoding {
-                RipProgressSection(progress: viewModel.progress)
-                    .transition(.opacity)
-            }
-        }
-        .padding(SwiftRipLayout.MainWindow.contentPadding)
-        .swiftRipWindowFrame(
-            width: SwiftRipLayout.MainWindow.width,
-            height: mainWindowHeight,
-            alignment: .top
+        DVDStatusView(
+            hasSelectedDVD: viewModel.hasSelectedDVD,
+            isEncoding: viewModel.isEncoding,
+            progress: viewModel.progress,
+            remainingTimeText: remainingTimeText,
+            displayName: viewModel.dvdDisplayName,
+            accessibilityValue: dvdStatusAccessibilityValue
         )
-        .fixedSize()
+        .padding()
+        .frame(
+            maxWidth: .infinity,
+            maxHeight: .infinity
+        )
         .fileImporter(
             isPresented: $isDVDPickerPresented,
             allowedContentTypes: [.folder],
@@ -51,6 +44,16 @@ struct ContentView: View {
         }
         .fileDialogDefaultDirectory(URL(fileURLWithPath: "/Volumes", isDirectory: true))
         .fileDialogConfirmationLabel(Self.chooseDVDTitle)
+        .fileImporter(
+            isPresented: $isOutputDirectoryPickerPresented,
+            allowedContentTypes: [.folder],
+            allowsMultipleSelection: false
+        ) { result in
+            handleOutputDirectoryPickerResult(result)
+        }
+        .fileDialogDefaultDirectory(viewModel.defaultOutputDirectory)
+        .fileDialogConfirmationLabel(AppStrings.chooseOutputFolderPrompt)
+        .fileDialogMessage(outputDirectoryPickerMessage.map(Text.init))
         .onDisappear {
             viewModel.cancelRipForWindowCloseOrAppQuit()
         }
@@ -59,9 +62,7 @@ struct ContentView: View {
             interruptionCoordinator.isRipActive = viewModel.isEncoding
             Task { @MainActor in
                 await Task.yield()
-                guard presentUsageNoticeIfNeeded() else { return }
-                presentInitialOutputDirectoryPromptIfNeeded()
-                runLaunchAutomationIfNeeded()
+                continueLaunchAutomationIfAllowed()
             }
         }
         .onChange(of: viewModel.isEncoding) { _, isEncoding in
@@ -79,11 +80,26 @@ struct ContentView: View {
         } message: {
             Text(AppStrings.stopRipConfirmationMessage)
         }
-        .focusedSceneValue(\.ripCommandActions, ripCommandActions)
-    }
+        .alert(activeAlertTitle, isPresented: activeAlertBinding, presenting: activeAlert) { alert in
+            switch alert.kind {
+            case .warning:
+                Button(AppStrings.settingsOKTitle) {}
+            case .usageNotice:
+                Button(AppStrings.usageNoticeAcknowledgeTitle) {
+                    acknowledgeUsageNotice()
+                }
 
-    private func performPrimaryButtonAction() {
-        ripCommandActions.perform(viewModel.primaryAction)
+                Button(AppStrings.quitTitle, role: .cancel) {
+                    NSApp.terminate(nil)
+                }
+            }
+        } message: { alert in
+            Text(alert.message)
+        }
+        .toolbar {
+            RipToolbar(actions: ripCommandActions)
+        }
+        .focusedSceneValue(\.ripCommandActions, ripCommandActions)
     }
 
     private var ripCommandActions: RipCommandActions {
@@ -113,20 +129,59 @@ struct ContentView: View {
 
     private var dvdStatusAccessibilityValue: String {
         if viewModel.isEncoding, let selectedDVDName = viewModel.selectedDVDName {
-            return AppStrings.ripping(selectedDVDName)
+            return ([
+                AppStrings.ripping(selectedDVDName),
+                AppStrings.percentComplete(progressPercent),
+                remainingTimeText
+            ] as [String?])
+                .compactMap(\.self)
+                .joined(separator: " ")
         }
 
         return viewModel.dvdDisplayName
     }
 
-    private func startRip() {
-        guard ensureOutputDirectoryPermission(message: AppStrings.outputFolderPermissionMessage) else { return }
+    private var progressPercent: Int {
+        Int(min(max(viewModel.progress, 0), 1) * 100)
+    }
 
+    private var remainingTimeText: String? {
+        guard viewModel.isEncoding, let estimatedRemainingTime = viewModel.estimatedRemainingTime else { return nil }
+
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        let now = Date()
+        return formatter.localizedString(
+            for: Date(timeInterval: max(estimatedRemainingTime, 0), since: now),
+            relativeTo: now
+        )
+    }
+
+    private func startRip() {
+        guard viewModel.commandAvailability.canRip else { return }
+        guard !viewModel.needsOutputDirectoryPermission else {
+            presentOutputDirectoryPicker(
+                purpose: .startRip,
+                message: AppStrings.outputFolderPermissionMessage
+            )
+            return
+        }
+
+        startRipAfterOutputPermission()
+    }
+
+    private func startRipAfterOutputPermission() {
         Task {
             await viewModel.startRip { outputURL in
                 NSWorkspace.shared.activateFileViewerSelecting([outputURL])
             }
         }
+    }
+
+    private func continueLaunchAutomationIfAllowed() {
+        guard presentUsageNoticeIfNeeded() else { return }
+        presentInitialOutputDirectoryPromptIfNeeded()
+        runLaunchAutomationIfNeeded()
     }
 
     private func presentUsageNoticeIfNeeded() -> Bool {
@@ -135,14 +190,13 @@ struct ContentView: View {
         guard !viewModel.hasAcknowledgedCurrentUsageNotice else { return true }
 
         hasPresentedUsageNotice = true
+        activeAlert = .usageNotice
+        return false
+    }
 
-        guard AppAlertPresenter.showUsageNotice() else {
-            NSApp.terminate(nil)
-            return false
-        }
-
+    private func acknowledgeUsageNotice() {
         viewModel.acknowledgeCurrentUsageNotice()
-        return true
+        continueLaunchAutomationIfAllowed()
     }
 
     private func presentInitialOutputDirectoryPromptIfNeeded() {
@@ -151,9 +205,9 @@ struct ContentView: View {
         guard FirstRunOutputPermissionPrompter.isForced() || viewModel.needsOutputDirectoryPermission else { return }
 
         hasPresentedInitialOutputDirectoryPrompt = true
-        _ = ensureOutputDirectoryPermission(
-            message: AppStrings.firstRunOutputFolderMessage,
-            force: FirstRunOutputPermissionPrompter.isForced()
+        presentOutputDirectoryPicker(
+            purpose: .firstRun,
+            message: AppStrings.firstRunOutputFolderMessage
         )
     }
 
@@ -170,39 +224,51 @@ struct ContentView: View {
 
     private func chooseDVD(at url: URL) {
         if !viewModel.chooseDVD(at: url) {
-            AppAlertPresenter.showWarning(
-                messageText: AppStrings.invalidDVDSelectionTitle,
-                informativeText: AppStrings.chooseVideoTSFolder(directoryName: DVDVolume.videoTSDirectoryName)
+            activeAlert = .warning(
+                title: AppStrings.invalidDVDSelectionTitle,
+                message: AppStrings.chooseVideoTSFolder(directoryName: DVDVolume.videoTSDirectoryName)
             )
         }
     }
 
-    private func ensureOutputDirectoryPermission(message: String, force: Bool = false) -> Bool {
-        guard force || viewModel.needsOutputDirectoryPermission else { return true }
+    private func presentOutputDirectoryPicker(
+        purpose: OutputDirectoryPickerPurpose,
+        message: String
+    ) {
+        outputDirectoryPickerPurpose = purpose
+        outputDirectoryPickerMessage = message
+        isOutputDirectoryPickerPresented = true
+    }
 
-        guard
-            let url = OutputDirectoryPanel.chooseDirectory(
-                defaultDirectoryURL: viewModel.defaultOutputDirectory,
-                prompt: AppStrings.chooseOutputFolderPrompt,
-                message: message
-            )
-        else {
-            return false
-        }
+    private func handleOutputDirectoryPickerResult(_ result: Result<[URL], Error>) {
+        let purpose = outputDirectoryPickerPurpose
+        outputDirectoryPickerPurpose = nil
+        outputDirectoryPickerMessage = nil
 
+        guard case .success(let urls) = result, let url = urls.first else { return }
+
+        setOutputDirectory(url, purpose: purpose)
+    }
+
+    private func setOutputDirectory(_ url: URL, purpose: OutputDirectoryPickerPurpose?) {
         do {
             try viewModel.setOutputDirectory(url)
-            return true
         } catch {
-            AppAlertPresenter.showWarning(
-                messageText: AppStrings.outputFolderPermissionFailedTitle,
-                informativeText: error.localizedDescription
+            activeAlert = .warning(
+                title: AppStrings.outputFolderPermissionFailedTitle,
+                message: error.localizedDescription
             )
-            return false
+            return
+        }
+
+        if purpose == .startRip {
+            startRipAfterOutputPermission()
         }
     }
 
     private func stopRip() {
+        guard viewModel.commandAvailability.canStop else { return }
+
         viewModel.cancelRip()
     }
 
@@ -232,6 +298,8 @@ struct ContentView: View {
     }
 
     private func ejectDVD() {
+        guard viewModel.commandAvailability.canEject else { return }
+
         viewModel.ejectCompletedDVD()
     }
 
@@ -245,9 +313,6 @@ struct ContentView: View {
         NSWorkspace.shared.activateFileViewerSelecting([logFileURL])
     }
 
-    private var mainWindowHeight: CGFloat {
-        viewModel.isEncoding ? SwiftRipLayout.MainWindow.encodingHeight : SwiftRipLayout.MainWindow.height
-    }
 }
 
 private enum FirstRunUsageNoticePrompter {
@@ -269,4 +334,49 @@ private enum FirstRunUsageNoticePrompter {
 
 #Preview {
     ContentView()
+}
+
+private enum OutputDirectoryPickerPurpose {
+    case firstRun
+    case startRip
+}
+
+private struct AppAlert: Identifiable {
+    enum Kind {
+        case usageNotice
+        case warning
+    }
+
+    let id = UUID()
+    let kind: Kind
+    let title: String
+    let message: String
+
+    static var usageNotice: AppAlert {
+        AppAlert(
+            kind: .usageNotice,
+            title: AppStrings.usageNoticeTitle,
+            message: AppStrings.usageNoticeMessage
+        )
+    }
+
+    static func warning(title: String, message: String) -> AppAlert {
+        AppAlert(kind: .warning, title: title, message: message)
+    }
+}
+
+private extension ContentView {
+    var activeAlertTitle: String {
+        activeAlert?.title ?? ""
+    }
+
+    var activeAlertBinding: Binding<Bool> {
+        Binding {
+            activeAlert != nil
+        } set: { isPresented in
+            if !isPresented {
+                activeAlert = nil
+            }
+        }
+    }
 }
