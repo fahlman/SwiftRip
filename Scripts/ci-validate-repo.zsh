@@ -30,6 +30,7 @@ while IFS= read -r script_path; do
     /bin/zsh -n "$ROOT_DIR/$script_path"
 done < <(
     git -C "$ROOT_DIR" ls-files \
+        'ci_scripts/*.sh' \
         'Scripts/*.zsh' \
         'Scripts/**/*.zsh' \
         'SwiftRip-Tools/Scripts/*.zsh' \

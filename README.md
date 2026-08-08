@@ -1,7 +1,5 @@
 # SwiftRip
 
-[![CI](https://github.com/fahlman/SwiftRip/actions/workflows/ci.yml/badge.svg)](https://github.com/fahlman/SwiftRip/actions/workflows/ci.yml)
-
 SwiftRip is a small macOS app for ripping DVDs to `.m4v` files.
 
 It bundles the required ripping tools, checks that they are present before starting, shows progress while ripping, and can safely stop an active rip.
