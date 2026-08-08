@@ -105,6 +105,7 @@ struct OutputFilenameFormatter: Sendable {
 @Observable
 final class AppSettings {
     static let shared = AppSettings()
+    static let currentUsageNoticeVersion = 1
 
     private static let userDefaultsSuiteEnvironmentKey = "SWIFTRIP_APP_SETTINGS_SUITE"
 
@@ -128,6 +129,9 @@ final class AppSettings {
     var outputFilenameFormat: OutputFilenameFormat {
         get { preferences.outputFilenameFormat }
         set { updatePreferences { $0.outputFilenameFormat = newValue } }
+    }
+    var hasAcknowledgedCurrentUsageNotice: Bool {
+        preferences.usageNoticeAcknowledgedVersion >= Self.currentUsageNoticeVersion
     }
 
     @ObservationIgnored
@@ -179,6 +183,10 @@ final class AppSettings {
 
     func startAccessingOutputDirectory() -> (any SecurityScopedResourceAccess)? {
         outputDirectoryBookmarkStore.startAccessingResolvedOutputDirectory()
+    }
+
+    func acknowledgeCurrentUsageNotice() {
+        updatePreferences { $0.usageNoticeAcknowledgedVersion = Self.currentUsageNoticeVersion }
     }
 
     static func defaultMoviesDirectory(using fileManager: FileManager) -> URL {

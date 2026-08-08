@@ -31,21 +31,16 @@ Those manifests are the app repository's contract with SwiftRip-Tools. The curre
 
 ## Updating HandBrakeCLI or libdvdcss
 
-To update bundled tools:
+The SwiftRip-Tools upstream workflow updates the bundled tools automatically:
 
-1. Review the upstream update issue created by the SwiftRip-Tools scheduled check.
-2. Sync the matching SwiftRip source pin repository: `SwiftRip-HandBrake` or `SwiftRip-libdvdcss`.
-3. Create a new protected SwiftRip source tag for the chosen upstream version.
-4. Update the version and commit pins in the SwiftRip-Tools repository build scripts.
-5. Rebuild and package the Apple Silicon artifacts in the SwiftRip-Tools repository.
-6. Rebuild and package the Intel artifacts in the SwiftRip-Tools repository if updating Intel support.
-7. Confirm the HandBrake patch still applies cleanly if HandBrake changed.
-8. Publish the packages to the SwiftRip-Tools GitHub release.
-9. Update the manifest copies in this repository if package names, URLs, versions, or checksums changed.
-10. Run `SwiftRip-Tools/Scripts/fetch-swiftrip-tools.zsh` for Apple Silicon.
-11. Run `SwiftRip-Tools/Scripts/fetch-swiftrip-tools.zsh --arch x86_64` for Intel.
-12. Run the app test suite.
-13. Run the signed real-DVD smoke test from [`RELEASE_CHECKLIST.md`](../RELEASE_CHECKLIST.md).
-14. Update bundled license notices if upstream license text or included components changed.
+1. Detect the new HandBrake or libdvdcss upstream release.
+2. Create the matching immutable SwiftRip source tags, applying the single HandBrake app-bundle patch automatically.
+3. Build and verify Apple Silicon and Intel artifacts.
+4. Publish the packages to the SwiftRip-Tools GitHub release.
+5. Dispatch the exact tool revision to SwiftRip.
+6. Update the manifest copies, provenance, and app version in SwiftRip.
+7. Push a new SwiftRip version tag for the GitHub release workflow.
+8. Run the app test suite and signed real-DVD smoke test as part of release verification.
+9. Update bundled license notices if upstream license text or included components changed.
 
-Do not publish a SwiftRip app update merely because SwiftRip-Tools produced a new package. SwiftRip app releases should intentionally select the tool package versions they consume.
+SwiftRip releases intentionally consume the exact tool revision delivered by the automatic update event; the app version tag is the release boundary.

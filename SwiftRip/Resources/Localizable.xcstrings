@@ -3905,6 +3905,70 @@
         }
       }
     },
+    "I Understand": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I Understand"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entiendo"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je comprends"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ich verstehe"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "理解しました"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ho capito"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entendi"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ik begrijp het"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我明白"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "이해했습니다"
+          }
+        }
+      }
+    },
     "Input: %@": {
       "localizations": {
         "en": {
@@ -5181,6 +5245,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "프리셋: %@"
+          }
+        }
+      }
+    },
+    "Quit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salir"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitter"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beenden"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "終了"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esci"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sair"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "退出"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "종료"
           }
         }
       }
@@ -6593,6 +6721,70 @@
         }
       }
     },
+    "SwiftRip is intended for personal backup or archival use of DVDs you own or otherwise have the legal right to copy. Laws vary by location. You are responsible for using SwiftRip legally.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SwiftRip is intended for personal backup or archival use of DVDs you own or otherwise have the legal right to copy. Laws vary by location. You are responsible for using SwiftRip legally."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SwiftRip está pensado para copias de seguridad o archivo personal de DVD que posees o que tienes derecho legal a copiar. Las leyes varían según la ubicación. Eres responsable de usar SwiftRip legalmente."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SwiftRip est destiné aux sauvegardes personnelles ou à l’archivage de DVD que vous possédez ou que vous avez légalement le droit de copier. Les lois varient selon le lieu. Vous êtes responsable d’utiliser SwiftRip légalement."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SwiftRip ist für persönliche Sicherungs- oder Archivkopien von DVDs gedacht, die du besitzt oder zu deren Kopie du rechtlich berechtigt bist. Gesetze unterscheiden sich je nach Ort. Du bist dafür verantwortlich, SwiftRip rechtmäßig zu verwenden."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SwiftRipは、所有しているDVD、またはコピーする法的権利があるDVDの個人的なバックアップやアーカイブを目的としています。法律は地域によって異なります。SwiftRipを合法的に使用する責任はあなたにあります。"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SwiftRip è pensato per backup personali o archiviazione di DVD che possiedi o che hai comunque il diritto legale di copiare. Le leggi variano in base al luogo. Sei responsabile dell’uso legale di SwiftRip."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O SwiftRip é destinado a backup pessoal ou arquivamento de DVDs que você possui ou que tem o direito legal de copiar. As leis variam conforme o local. Você é responsável por usar o SwiftRip legalmente."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SwiftRip is bedoeld voor persoonlijke back-ups of archivering van dvd's die je bezit of die je wettelijk mag kopiëren. Wetgeving verschilt per locatie. Jij bent verantwoordelijk voor legaal gebruik van SwiftRip."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SwiftRip 旨在用于对你拥有或有合法复制权的 DVD 进行个人备份或归档。法律因地区而异。你有责任合法使用 SwiftRip。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SwiftRip은 본인이 소유했거나 합법적으로 복사할 권리가 있는 DVD의 개인 백업 또는 보관용으로 사용하기 위한 앱입니다. 법률은 지역마다 다릅니다. SwiftRip을 합법적으로 사용할 책임은 사용자에게 있습니다."
+          }
+        }
+      }
+    },
     "SwiftRip needs permission to save ripped movies outside its app container. Choose Movies or another output folder.": {
       "localizations": {
         "en": {
@@ -6781,6 +6973,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "출력 위치가 폴더가 아닙니다."
+          }
+        }
+      }
+    },
+    "Use SwiftRip Responsibly": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use SwiftRip Responsibly"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usa SwiftRip de forma responsable"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilisez SwiftRip de façon responsable"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SwiftRip verantwortungsvoll verwenden"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SwiftRipを責任を持って使用"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usa SwiftRip in modo responsabile"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use o SwiftRip com responsabilidade"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gebruik SwiftRip verantwoord"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "负责任地使用 SwiftRip"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SwiftRip을 책임감 있게 사용"
           }
         }
       }

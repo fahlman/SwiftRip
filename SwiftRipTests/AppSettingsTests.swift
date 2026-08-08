@@ -18,6 +18,7 @@ struct AppSettingsTests {
         #expect(settings.shouldRevealCompletedFile)
         #expect(!settings.shouldAutoEjectAfterSuccessfulRip)
         #expect(settings.outputFilenameFormat == .titleCase)
+        #expect(!settings.hasAcknowledgedCurrentUsageNotice)
         #expect(settings.isUsingDefaultOutputDirectory)
         #expect(settings.needsOutputDirectoryPermission)
     }
@@ -48,6 +49,29 @@ struct AppSettingsTests {
         #expect(!reloadedSettings.shouldRevealCompletedFile)
         #expect(reloadedSettings.shouldAutoEjectAfterSuccessfulRip)
         #expect(reloadedSettings.outputFilenameFormat == .datedTitleCase)
+    }
+
+    @Test func persistsUsageNoticeAcknowledgement() throws {
+        let suiteName = "AppSettingsTests-\(UUID().uuidString)"
+        let userDefaults = try #require(UserDefaults(suiteName: suiteName))
+        defer {
+            userDefaults.removePersistentDomain(forName: suiteName)
+        }
+
+        let settings = AppSettings(
+            userDefaults: userDefaults,
+            fileManager: .default
+        )
+
+        #expect(!settings.hasAcknowledgedCurrentUsageNotice)
+        settings.acknowledgeCurrentUsageNotice()
+        #expect(settings.hasAcknowledgedCurrentUsageNotice)
+
+        let reloadedSettings = AppSettings(
+            userDefaults: userDefaults,
+            fileManager: .default
+        )
+        #expect(reloadedSettings.hasAcknowledgedCurrentUsageNotice)
     }
 
     @Test func invalidPersistedEnumValuesFallBackToDefaults() throws {

@@ -18,6 +18,7 @@ struct SwiftRipApp: App {
     private static let aboutTitle = AppStrings.aboutTitle(appName: RipConfiguration.appName)
 
     init() {
+        AppMenuCleaner.configureWindowBehavior()
         updaterController = SPUStandardUpdaterController(
             startingUpdater: true,
             updaterDelegate: nil,
@@ -56,6 +57,17 @@ struct SwiftRipApp: App {
 
 @MainActor
 final class SwiftRipAppDelegate: NSObject, NSApplicationDelegate {
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        AppMenuCleaner.removeUnusedMenus(from: NSApp.mainMenu)
+        DispatchQueue.main.async {
+            AppMenuCleaner.removeUnusedMenus(from: NSApp.mainMenu)
+        }
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        AppMenuCleaner.removeUnusedMenus(from: NSApp.mainMenu)
+    }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         let coordinator = RipInterruptionCoordinator.shared

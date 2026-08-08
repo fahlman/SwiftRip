@@ -1,0 +1,75 @@
+name: Release SwiftRip
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build, Notarize, and Publish
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: macos-latest
+    timeout-minutes: 90
+
+    env:
+      SWIFTRIP_TEAM_ID: PUT2KYMV2W
+      SWIFTRIP_SIGNING_IDENTITY: Developer ID Application
+      SWIFTRIP_GITHUB_REPO: ${{ github.repository }}
+      SWIFTRIP_GITHUB_TOKEN: ${{ secrets.SWIFTRIP_RELEASE_TOKEN }}
+      SWIFTRIP_NOTARY_APPLE_ID: ${{ secrets.SWIFTRIP_NOTARY_APPLE_ID }}
+      SWIFTRIP_NOTARY_PASSWORD: ${{ secrets.SWIFTRIP_NOTARY_PASSWORD }}
+      SWIFTRIP_SPARKLE_ED_KEY: ${{ secrets.SWIFTRIP_SPARKLE_ED_KEY }}
+      SWIFTRIP_RELEASE_WORK_DIR: ${{ runner.temp }}/swiftrip-release
+      SWIFTRIP_APPCAST_WORK_DIR: ${{ runner.temp }}/swiftrip-appcasts
+      SWIFTRIP_PAGES_WORKTREE: ${{ runner.temp }}/swiftrip-gh-pages
+
+    steps:
+      - name: Check out release commit
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Import Developer ID certificate
+        env:
+          DEVELOPER_ID_APPLICATION_P12_BASE64: ${{ secrets.DEVELOPER_ID_APPLICATION_P12_BASE64 }}
+          DEVELOPER_ID_APPLICATION_P12_PASSWORD: ${{ secrets.DEVELOPER_ID_APPLICATION_P12_PASSWORD }}
+          SWIFTRIP_KEYCHAIN_PASSWORD: ${{ secrets.SWIFTRIP_KEYCHAIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          certificate_path="$RUNNER_TEMP/swiftrip-developer-id.p12"
+          keychain_path="$RUNNER_TEMP/swiftrip-build.keychain-db"
+
+          printf '%s' "$DEVELOPER_ID_APPLICATION_P12_BASE64" | /usr/bin/base64 -D > "$certificate_path"
+          /usr/bin/security create-keychain -p "$SWIFTRIP_KEYCHAIN_PASSWORD" "$keychain_path"
+          /usr/bin/security set-keychain-settings -lut 21600 "$keychain_path"
+          /usr/bin/security unlock-keychain -p "$SWIFTRIP_KEYCHAIN_PASSWORD" "$keychain_path"
+          /usr/bin/security import "$certificate_path" \
+            -P "$DEVELOPER_ID_APPLICATION_P12_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            "$keychain_path"
+          /usr/bin/security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s \
+            -k "$SWIFTRIP_KEYCHAIN_PASSWORD" \
+            "$keychain_path"
+          /usr/bin/security list-keychains -d user -s "$keychain_path"
+          /usr/bin/security default-keychain -s "$keychain_path"
+          /usr/bin/security find-identity -v -p codesigning "$keychain_path"
+
+      - name: Validate repository
+        run: Scripts/ci-validate-repo.zsh
+
+      - name: Build, notarize, and publish release
+        run: |
+          set -euo pipefail
+          release_version="${GITHUB_REF_NAME#v}"
+          Scripts/release-sparkle.zsh \
+            --version "$release_version" \
+            --release-tag "$GITHUB_REF_NAME" \
+            --title "SwiftRip $release_version"

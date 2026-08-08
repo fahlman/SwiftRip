@@ -2,7 +2,7 @@
 
 ## Completed
 
-- Bundled architecture-specific `HandBrakeCLI` and `libdvdcss.2.dylib` inside the app.
+- Bundled `HandBrakeCLI` and `libdvdcss.2.dylib` inside the app.
 - Added the SwiftRip HandBrake preset.
 - Verified the bundled tools run without `/opt/local`, `/usr/local`, Homebrew, or MacPorts runtime dependencies.
 - Added DVD volume detection for mounted discs with a `VIDEO_TS` folder.
@@ -16,14 +16,14 @@
 - Added an About window with bundled tool and license information.
 - Added localized user-facing strings.
 - Added tests for selection, preflight, progress parsing, rip lifecycle, cancellation cleanup, logging, bundled-tool integrity, and localization formatting.
-- Added architecture-specific Sparkle update feeds for Apple Silicon and Intel releases.
-- Added Developer ID DMG release scripts with signing, notarization, stapling, Gatekeeper assessment, and Sparkle appcast generation.
+- Added a Sparkle update feed.
+- Added Developer ID ZIP release scripts with signing, notarization, stapling, Gatekeeper assessment, and Sparkle appcast generation.
 - Split bundled-tool packaging into the public `SwiftRip-Tools` repository.
 - Added public source-pin repositories for the shipped HandBrake and libdvdcss sources.
 - Added scheduled upstream checks for HandBrake and libdvdcss updates.
 - Added branch and tag protection for release-critical SwiftRip repositories.
-- Verified local app builds, GitHub CI, SwiftRip-Tools CI, and Xcode Cloud archive builds.
-- Published signed, notarized, architecture-specific releases with Sparkle updates.
+- Verified local app builds, SwiftRip-Tools CI, and GitHub Actions release builds.
+- Published signed, notarized releases with Sparkle updates.
 - Added release checklist, support guidance, and security reporting policy.
 
 ## In Progress

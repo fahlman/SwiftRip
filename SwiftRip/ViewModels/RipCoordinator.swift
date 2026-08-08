@@ -117,6 +117,10 @@ final class RipCoordinator {
         environment.appSettings.needsOutputDirectoryPermission
     }
 
+    var hasAcknowledgedCurrentUsageNotice: Bool {
+        environment.appSettings.hasAcknowledgedCurrentUsageNotice
+    }
+
     var defaultLogDirectory: URL {
         if let logDirectoryOverride = environment.logDirectoryOverride {
             return logDirectoryOverride
@@ -168,6 +172,10 @@ final class RipCoordinator {
         if let selectedDVD = state.selectedDVD {
             selectDVD(selectedDVD)
         }
+    }
+
+    func acknowledgeCurrentUsageNotice() {
+        environment.appSettings.acknowledgeCurrentUsageNotice()
     }
 
     func selectDVD(_ dvd: DVDVolume, outputURL: URL? = nil, statusMessage: String? = nil) {

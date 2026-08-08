@@ -12,4 +12,4 @@ This directory intentionally keeps only the small consumer-side contract needed 
 - the artifact fetch script under `Scripts/`
 - the artifact verifier used by local release scripts and CI
 
-Xcode Cloud and clean local archive builds restore `HandBrakeCLI` and `libdvdcss.2.dylib` from the checksummed packages referenced in the manifests.
+GitHub Actions and clean local archive builds restore `HandBrakeCLI` and `libdvdcss.2.dylib` from the checksummed packages referenced in the manifests.
