@@ -10,7 +10,7 @@ Use this checklist for every public SwiftRip release, including hotfixes. Stop t
 - Confirm the release still targets the intended minimum macOS version, currently macOS 15.7.
 - Confirm the dedicated GitHub Actions release workflow is the intended publisher.
 - Confirm any user-facing changes are reflected in `README.md`, `ROADMAP.md`, or release notes as needed.
-- Confirm third-party tool versions are the intended pinned versions in `THIRD_PARTY_NOTICES.md`, `SOURCE_OFFER.md`, and `SwiftRip-Tools/Manifest/`.
+- Confirm third-party tool versions and the Sparkle pin are the intended versions in `THIRD_PARTY_NOTICES.md`, `SOURCE_OFFER.md`, `SwiftRip-Tools/Manifest/`, and `Package.resolved`.
 
 ## 2. Check Repository State
 
@@ -105,6 +105,7 @@ The expected public artifacts are:
 ## 8. Check Source and License Availability
 
 - If HandBrakeCLI or libdvdcss changed, follow [`Docs/BundledTools.md`](Docs/BundledTools.md).
+- If Sparkle changed, confirm `Package.resolved` points to the exact official Sparkle release tag commit and that the release workflow can access the Sparkle signing key.
 - Confirm `THIRD_PARTY_NOTICES.md` lists the exact HandBrake and libdvdcss versions shipped.
 - Confirm `SOURCE_OFFER.md` points to the matching SwiftRip, SwiftRip-Tools, SwiftRip-HandBrake, and SwiftRip-libdvdcss sources.
 - Confirm SwiftRip-Tools release assets and checksums match the manifests consumed by this repository.

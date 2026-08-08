@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: swiftrip-automatic-release
+  cancel-in-progress: false
+
 jobs:
   consume:
     name: Update SwiftRip and Create Release Tag
