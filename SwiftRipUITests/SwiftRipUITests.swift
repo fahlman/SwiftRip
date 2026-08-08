@@ -14,7 +14,10 @@ final class SwiftRipUITests: XCTestCase {
     func testAccessibilitySurfacesAndMenus() throws {
         let app = launchApp()
 
-        XCTAssertTrue(element("primaryActionButton", in: app).waitForExistence(timeout: 5))
+        XCTAssertTrue(element("chooseDVDToolbarButton", in: app).waitForExistence(timeout: 5))
+        XCTAssertTrue(element("ripToolbarButton", in: app).exists)
+        XCTAssertTrue(element("stopToolbarButton", in: app).exists)
+        XCTAssertTrue(element("ejectToolbarButton", in: app).exists)
         XCTAssertTrue(element("dvdStatus", in: app).exists)
         XCTAssertTrue(element("dvdName", in: app).exists)
 
@@ -29,9 +32,8 @@ final class SwiftRipUITests: XCTestCase {
         XCTAssertTrue(app.checkBoxes["Reveal completed file in Finder"].exists)
         XCTAssertTrue(app.checkBoxes["Eject DVD after successful rip"].exists)
         XCTAssertTrue(app.buttons["Change…"].exists)
-        XCTAssertTrue(app.buttons["OK"].exists)
 
-        app.buttons["OK"].click()
+        app.typeKey("w", modifierFlags: .command)
 
         assertAppMenuExposesItem("About SwiftRip", in: app)
         app.typeKey(.escape, modifierFlags: [])
@@ -59,7 +61,7 @@ final class SwiftRipUITests: XCTestCase {
         XCTAssertTrue(openPanel.buttons["Cancel"].waitForExistence(timeout: 5))
 
         openPanel.buttons["Cancel"].click()
-        XCTAssertTrue(element("primaryActionButton", in: app).waitForExistence(timeout: 5))
+        XCTAssertTrue(element("chooseDVDToolbarButton", in: app).waitForExistence(timeout: 5))
     }
 
     @MainActor
@@ -74,7 +76,7 @@ final class SwiftRipUITests: XCTestCase {
         ])
 
         cancelOutputPromptIfPresent(in: app)
-        element("primaryActionButton", in: app).click()
+        element("chooseDVDToolbarButton", in: app).click()
         chooseFolder(invalidDVDURL, confirmationButtons: ["Choose DVD…", "Choose DVD", "Open"], in: app)
 
         XCTAssertTrue(app.staticTexts["Not a Video DVD"].waitForExistence(timeout: 5))

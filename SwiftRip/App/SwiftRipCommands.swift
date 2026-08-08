@@ -9,21 +9,22 @@ import SwiftUI
 @MainActor
 struct SwiftRipCommands: Commands {
     let updaterController: SPUStandardUpdaterController
-    let showAbout: @MainActor () -> Void
 
+    @Environment(\.openURL) private var openURL
     @FocusedValue(\.ripCommandActions) private var ripCommandActions
 
     var body: some Commands {
-        CommandGroup(replacing: .appInfo) {
-            Button(AppStrings.aboutTitle(appName: RipConfiguration.appName)) {
-                showAbout()
-            }
-        }
-
         CommandGroup(after: .appInfo) {
             Button(AppStrings.checkForUpdatesTitle) {
                 updaterController.checkForUpdates(nil)
             }
+        }
+
+        CommandGroup(after: .help) {
+            Button(AppStrings.showLicensesTitle) {
+                openLicensesFolder()
+            }
+            .disabled(licensesFolderURL == nil)
         }
 
         CommandGroup(after: .newItem) {
@@ -33,13 +34,6 @@ struct SwiftRipCommands: Commands {
             .keyboardShortcut("o", modifiers: .command)
             .disabled(ripCommandActions?.canChooseDVD != true)
         }
-
-        CommandGroup(replacing: .undoRedo) {}
-        CommandGroup(replacing: .pasteboard) {}
-        CommandGroup(replacing: .toolbar) {}
-        CommandGroup(replacing: .sidebar) {}
-        CommandGroup(replacing: .windowSize) {}
-        CommandGroup(replacing: .windowArrangement) {}
 
         CommandMenu(AppStrings.ripMenuTitle) {
             Button(AppStrings.ripTitle) {
@@ -72,5 +66,26 @@ struct SwiftRipCommands: Commands {
             }
             .disabled(ripCommandActions?.canRevealLog != true)
         }
+    }
+
+    private func openLicensesFolder() {
+        guard let licensesFolderURL else { return }
+        openURL(licensesFolderURL)
+    }
+
+    private var licensesFolderURL: URL? {
+        guard
+            let resourceURL = Bundle.main.resourceURL,
+            let urls = try? FileManager.default.contentsOfDirectory(
+                at: resourceURL,
+                includingPropertiesForKeys: nil,
+                options: [.skipsHiddenFiles]
+            ),
+            urls.contains(where: { $0.lastPathComponent.hasSuffix("COPYING") })
+        else {
+            return nil
+        }
+
+        return resourceURL
     }
 }

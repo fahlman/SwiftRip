@@ -6,23 +6,12 @@
 import SwiftUI
 
 enum SwiftRipColors {
-    static let primaryButtonForeground = Color.white
-    static let secondaryButtonForeground = Color.primary
-    static let secondaryButtonBorder = Color.secondary.opacity(0.22)
-
     static let secondaryText = Color.secondary
-    static let discIcon = Color.secondary
-    static let selectedBadgeForeground = Color.white
-    static let selectedBadgeBackground = Color.green
-    static let missingBadgeForeground = Color.black
-    static let missingBadgeBackground = Color.gray
-    static let errorText = Color.red
-
-    static func primaryButtonBackground(isPressed: Bool) -> Color {
-        isPressed ? Color.accentColor.opacity(0.82) : Color.accentColor
-    }
-
-    static func secondaryButtonBackground(isPressed: Bool) -> Color {
-        isPressed ? Color.secondary.opacity(0.24) : Color.secondary.opacity(0.14)
-    }
+    static let discIcon = Color(nsColor: .tertiaryLabelColor)
+    static let selectedDiscIcon = Color(nsColor: .tertiaryLabelColor)
+    static let selectedBadgeForeground = Color(nsColor: .alternateSelectedControlTextColor)
+    static let selectedBadgeBackground = Color(nsColor: .systemGreen)
+    static let missingBadgeForeground = Color(nsColor: .labelColor)
+    static let missingBadgeBackground = Color(nsColor: .quaternaryLabelColor)
+    static let errorText = Color(nsColor: .systemRed)
 }

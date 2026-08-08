@@ -23,7 +23,7 @@ struct BundleIntegrityTests {
 
         #expect(infoDictionary["SUEnableInstallerLauncherService"] as? Bool == true)
         #expect(infoDictionary["SUPublicEDKey"] as? String == "sMmU/N+9HqwHhHkwmkXaB7tNNggc7oVVSDand45m760=")
-        #expect(infoDictionary["SUFeedURL"] as? String == "https://fahlman.github.io/SwiftRip/appcast-arm64.xml")
+        #expect(infoDictionary["SUFeedURL"] as? String == "https://fahlman.github.io/SwiftRip/appcast.xml")
     }
 
     @Test func appBundleDeclaresMacAppCategory() throws {
