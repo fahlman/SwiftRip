@@ -1,0 +1,45 @@
+name: Sparkle Updates
+
+on:
+  schedule:
+    - cron: "30 14 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: swiftrip-automatic-release
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Check, Test, and Release Sparkle Update
+    runs-on: macos-26
+    timeout-minutes: 120
+
+    steps:
+      - name: Require automation token
+        env:
+          SWIFTRIP_AUTOMATION_TOKEN: ${{ secrets.SWIFTRIP_AUTOMATION_TOKEN }}
+        run: |
+          if [[ -z "$SWIFTRIP_AUTOMATION_TOKEN" ]]; then
+            echo "::error::SWIFTRIP_AUTOMATION_TOKEN is required for automated commits and release tags."
+            exit 1
+          fi
+
+      - name: Check out SwiftRip main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.SWIFTRIP_AUTOMATION_TOKEN }}
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Consume latest stable Sparkle release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SWIFTRIP_RELEASE_BRANCH: main
+        run: Scripts/consume-sparkle-update.zsh

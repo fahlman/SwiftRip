@@ -33,7 +33,7 @@ SwiftRip-Tools builds libdvdcss from a SwiftRip-controlled source tag that point
 The pinned source tag is:
 
 ```text
-https://github.com/fahlman/SwiftRip-libdvdcss/tree/swiftrip-libdvdcss-1.5.0
+https://github.com/fahlman/SwiftRip-libdvdcss/tree/swiftrip-libdvdcss-1.6.0
 ```
 
 The build script is:

@@ -25,8 +25,8 @@ When SwiftRip distributes a bundled HandBrakeCLI binary, SwiftRip must also prov
 - Project: VideoLAN libdvdcss
 - Website: https://www.videolan.org/developers/libdvdcss.html
 - Source: https://code.videolan.org/videolan/libdvdcss
-- SwiftRip source pin: https://github.com/fahlman/SwiftRip-libdvdcss/tree/swiftrip-libdvdcss-1.5.0
-- Current SwiftRip-Tools target version: 1.5.0
+- SwiftRip source pin: https://github.com/fahlman/SwiftRip-libdvdcss/tree/swiftrip-libdvdcss-1.6.0
+- Current SwiftRip-Tools target version: 1.6.0
 - License: GNU General Public License
 - Use in SwiftRip: SwiftRip-Tools builds libdvdcss so DVD CSS access can be provided by a bundled app-local dynamic library instead of relying on Homebrew, MacPorts, `/usr/local/lib`, `/opt/local/lib`, or other user-installed runtime libraries.
 
