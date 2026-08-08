@@ -176,3 +176,38 @@ write_release_manifest() {
 }
 EOF
 }
+
+write_zip_release_manifest() {
+    local manifest_path="$1"
+    local app_name="$2"
+    local version="$3"
+    local bundle_identifier="$4"
+    local release_arch="$5"
+    local sparkle_feed_url="$6"
+    local app_path="$7"
+    local zip_path="$8"
+    local notarized="$9"
+    local zip_name
+    local zip_sha256
+    local generated_at
+
+    zip_name="$(basename "$zip_path")"
+    zip_sha256="$(/usr/bin/shasum -a 256 "$zip_path" | /usr/bin/awk '{print $1}')"
+    generated_at="$(/bin/date -u '+%Y-%m-%dT%H:%M:%SZ')"
+
+    cat > "$manifest_path" <<EOF
+{
+  "appName": $(json_string "$app_name"),
+  "version": $(json_string "$version"),
+  "bundleIdentifier": $(json_string "$bundle_identifier"),
+  "architecture": $(json_string "$release_arch"),
+  "sparkleFeedURL": $(json_string "$sparkle_feed_url"),
+  "appPath": $(json_string "$app_path"),
+  "zipName": $(json_string "$zip_name"),
+  "zipPath": $(json_string "$zip_path"),
+  "zipSHA256": $(json_string "$zip_sha256"),
+  "notarized": $notarized,
+  "generatedAt": $(json_string "$generated_at")
+}
+EOF
+}

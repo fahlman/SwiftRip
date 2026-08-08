@@ -8,6 +8,7 @@ Use this checklist for every public SwiftRip release, including hotfixes. Stop t
 - Confirm `CURRENT_PROJECT_VERSION` will be higher than every previously published Sparkle build.
 - Confirm the release is meant to be public, not a local packaging test.
 - Confirm the release still targets the intended minimum macOS version, currently macOS 15.7.
+- Confirm the dedicated GitHub Actions release workflow is the intended publisher.
 - Confirm any user-facing changes are reflected in `README.md`, `ROADMAP.md`, or release notes as needed.
 - Confirm third-party tool versions are the intended pinned versions in `THIRD_PARTY_NOTICES.md`, `SOURCE_OFFER.md`, and `SwiftRip-Tools/Manifest/`.
 
@@ -16,8 +17,7 @@ Use this checklist for every public SwiftRip release, including hotfixes. Stop t
 - Work from `main` for a public release.
 - Pull the latest remote state.
 - Confirm `git status --short --branch` is clean before starting release packaging.
-- Confirm GitHub CI is passing on the release commit.
-- Confirm Xcode Cloud is passing on the release commit.
+- Confirm GitHub Actions is passing on the release commit.
 - Run repository validation:
 
 ```sh
@@ -66,19 +66,18 @@ Run this against a signed release build whenever changes touch ripping, bundled 
 - Update `MARKETING_VERSION` for the public version.
 - Increment `CURRENT_PROJECT_VERSION` for Sparkle. Never reuse a Sparkle build number.
 - Commit and push the version bump.
-- Wait for GitHub CI and Xcode Cloud to pass on the exact release commit.
+- Wait for GitHub Actions to pass on the exact release commit.
 
 ## 6. Build and Publish Release Artifacts
 
 Prerequisites:
 
-- `Developer ID Application` certificate installed in the login keychain.
-- Notary credentials stored in the keychain as `SwiftRip Notary`.
-- GitHub CLI authenticated with release upload permission.
+- GitHub Actions release workflow builds a Developer ID signed macOS app.
+- GitHub Actions secrets are configured for GitHub release publishing, notarization, and Sparkle signing.
 - Sparkle `generate_appcast` available from Xcode's resolved package artifacts.
 - Apple Silicon and Intel SwiftRip-Tools packages available from the pinned manifests.
 
-Build, sign, notarize, staple, upload both architecture-specific DMGs, generate Sparkle appcasts, and publish appcasts to GitHub Pages:
+GitHub Actions release publishing is documented in [`Docs/GitHubActionsRelease.md`](Docs/GitHubActionsRelease.md). Official releases should use the dedicated GitHub Actions tag workflow. If publishing locally as a fallback, package, notarize, staple, upload the universal ZIP, generate the Sparkle appcast, and publish it to GitHub Pages:
 
 ```sh
 Scripts/release-sparkle.zsh --notary-profile "SwiftRip Notary"
@@ -86,23 +85,22 @@ Scripts/release-sparkle.zsh --notary-profile "SwiftRip Notary"
 
 The expected public artifacts are:
 
-- `SwiftRip-VERSION-arm64.dmg`
-- `SwiftRip-VERSION-x86_64.dmg`
+- `SwiftRip-VERSION.zip`
 - `https://github.com/fahlman/SwiftRip/releases/tag/vVERSION`
-- `https://fahlman.github.io/SwiftRip/appcast-arm64.xml`
-- `https://fahlman.github.io/SwiftRip/appcast-x86_64.xml`
+- `https://fahlman.github.io/SwiftRip/appcast.xml`
+- compatibility appcast copies at `appcast-arm64.xml` and `appcast-x86_64.xml` for previously released builds
 
 ## 7. Verify Published Artifacts
 
 - Confirm the GitHub release points at the intended commit.
-- Confirm both DMGs are attached to the release.
-- Confirm both generated release manifests exist in `dist/VERSION/`.
-- Confirm both appcasts reference the new version and the correct architecture-specific DMG.
-- Download each published DMG from GitHub, mount it, and launch the app.
-- Confirm Gatekeeper accepts each downloaded DMG on a clean machine or clean user account.
+- Confirm the universal ZIP is attached to the release.
+- Confirm the generated release manifest exists in `dist/VERSION/`.
+- Confirm the appcast references the new version and ZIP.
+- Download the published ZIP from GitHub, expand it, and launch the app.
+- Confirm Gatekeeper accepts the downloaded app on a clean machine or clean user account.
 - Confirm Sparkle updates from the previous public release to the new release.
-- Test Sparkle on Apple Silicon for the `arm64` feed.
-- Test Sparkle on Intel hardware, or an appropriate Intel test environment, for the `x86_64` feed.
+- Test Sparkle on Apple Silicon.
+- Test Sparkle on Intel hardware, or an appropriate Intel test environment.
 
 ## 8. Check Source and License Availability
 
@@ -114,8 +112,7 @@ The expected public artifacts are:
 
 ## 9. After Release
 
-- Confirm GitHub CI remains green after the release commit and appcast publishing.
-- Confirm Xcode Cloud remains green after the release commit.
+- Confirm GitHub Actions remains green after the release commit.
 - Watch GitHub issues for install, update, sandbox, and DVD read failures.
 - If a serious release problem appears, prefer publishing a fixed release with a higher `CURRENT_PROJECT_VERSION`.
 

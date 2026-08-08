@@ -1,0 +1,38 @@
+name: Consume SwiftRip-Tools Update
+
+on:
+  repository_dispatch:
+    types:
+      - swiftrip-tools-updated
+
+permissions:
+  contents: write
+
+jobs:
+  consume:
+    name: Update SwiftRip and Create Release Tag
+    if: github.event.action == 'swiftrip-tools-updated'
+    runs-on: macos-latest
+
+    steps:
+      - name: Check out SwiftRip main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.SWIFTRIP_AUTOMATION_TOKEN }}
+
+      - name: Consume exact SwiftRip-Tools revision
+        env:
+          SWIFTRIP_RELEASE_BRANCH: main
+        run: |
+          Scripts/consume-swiftrip-tools-update.zsh \
+            --tools-repository "${{ github.event.client_payload.tools_repository }}" \
+            --tools-revision "${{ github.event.client_payload.tools_revision }}" \
+            --package-version "${{ github.event.client_payload.package_version }}" \
+            --handbrake-version "${{ github.event.client_payload.handbrake_version }}" \
+            --handbrake-source-tag "${{ github.event.client_payload.handbrake_source_tag }}" \
+            --handbrake-source-commit "${{ github.event.client_payload.handbrake_source_commit }}" \
+            --libdvdcss-version "${{ github.event.client_payload.libdvdcss_version }}" \
+            --libdvdcss-source-tag "${{ github.event.client_payload.libdvdcss_source_tag }}" \
+            --libdvdcss-source-commit "${{ github.event.client_payload.libdvdcss_source_commit }}"

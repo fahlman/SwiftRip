@@ -14,6 +14,8 @@ OUTPUT_DIR="$ROOT_DIR/dist"
 TEAM_ID="${SWIFTRIP_TEAM_ID:-PUT2KYMV2W}"
 SIGNING_IDENTITY="${SWIFTRIP_SIGNING_IDENTITY:-Developer ID Application}"
 NOTARY_PROFILE="${SWIFTRIP_NOTARY_PROFILE:-}"
+NOTARY_APPLE_ID="${SWIFTRIP_NOTARY_APPLE_ID:-}"
+NOTARY_PASSWORD="${SWIFTRIP_NOTARY_PASSWORD:-}"
 SKIP_NOTARIZATION=false
 typeset -a NOTARY_ARGS
 
@@ -40,11 +42,14 @@ Environment variables:
   SWIFTRIP_TEAM_ID
   SWIFTRIP_SIGNING_IDENTITY
   SWIFTRIP_NOTARY_PROFILE
+  SWIFTRIP_NOTARY_APPLE_ID
+  SWIFTRIP_NOTARY_PASSWORD
   SWIFTRIP_RELEASE_ARCH
   SWIFTRIP_SPARKLE_FEED_URL
   SWIFTRIP_RELEASE_WORK_DIR
 
-Notarization requires a notarytool keychain profile.
+Notarization requires a notarytool keychain profile or Apple notarization
+credentials provided through environment variables.
 USAGE
 }
 
@@ -110,7 +115,7 @@ case "$RELEASE_ARCH" in
         OTHER_ARCH="arm64"
         ;;
 esac
-SPARKLE_FEED_URL="${SWIFTRIP_SPARKLE_FEED_URL:-https://fahlman.github.io/SwiftRip/appcast-${RELEASE_ARCH}.xml}"
+SPARKLE_FEED_URL="${SWIFTRIP_SPARKLE_FEED_URL:-https://fahlman.github.io/SwiftRip/appcast.xml}"
 
 require_value "TEAM_ID" "$TEAM_ID"
 require_value "SIGNING_IDENTITY" "$SIGNING_IDENTITY"
@@ -125,8 +130,11 @@ require_command /usr/bin/xcrun
 if [[ "$SKIP_NOTARIZATION" == false ]]; then
     if [[ -n "$NOTARY_PROFILE" ]]; then
         NOTARY_ARGS=(--keychain-profile "$NOTARY_PROFILE")
+    elif [[ -n "$NOTARY_APPLE_ID" && -n "$NOTARY_PASSWORD" ]]; then
+        NOTARY_ARGS=(--apple-id "$NOTARY_APPLE_ID" --password "$NOTARY_PASSWORD" --team-id "$TEAM_ID")
     else
         echo "ERROR: Notarization needs --notary-profile."
+        echo "For GitHub Actions, set SWIFTRIP_NOTARY_APPLE_ID and SWIFTRIP_NOTARY_PASSWORD as secrets."
         echo "Use --skip-notarization for a local packaging check without Apple notarization."
         exit 1
     fi

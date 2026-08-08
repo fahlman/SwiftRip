@@ -16,17 +16,18 @@ It bundles the required ripping tools, checks that they are present before start
 - Preserves completed and failed output files.
 - Writes rip logs.
 - Includes bundled tool license information in the About window.
-- Ships architecture-specific signed/notarized DMGs with Sparkle update feeds.
+- Ships a signed/notarized universal app ZIP with Sparkle updates.
 - Supports localized user-facing strings.
 
 ## Tests
 
-The unit test suite covers DVD selection, HandBrake arguments, progress parsing, preflight checks, rip lifecycle behavior, cancellation cleanup, logging, and localization formatting. CI runs those unit tests; macOS UI tests remain available for local interactive checks.
+The unit test suite covers DVD selection, HandBrake arguments, progress parsing, preflight checks, rip lifecycle behavior, cancellation cleanup, logging, and localization formatting. GitHub Actions handles the automated macOS build and release workflow; macOS UI tests remain available for local interactive checks.
 
 ## Project docs
 
 - [Release checklist](RELEASE_CHECKLIST.md)
 - [Bundled tool maintenance](Docs/BundledTools.md)
+- [GitHub Actions release publishing](Docs/GitHubActionsRelease.md)
 - [Security policy](SECURITY.md)
 - [Support guide](SUPPORT.md)
 - [Legal notes](LEGAL.md)

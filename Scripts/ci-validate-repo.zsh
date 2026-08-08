@@ -24,6 +24,9 @@ fi
 
 echo "Checking shell script syntax..."
 while IFS= read -r script_path; do
+    if [[ ! -f "$ROOT_DIR/$script_path" ]]; then
+        continue
+    fi
     /bin/zsh -n "$ROOT_DIR/$script_path"
 done < <(
     git -C "$ROOT_DIR" ls-files \
