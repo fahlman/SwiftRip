@@ -72,4 +72,5 @@ jobs:
           Scripts/release-sparkle.zsh \
             --version "$release_version" \
             --release-tag "$GITHUB_REF_NAME" \
-            --title "SwiftRip $release_version"
+            --title "SwiftRip $release_version" \
+            --notes-file "ReleaseNotes/$GITHUB_REF_NAME.md"
