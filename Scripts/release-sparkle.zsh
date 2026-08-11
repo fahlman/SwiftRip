@@ -351,15 +351,10 @@ ensure_pages_worktree() {
     fi
 
     /bin/rm -rf "$PAGES_WORKTREE"
-    if authenticated_git ls-remote --exit-code --heads "$origin_url" gh-pages >/dev/null 2>&1; then
-        authenticated_git clone --branch gh-pages --single-branch "$origin_url" "$PAGES_WORKTREE"
-        return
+    if ! authenticated_git clone --branch gh-pages --single-branch "$origin_url" "$PAGES_WORKTREE"; then
+        echo "ERROR: Could not clone the existing gh-pages publishing branch."
+        exit 1
     fi
-
-    /bin/mkdir -p "$PAGES_WORKTREE"
-    authenticated_git -C "$PAGES_WORKTREE" init
-    authenticated_git -C "$PAGES_WORKTREE" checkout --orphan gh-pages
-    authenticated_git -C "$PAGES_WORKTREE" remote add origin "$origin_url"
 }
 
 publish_appcasts() {
