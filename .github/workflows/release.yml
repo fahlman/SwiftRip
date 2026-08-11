@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  pages: write
 
 jobs:
   release:
@@ -19,8 +20,8 @@ jobs:
       SWIFTRIP_TEAM_ID: PUT2KYMV2W
       SWIFTRIP_SIGNING_IDENTITY: Developer ID Application
       SWIFTRIP_GITHUB_REPO: ${{ github.repository }}
-      SWIFTRIP_GITHUB_TOKEN: ${{ secrets.SWIFTRIP_RELEASE_TOKEN }}
-      GH_TOKEN: ${{ secrets.SWIFTRIP_RELEASE_TOKEN }}
+      SWIFTRIP_GITHUB_TOKEN: ${{ github.token }}
+      GH_TOKEN: ${{ github.token }}
       SWIFTRIP_NOTARY_APPLE_ID: ${{ secrets.SWIFTRIP_NOTARY_APPLE_ID }}
       SWIFTRIP_NOTARY_PASSWORD: ${{ secrets.SWIFTRIP_NOTARY_PASSWORD }}
       SWIFTRIP_SPARKLE_ED_KEY: ${{ secrets.SWIFTRIP_SPARKLE_ED_KEY }}
@@ -77,3 +78,6 @@ jobs:
             --release-tag "$GITHUB_REF_NAME" \
             --title "SwiftRip $release_version" \
             --notes-file "ReleaseNotes/$GITHUB_REF_NAME.md"
+
+      - name: Deploy updated Sparkle appcast
+        run: gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds"

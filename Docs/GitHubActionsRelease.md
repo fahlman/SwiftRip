@@ -15,13 +15,16 @@ SwiftRip-Tools requires `SWIFTRIP_AUTOMATION_TOKEN`, with write access to SwiftR
 SwiftRip requires:
 
 - `SWIFTRIP_AUTOMATION_TOKEN` — pushes the automated manifest/version commit and release tag.
-- `SWIFTRIP_RELEASE_TOKEN` — creates the GitHub release and updates `gh-pages`.
 - `DEVELOPER_ID_APPLICATION_P12_BASE64` — base64-encoded Developer ID Application certificate export.
 - `DEVELOPER_ID_APPLICATION_P12_PASSWORD` — password for that certificate export.
 - `SWIFTRIP_KEYCHAIN_PASSWORD` — temporary CI keychain password.
 - `SWIFTRIP_NOTARY_APPLE_ID` — Apple ID used for notarization.
 - `SWIFTRIP_NOTARY_PASSWORD` — app-specific password for notarization.
 - `SWIFTRIP_SPARKLE_ED_KEY` — Sparkle signing key.
+
+The release workflow uses its short-lived, repository-scoped `GITHUB_TOKEN` to
+create the GitHub release, update `gh-pages`, and request the GitHub Pages build.
+Its permissions are limited in the workflow to repository contents and Pages.
 
 The repository's existing release scripts perform the build, signing, notarization, ZIP packaging, GitHub release upload, and appcast publication. The workflow does not require a Mac App Store listing or another release service.
 
