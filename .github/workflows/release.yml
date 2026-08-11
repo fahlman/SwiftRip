@@ -23,9 +23,6 @@ jobs:
       SWIFTRIP_NOTARY_APPLE_ID: ${{ secrets.SWIFTRIP_NOTARY_APPLE_ID }}
       SWIFTRIP_NOTARY_PASSWORD: ${{ secrets.SWIFTRIP_NOTARY_PASSWORD }}
       SWIFTRIP_SPARKLE_ED_KEY: ${{ secrets.SWIFTRIP_SPARKLE_ED_KEY }}
-      SWIFTRIP_RELEASE_WORK_DIR: ${{ runner.temp }}/swiftrip-release
-      SWIFTRIP_APPCAST_WORK_DIR: ${{ runner.temp }}/swiftrip-appcasts
-      SWIFTRIP_PAGES_WORKTREE: ${{ runner.temp }}/swiftrip-gh-pages
 
     steps:
       - name: Check out release commit
@@ -66,6 +63,10 @@ jobs:
         run: Scripts/ci-validate-repo.zsh
 
       - name: Build, notarize, and publish release
+        env:
+          SWIFTRIP_RELEASE_WORK_DIR: ${{ runner.temp }}/swiftrip-release
+          SWIFTRIP_APPCAST_WORK_DIR: ${{ runner.temp }}/swiftrip-appcasts
+          SWIFTRIP_PAGES_WORKTREE: ${{ runner.temp }}/swiftrip-gh-pages
         run: |
           set -euo pipefail
           release_version="${GITHUB_REF_NAME#v}"
