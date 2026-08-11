@@ -171,7 +171,13 @@ release_notes_body() {
 
 authenticated_git() {
     if [[ -n "$GITHUB_TOKEN" ]]; then
-        git -c "http.https://github.com/.extraheader=AUTHORIZATION: bearer $GITHUB_TOKEN" "$@"
+        local authorization
+        authorization="$(
+            printf "%s" "x-access-token:$GITHUB_TOKEN" \
+                | /usr/bin/base64 \
+                | /usr/bin/tr -d '\n'
+        )"
+        git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $authorization" "$@"
     else
         git "$@"
     fi
