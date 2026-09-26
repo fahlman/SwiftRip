@@ -33,7 +33,7 @@ usage() {
     cat <<'USAGE'
 Usage: Scripts/release-sparkle.zsh [options]
 
-Package a universal SwiftRip.app ZIP, upload it to a GitHub release,
+Package an Apple silicon SwiftRip.app ZIP, upload it to a GitHub release,
 generate the Sparkle appcast, and publish the appcast to GitHub Pages.
 
 Options:
@@ -366,9 +366,8 @@ publish_appcasts() {
     # Compatibility for released builds whose SUFeedURL still points at an
     # architecture-specific appcast. New builds use appcast.xml.
     /bin/cp "$APPCAST_WORK_DIR/appcast.xml" "$PAGES_WORKTREE/appcast-arm64.xml"
-    /bin/cp "$APPCAST_WORK_DIR/appcast.xml" "$PAGES_WORKTREE/appcast-x86_64.xml"
 
-    authenticated_git -C "$PAGES_WORKTREE" add .nojekyll appcast.xml appcast-arm64.xml appcast-x86_64.xml
+    authenticated_git -C "$PAGES_WORKTREE" add .nojekyll appcast.xml appcast-arm64.xml
     if authenticated_git -C "$PAGES_WORKTREE" diff --cached --quiet; then
         echo "GitHub Pages appcasts are already current."
         return

@@ -34,7 +34,7 @@ Options:
   --notary-profile NAME      notarytool keychain profile name.
   --team-id TEAMID           Apple Developer Team ID.
   --signing-identity NAME    Code signing identity. Defaults to Developer ID Application.
-  --arch ARCH                Release architecture: arm64 or x86_64. Defaults to arm64.
+  --arch ARCH                Release architecture: arm64, the only supported value (default).
   --output-dir PATH          Directory for the final DMG. Defaults to ./dist.
   -h, --help                 Show this help.
 
@@ -97,24 +97,17 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$RELEASE_ARCH" in
-    arm64|x86_64)
+    arm64)
         ;;
     *)
         echo "ERROR: Unsupported release architecture: $RELEASE_ARCH"
-        echo "Supported architectures: arm64, x86_64"
+        echo "Supported architecture: arm64 (SwiftRip requires macOS 27, which runs only on Apple silicon)."
         exit 64
         ;;
 esac
 
 WORK_DIR="${SWIFTRIP_RELEASE_WORK_DIR:-${RELEASE_TMP_ROOT%/}/swiftrip-release-${USER:-user}-${RELEASE_ARCH}}"
-case "$RELEASE_ARCH" in
-    arm64)
-        OTHER_ARCH="x86_64"
-        ;;
-    x86_64)
-        OTHER_ARCH="arm64"
-        ;;
-esac
+OTHER_ARCH="x86_64"
 SPARKLE_FEED_URL="${SWIFTRIP_SPARKLE_FEED_URL:-https://fahlman.github.io/SwiftRip/appcast.xml}"
 
 require_value "TEAM_ID" "$TEAM_ID"

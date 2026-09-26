@@ -14,7 +14,7 @@ It bundles the required ripping tools, checks that they are present before start
 - Preserves completed and failed output files.
 - Writes rip logs.
 - Includes bundled tool license information in the About window.
-- Ships a signed/notarized universal app ZIP with Sparkle updates.
+- Ships a signed/notarized Apple silicon app ZIP with Sparkle updates.
 - Supports localized user-facing strings.
 
 ## Tests

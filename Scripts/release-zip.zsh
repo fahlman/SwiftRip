@@ -7,7 +7,7 @@ PROJECT_PATH="$ROOT_DIR/SwiftRip.xcodeproj"
 SCHEME="SwiftRip"
 CONFIGURATION="Release"
 APP_NAME="SwiftRip"
-RELEASE_ARCH="universal"
+RELEASE_ARCH="arm64"
 RELEASE_TMP_ROOT="${TMPDIR:-/private/tmp}"
 OUTPUT_DIR="$ROOT_DIR/dist"
 TEAM_ID="${SWIFTRIP_TEAM_ID:-PUT2KYMV2W}"
@@ -27,10 +27,10 @@ usage() {
     cat <<'USAGE'
 Usage: Scripts/release-zip.zsh [options]
 
-Package, notarize, staple, and verify a universal SwiftRip.app ZIP.
+Package, notarize, staple, and verify an Apple silicon SwiftRip.app ZIP.
 
 By default, this script uses SWIFTRIP_RELEASE_APP_PATH. If it is not present, it builds a local
-universal Release app and signs it with Developer ID.
+Apple silicon Release app and signs it with Developer ID.
 
 Options:
   --app-path PATH           Signed app, exported app directory, or ZIP to package.
@@ -220,7 +220,7 @@ build_local_app() {
     require_command /usr/bin/xcodebuild
 
     echo ""
-    echo "Building local universal release app..."
+    echo "Building local Apple silicon release app..."
     /usr/bin/xcodebuild build \
         -quiet \
         -project "$PROJECT_PATH" \
@@ -228,8 +228,8 @@ build_local_app() {
         -configuration "$CONFIGURATION" \
         -destination "generic/platform=macOS" \
         -derivedDataPath "$derived_data_path" \
-        ARCHS="arm64 x86_64" \
-        SWIFTRIP_TOOLS_ARCH=universal \
+        ARCHS="arm64" \
+        SWIFTRIP_TOOLS_ARCH=arm64 \
         SWIFTRIP_SPARKLE_FEED_URL="$SPARKLE_FEED_URL" \
         ENABLE_USER_SCRIPT_SANDBOXING=NO \
         CODE_SIGNING_ALLOWED=NO \
@@ -311,14 +311,16 @@ assert_entitlement_absent "$APP_ENTITLEMENTS" "com.apple.security.temporary-exce
 assert_entitlement_absent "$APP_ENTITLEMENTS" "PRODUCT_BUNDLE_IDENTIFIER"
 
 echo ""
-echo "Verifying universal app architecture..."
+echo "Verifying Apple silicon app architecture..."
 /usr/bin/file "$APP_EXECUTABLE"
-for expected_arch in arm64 x86_64; do
-    if ! /usr/bin/file "$APP_EXECUTABLE" | /usr/bin/grep -q "$expected_arch"; then
-        echo "ERROR: App executable is missing $expected_arch."
-        exit 1
-    fi
-done
+if ! /usr/bin/file "$APP_EXECUTABLE" | /usr/bin/grep -q "arm64"; then
+    echo "ERROR: App executable is not arm64."
+    exit 1
+fi
+if /usr/bin/file "$APP_EXECUTABLE" | /usr/bin/grep -q "x86_64"; then
+    echo "ERROR: App executable contains x86_64, but SwiftRip is Apple silicon only."
+    exit 1
+fi
 
 echo ""
 echo "Verifying bundled executable code..."
@@ -330,17 +332,15 @@ fi
 
 /usr/bin/file "$HANDBRAKE_CLI"
 /usr/bin/file "$LIBDVDCSS"
-for expected_arch in arm64 x86_64; do
-    if ! /usr/bin/file "$HANDBRAKE_CLI" | /usr/bin/grep -q "$expected_arch"; then
-        echo "ERROR: Universal HandBrakeCLI is missing $expected_arch."
-        exit 1
-    fi
+if ! /usr/bin/file "$HANDBRAKE_CLI" | /usr/bin/grep -q "arm64"; then
+    echo "ERROR: Bundled HandBrakeCLI is not arm64."
+    exit 1
+fi
 
-    if ! /usr/bin/file "$LIBDVDCSS" | /usr/bin/grep -q "$expected_arch"; then
-        echo "ERROR: Universal libdvdcss.2.dylib is missing $expected_arch."
-        exit 1
-    fi
-done
+if ! /usr/bin/file "$LIBDVDCSS" | /usr/bin/grep -q "arm64"; then
+    echo "ERROR: Bundled libdvdcss.2.dylib is not arm64."
+    exit 1
+fi
 
 if /usr/bin/otool -L "$HANDBRAKE_CLI" | /usr/bin/grep -q "/opt/local"; then
     echo "ERROR: Bundled HandBrakeCLI links against /opt/local libraries."

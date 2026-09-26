@@ -129,12 +129,12 @@ WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/swiftrip-tools-consumer.XXXXXX")"
 trap 'rm -rf "$WORK_DIR"' EXIT
 
 RAW_BASE_URL="https://raw.githubusercontent.com/$TOOLS_REPOSITORY/$TOOLS_REVISION"
-for manifest_name in swiftrip-tools.json swiftrip-tools-x86_64.json; do
+for manifest_name in swiftrip-tools.json; do
     curl -fsSL "$RAW_BASE_URL/Manifest/$manifest_name" -o "$WORK_DIR/$manifest_name"
     /usr/bin/plutil -convert json -o /dev/null "$WORK_DIR/$manifest_name"
 done
 
-for manifest_name in swiftrip-tools.json swiftrip-tools-x86_64.json; do
+for manifest_name in swiftrip-tools.json; do
     manifest_version="$(/usr/bin/plutil -extract version raw -o - "$WORK_DIR/$manifest_name")"
     if [[ "$manifest_version" != "$PACKAGE_VERSION" ]]; then
         echo "ERROR: $manifest_name does not contain package version $PACKAGE_VERSION:" >&2
@@ -144,14 +144,12 @@ for manifest_name in swiftrip-tools.json swiftrip-tools-x86_64.json; do
 done
 
 current_arm_version="$(/usr/bin/plutil -extract version raw -o - "$ROOT_DIR/SwiftRip-Tools/Manifest/swiftrip-tools.json")"
-current_intel_version="$(/usr/bin/plutil -extract version raw -o - "$ROOT_DIR/SwiftRip-Tools/Manifest/swiftrip-tools-x86_64.json")"
-if [[ "$current_arm_version" == "$PACKAGE_VERSION" && "$current_intel_version" == "$PACKAGE_VERSION" ]]; then
+if [[ "$current_arm_version" == "$PACKAGE_VERSION" ]]; then
     echo "SwiftRip already consumes $PACKAGE_VERSION; nothing to do."
     exit 0
 fi
 
 /bin/cp "$WORK_DIR/swiftrip-tools.json" "$ROOT_DIR/SwiftRip-Tools/Manifest/swiftrip-tools.json"
-/bin/cp "$WORK_DIR/swiftrip-tools-x86_64.json" "$ROOT_DIR/SwiftRip-Tools/Manifest/swiftrip-tools-x86_64.json"
 
 /usr/bin/python3 - "$ROOT_DIR/THIRD_PARTY_NOTICES.md" "$ROOT_DIR/SOURCE_OFFER.md" "$HANDBRAKE_SOURCE_TAG" "$LIBDVDCSS_SOURCE_TAG" "$HANDBRAKE_VERSION" "$LIBDVDCSS_VERSION" <<'PY'
 from pathlib import Path
@@ -268,7 +266,6 @@ fi
 
 git -C "$ROOT_DIR" add \
     SwiftRip-Tools/Manifest/swiftrip-tools.json \
-    SwiftRip-Tools/Manifest/swiftrip-tools-x86_64.json \
     SwiftRip.xcodeproj/project.pbxproj \
     THIRD_PARTY_NOTICES.md \
     SOURCE_OFFER.md \

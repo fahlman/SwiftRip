@@ -17,7 +17,7 @@ Please include:
 
 - SwiftRip version and build number from the app or release page.
 - macOS version.
-- Apple Silicon or Intel.
+- Mac model.
 - Whether SwiftRip was installed from a DMG, updated by Sparkle, or built locally.
 - DVD drive model if known.
 - Whether the disc is encrypted, unencrypted, damaged, homemade, or commercial.

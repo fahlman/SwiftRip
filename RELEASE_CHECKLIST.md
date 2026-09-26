@@ -38,11 +38,6 @@ SwiftRip-Tools/Scripts/fetch-swiftrip-tools.zsh
 SWIFTRIP_SUPPRESS_FIRST_RUN_OUTPUT_PROMPT=1 xcodebuild test -project SwiftRip.xcodeproj -scheme SwiftRip -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO -only-testing:SwiftRipTests
 ```
 
-- If the release touches Intel support, restore Intel bundled tools too:
-
-```sh
-SwiftRip-Tools/Scripts/fetch-swiftrip-tools.zsh --arch x86_64
-```
 
 ## 4. Run the Real App Smoke Test
 
@@ -75,9 +70,9 @@ Prerequisites:
 - GitHub Actions release workflow builds a Developer ID signed macOS app.
 - GitHub Actions secrets are configured for GitHub release publishing, notarization, and Sparkle signing.
 - Sparkle `generate_appcast` available from Xcode's resolved package artifacts.
-- Apple Silicon and Intel SwiftRip-Tools packages available from the pinned manifests.
+- The Apple silicon SwiftRip-Tools package available from the pinned manifest.
 
-GitHub Actions release publishing is documented in [`Docs/GitHubActionsRelease.md`](Docs/GitHubActionsRelease.md). Official releases should use the dedicated GitHub Actions tag workflow. If publishing locally as a fallback, package, notarize, staple, upload the universal ZIP, generate the Sparkle appcast, and publish it to GitHub Pages:
+GitHub Actions release publishing is documented in [`Docs/GitHubActionsRelease.md`](Docs/GitHubActionsRelease.md). Official releases should use the dedicated GitHub Actions tag workflow. If publishing locally as a fallback, package, notarize, staple, upload the Apple silicon ZIP, generate the Sparkle appcast, and publish it to GitHub Pages:
 
 ```sh
 Scripts/release-sparkle.zsh --notary-profile "SwiftRip Notary"
@@ -88,19 +83,18 @@ The expected public artifacts are:
 - `SwiftRip-VERSION.zip`
 - `https://github.com/fahlman/SwiftRip/releases/tag/vVERSION`
 - `https://fahlman.github.io/SwiftRip/appcast.xml`
-- compatibility appcast copies at `appcast-arm64.xml` and `appcast-x86_64.xml` for previously released builds
+- a compatibility appcast copy at `appcast-arm64.xml` for previously released builds (`appcast-x86_64.xml` is no longer updated: Intel Macs cannot run macOS 27)
 
 ## 7. Verify Published Artifacts
 
 - Confirm the GitHub release points at the intended commit.
-- Confirm the universal ZIP is attached to the release.
+- Confirm the Apple silicon ZIP is attached to the release.
 - Confirm the generated release manifest exists in `dist/VERSION/`.
 - Confirm the appcast references the new version and ZIP.
 - Download the published ZIP from GitHub, expand it, and launch the app.
 - Confirm Gatekeeper accepts the downloaded app on a clean machine or clean user account.
 - Confirm Sparkle updates from the previous public release to the new release.
 - Test Sparkle on Apple Silicon.
-- Test Sparkle on Intel hardware, or an appropriate Intel test environment.
 
 ## 8. Check Source and License Availability
 

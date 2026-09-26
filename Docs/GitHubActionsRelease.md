@@ -5,7 +5,7 @@ SwiftRip is distributed directly from GitHub as a signed and notarized macOS ZIP
 1. The SwiftRip-Tools automation publishes updated HandBrakeCLI and libdvdcss packages.
 2. SwiftRip consumes the exact tool manifests and pushes a new `vVERSION` tag.
 3. The Sparkle Updates workflow checks the official Sparkle repository weekly. When a stable Sparkle release is newer than the locked version, it updates the pin, runs validation and tests, and pushes a new `vVERSION` tag.
-4. The tag workflow builds the universal app on a macOS GitHub runner.
+4. The tag workflow builds the Apple silicon app on GitHub's `xcode-27` runner.
 5. The workflow signs the app and bundled tools with Developer ID, submits the ZIP to Apple's notary service, staples the ticket, publishes the GitHub release, and updates the Sparkle appcast on `gh-pages`.
 
 ## Required GitHub secrets

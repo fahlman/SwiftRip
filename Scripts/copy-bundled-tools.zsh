@@ -1,33 +1,22 @@
 #!/bin/zsh
 set -euo pipefail
 
-requested_arch="${SWIFTRIP_TOOLS_ARCH:-}"
-if [[ -n "${requested_arch}" ]]; then
-    ARTIFACTS_ARCH="${requested_arch}"
-else
-    build_archs=" ${ARCHS:-${CURRENT_ARCH:-arm64}} "
-    if [[ "${build_archs}" == *" arm64 "* && "${build_archs}" == *" x86_64 "* ]]; then
-        ARTIFACTS_ARCH="universal"
-    elif [[ "${build_archs}" == *" x86_64 "* ]]; then
-        ARTIFACTS_ARCH="x86_64"
-    else
-        ARTIFACTS_ARCH="arm64"
-    fi
+# SwiftRip requires macOS 27, which runs only on Apple silicon, so the app and
+# its bundled tools are arm64 only.
+ARTIFACTS_ARCH="${SWIFTRIP_TOOLS_ARCH:-arm64}"
+if [[ "${ARTIFACTS_ARCH}" != "arm64" ]]; then
+    echo "ERROR: Unsupported SwiftRip-Tools architecture: ${ARTIFACTS_ARCH}"
+    echo "Supported architecture: arm64 (SwiftRip requires macOS 27, which runs only on Apple silicon)."
+    exit 64
 fi
 
-case "${ARTIFACTS_ARCH}" in
-    arm64|x86_64|universal)
-        ;;
-    *)
-        echo "ERROR: Unsupported SwiftRip-Tools architecture: ${ARTIFACTS_ARCH}"
-        echo "Supported architectures: arm64, x86_64, universal"
-        exit 64
-        ;;
-esac
+build_archs=(${=${ARCHS:-${CURRENT_ARCH:-arm64}}})
+if [[ "${build_archs[*]}" != "arm64" ]]; then
+    echo "ERROR: SwiftRip builds for Apple silicon (arm64) only, but ARCHS is '${build_archs[*]}'."
+    exit 64
+fi
 
 ARTIFACTS_DIR="${SRCROOT}/SwiftRip-Tools/Artifacts/macos-${ARTIFACTS_ARCH}"
-ARM64_ARTIFACTS_DIR="${SRCROOT}/SwiftRip-Tools/Artifacts/macos-arm64"
-X86_64_ARTIFACTS_DIR="${SRCROOT}/SwiftRip-Tools/Artifacts/macos-x86_64"
 FETCH_TOOLS_SCRIPT="${SRCROOT}/SwiftRip-Tools/Scripts/fetch-swiftrip-tools.zsh"
 APP_MACOS_DIR="${TARGET_BUILD_DIR}/${EXECUTABLE_FOLDER_PATH}"
 APP_FRAMEWORKS_DIR="${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}"
@@ -50,21 +39,10 @@ if [[ "${SWIFTRIP_SKIP_BUNDLED_TOOLS:-0}" == "1" ]]; then
     exit 0
 fi
 
-if [[ "${ARTIFACTS_ARCH}" == "universal" ]]; then
-    required_tool_arches=(arm64 x86_64)
-    required_artifacts=(
-        "${ARM64_ARTIFACTS_DIR}/HandBrakeCLI"
-        "${ARM64_ARTIFACTS_DIR}/libdvdcss.2.dylib"
-        "${X86_64_ARTIFACTS_DIR}/HandBrakeCLI"
-        "${X86_64_ARTIFACTS_DIR}/libdvdcss.2.dylib"
-    )
-else
-    required_tool_arches=("${ARTIFACTS_ARCH}")
-    required_artifacts=(
-        "${HANDBRAKE_SOURCE}"
-        "${LIBDVDCSS_SOURCE}"
-    )
-fi
+required_artifacts=(
+    "${HANDBRAKE_SOURCE}"
+    "${LIBDVDCSS_SOURCE}"
+)
 
 missing_artifacts=()
 for artifact in "${required_artifacts[@]}"; do
@@ -85,9 +63,7 @@ if [[ "${#missing_artifacts[@]}" -gt 0 ]]; then
         exit 1
     fi
 
-    for arch in "${required_tool_arches[@]}"; do
-        "${FETCH_TOOLS_SCRIPT}" --arch "${arch}"
-    done
+    "${FETCH_TOOLS_SCRIPT}" --arch "${ARTIFACTS_ARCH}"
 fi
 
 for artifact in "${required_artifacts[@]}"; do
@@ -103,21 +79,8 @@ done
 mkdir -p "${APP_MACOS_DIR}"
 mkdir -p "${APP_FRAMEWORKS_DIR}"
 
-if [[ "${ARTIFACTS_ARCH}" == "universal" ]]; then
-    echo ""
-    echo "Creating universal bundled tool artifacts..."
-    /usr/bin/lipo -create \
-        "${ARM64_ARTIFACTS_DIR}/HandBrakeCLI" \
-        "${X86_64_ARTIFACTS_DIR}/HandBrakeCLI" \
-        -output "${HANDBRAKE_DESTINATION}"
-    /usr/bin/lipo -create \
-        "${ARM64_ARTIFACTS_DIR}/libdvdcss.2.dylib" \
-        "${X86_64_ARTIFACTS_DIR}/libdvdcss.2.dylib" \
-        -output "${LIBDVDCSS_FRAMEWORKS_DESTINATION}"
-else
-    cp "${HANDBRAKE_SOURCE}" "${HANDBRAKE_DESTINATION}"
-    cp "${LIBDVDCSS_SOURCE}" "${LIBDVDCSS_FRAMEWORKS_DESTINATION}"
-fi
+cp "${HANDBRAKE_SOURCE}" "${HANDBRAKE_DESTINATION}"
+cp "${LIBDVDCSS_SOURCE}" "${LIBDVDCSS_FRAMEWORKS_DESTINATION}"
 
 rm -f "${STALE_LIBDVDCSS_MACOS_DESTINATION}"
 
@@ -152,32 +115,15 @@ echo "Verifying copied artifacts..."
 file "${HANDBRAKE_DESTINATION}"
 file "${LIBDVDCSS_FRAMEWORKS_DESTINATION}"
 
-case "${ARTIFACTS_ARCH}" in
-    universal)
-        for expected_arch in arm64 x86_64; do
-            if ! file "${HANDBRAKE_DESTINATION}" | grep -q "${expected_arch}"; then
-                echo "ERROR: Universal HandBrakeCLI is missing ${expected_arch}."
-                exit 1
-            fi
+if ! file "${HANDBRAKE_DESTINATION}" | grep -q "${ARTIFACTS_ARCH}"; then
+    echo "ERROR: Bundled HandBrakeCLI is not ${ARTIFACTS_ARCH}."
+    exit 1
+fi
 
-            if ! file "${LIBDVDCSS_FRAMEWORKS_DESTINATION}" | grep -q "${expected_arch}"; then
-                echo "ERROR: Universal Frameworks libdvdcss.2.dylib is missing ${expected_arch}."
-                exit 1
-            fi
-        done
-        ;;
-    *)
-        if ! file "${HANDBRAKE_DESTINATION}" | grep -q "${ARTIFACTS_ARCH}"; then
-            echo "ERROR: Bundled HandBrakeCLI is not ${ARTIFACTS_ARCH}."
-            exit 1
-        fi
-
-        if ! file "${LIBDVDCSS_FRAMEWORKS_DESTINATION}" | grep -q "${ARTIFACTS_ARCH}"; then
-            echo "ERROR: Bundled Frameworks libdvdcss.2.dylib is not ${ARTIFACTS_ARCH}."
-            exit 1
-        fi
-        ;;
-esac
+if ! file "${LIBDVDCSS_FRAMEWORKS_DESTINATION}" | grep -q "${ARTIFACTS_ARCH}"; then
+    echo "ERROR: Bundled Frameworks libdvdcss.2.dylib is not ${ARTIFACTS_ARCH}."
+    exit 1
+fi
 
 if otool -L "${HANDBRAKE_DESTINATION}" | grep -q "/opt/local"; then
     echo "ERROR: Bundled HandBrakeCLI links against /opt/local libraries."
