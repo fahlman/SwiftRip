@@ -7,7 +7,7 @@ Use this checklist for every public SwiftRip release, including hotfixes. Stop t
 - Confirm the user-facing version to ship.
 - Confirm `CURRENT_PROJECT_VERSION` will be higher than every previously published Sparkle build.
 - Confirm the release is meant to be public, not a local packaging test.
-- Confirm the release still targets the intended minimum macOS version, currently macOS 15.7.
+- Confirm the release still targets the intended minimum macOS version, currently macOS 27.0.
 - Confirm the dedicated GitHub Actions release workflow is the intended publisher.
 - Confirm any user-facing changes are reflected in `README.md`, `ROADMAP.md`, or release notes as needed.
 - Confirm third-party tool versions and the Sparkle pin are the intended versions in `THIRD_PARTY_NOTICES.md`, `SOURCE_OFFER.md`, `SwiftRip-Tools/Manifest/`, and `Package.resolved`.

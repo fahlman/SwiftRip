@@ -16,7 +16,7 @@ jobs:
   consume:
     name: Update SwiftRip and Create Release Tag
     if: github.event.action == 'swiftrip-tools-updated'
-    runs-on: macos-latest
+    runs-on: xcode-27
 
     steps:
       - name: Check out SwiftRip main
