@@ -25,7 +25,6 @@ Do not ship a CLI that falls back to `/usr/local/lib/libdvdcss.2.dylib`, `/opt/l
 SwiftRip-Tools packages are pinned by architecture:
 
 - `SwiftRip-Tools/Manifest/swiftrip-tools.json` for Apple Silicon.
-- `SwiftRip-Tools/Manifest/swiftrip-tools-x86_64.json` for Intel.
 
 Those manifests are the app repository's contract with SwiftRip-Tools. The current shipped third-party component versions belong in [`THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) and [`SOURCE_OFFER.md`](../SOURCE_OFFER.md), not in this maintenance note.
 
@@ -35,7 +34,7 @@ The SwiftRip-Tools upstream workflow updates the bundled tools automatically:
 
 1. Detect the new HandBrake or libdvdcss upstream release.
 2. Create the matching immutable SwiftRip source tags, applying the single HandBrake app-bundle patch automatically.
-3. Build and verify Apple Silicon and Intel artifacts.
+3. Build and verify the Apple silicon artifacts.
 4. Publish the packages to the SwiftRip-Tools GitHub release.
 5. Dispatch the exact tool revision to SwiftRip.
 6. Update the manifest copies, provenance, and app version in SwiftRip.

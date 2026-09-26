@@ -24,7 +24,7 @@ Helpful report details:
 
 - SwiftRip version and build number.
 - macOS version.
-- Apple Silicon or Intel.
+- Mac model.
 - Whether the app came from a GitHub release, Sparkle update, local build, or Xcode.
 - Exact steps to reproduce.
 - Expected and actual behavior.
@@ -58,7 +58,7 @@ SwiftRip should:
 - Avoid Homebrew, MacPorts, `/usr/local`, and `/opt/local` runtime dependencies.
 - Sign bundled executable code and the app bundle with Developer ID for release.
 - Notarize, staple, and Gatekeeper-assess release DMGs.
-- Publish Sparkle appcasts for Apple Silicon and Intel separately.
+- Publish each Sparkle appcast item with the release's minimum macOS, so Macs that cannot run it are not offered it.
 - Keep source, build scripts, notices, and source-offer documentation aligned with shipped binaries.
 
 DVD input, disc metadata, mounted volume names, file paths, HandBrake output, and downloaded update metadata should all be treated as untrusted input.

@@ -52,7 +52,6 @@ The intended generated artifact is:
 
 ```text
 Artifacts/macos-arm64/libdvdcss.2.dylib
-Artifacts/macos-x86_64/libdvdcss.2.dylib
 ```
 
 Generated source archives, extracted source trees, build folders, and binary artifacts are intentionally not committed to Git. They are produced locally by the build scripts.
