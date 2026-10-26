@@ -3,12 +3,12 @@
     <channel>
         <title>SwiftRip</title>
         <item>
-            <title>1.5</title>
-            <pubDate>Mon, 14 Sep 2026 19:33:25 +0000</pubDate>
-            <sparkle:version>12</sparkle:version>
-            <sparkle:shortVersionString>1.5</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>15.7</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/fahlman/SwiftRip/releases/download/v1.5/SwiftRip-1.5.zip" length="29473563" type="application/octet-stream" sparkle:edSignature="QaDe48/h0PeNEVI3vVEw8Z3YDJQc0Aen/3xtfoyr58fCHhOmoi7V63DrY+2B8Hv6zVmpjqCiBNf2k9+6YA+ZAQ=="/>
+            <title>1.6</title>
+            <pubDate>Mon, 26 Oct 2026 20:04:46 +0000</pubDate>
+            <sparkle:version>13</sparkle:version>
+            <sparkle:shortVersionString>1.6</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>27.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/fahlman/SwiftRip/releases/download/v1.6/SwiftRip-1.6.zip" length="14931911" type="application/octet-stream" sparkle:edSignature="P6nKD9Rls4+1CJje6P2IocWLqrPik6K/G4r+Mu4mzSkheGuw1bTr9hPvsNJD+BCGTDob1u+bAR98BBS9Jp/mBw=="/>
         </item>
     </channel>
 </rss>
